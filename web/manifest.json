@@ -1,0 +1,9 @@
+{
+    "name": "Login",
+    "short_name": "Login",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#C41E3A",
+    "theme_color": "#C41E3A",
+    "description": "A functional login page with red and white theme"
+}
