@@ -63,8 +63,6 @@ class _ClientsPageState extends State<ClientsPage> {
 
   void _showAddClientDialog() {
     final nameController = TextEditingController();
-    final emailController = TextEditingController();
-    final phoneController = TextEditingController();
     final addressController = TextEditingController();
 
     showDialog(
@@ -79,22 +77,6 @@ class _ClientsPageState extends State<ClientsPage> {
                 controller: nameController,
                 decoration: const InputDecoration(
                   labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -118,12 +100,11 @@ class _ClientsPageState extends State<ClientsPage> {
           ElevatedButton(
             onPressed: () async {
               final name = nameController.text.trim();
-              final email = emailController.text.trim();
-              if (name.isEmpty || email.isEmpty) {
+              if (name.isEmpty) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Please fill in Name and Email'),
+                      content: Text('Please fill in the Name field'),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -133,8 +114,6 @@ class _ClientsPageState extends State<ClientsPage> {
               try {
                 await FirebaseFirestore.instance.collection('clients').add({
                   'name': name,
-                  'email': email,
-                  'phone': phoneController.text.trim(),
                   'address': addressController.text.trim(),
                   'joinDate': DateTime.now().toIso8601String(),
                   'createdAt': FieldValue.serverTimestamp(),
@@ -172,8 +151,6 @@ class _ClientsPageState extends State<ClientsPage> {
   void _showEditClientDialog(DocumentSnapshot client) {
     final data = client.data() as Map<String, dynamic>;
     final nameController = TextEditingController(text: data['name']);
-    final emailController = TextEditingController(text: data['email']);
-    final phoneController = TextEditingController(text: data['phone']);
     final addressController = TextEditingController(text: data['address']);
 
     showDialog(
@@ -188,22 +165,6 @@ class _ClientsPageState extends State<ClientsPage> {
                 controller: nameController,
                 decoration: const InputDecoration(
                   labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -226,12 +187,11 @@ class _ClientsPageState extends State<ClientsPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (nameController.text.trim().isEmpty ||
-                  emailController.text.trim().isEmpty) {
+              if (nameController.text.trim().isEmpty) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Please fill in Name and Email'),
+                      content: Text('Please fill in the Name field'),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -241,8 +201,6 @@ class _ClientsPageState extends State<ClientsPage> {
               try {
                 await client.reference.update({
                   'name': nameController.text.trim(),
-                  'email': emailController.text.trim(),
-                  'phone': phoneController.text.trim(),
                   'address': addressController.text.trim(),
                 });
                 if (context.mounted) {
@@ -275,6 +233,406 @@ class _ClientsPageState extends State<ClientsPage> {
     );
   }
 
+  void _showClientSessionsDialog(DocumentSnapshot client) {
+    final data = client.data() as Map<String, dynamic>;
+    final clientName = (data['name'] ?? '').toString().trim();
+    final clientId = client.id;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.88,
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$clientName - Previous Sessions',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1a1a1a),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                      splashRadius: 20,
+                    ),
+                  ],
+                ),
+                const Divider(height: 24),
+
+                // Sessions content — FutureBuilder fetches all sessions,
+                // then filters where clientName in session matches this client's name,
+                // OR where clientId matches the document ID.
+                Flexible(
+                  child: FutureBuilder<QuerySnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('sessions')
+                        .get(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(40),
+                            child: CircularProgressIndicator(color: Color(0xFFC41E3A)),
+                          ),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(
+                              'Error loading sessions: ${snapshot.error}',
+                              style: TextStyle(color: Colors.red[700]),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (!snapshot.hasData) {
+                        return const Center(child: Text('No data'));
+                      }
+
+                      // Match sessions by clientName (case-insensitive trim)
+                      // OR by clientId matching this client's Firestore document ID
+                      final lowerClientName = clientName.toLowerCase();
+                      final allDocs = snapshot.data!.docs;
+                      final sessions = allDocs.where((doc) {
+                        final d = doc.data() as Map<String, dynamic>;
+                        final sessionClientName =
+                            (d['clientName'] ?? '').toString().trim().toLowerCase();
+                        final sessionClientId =
+                            (d['clientId'] ?? '').toString().trim();
+                        return sessionClientName == lowerClientName ||
+                            sessionClientId == clientId;
+                      }).toList();
+
+                      // Sort newest first — date stored as MM/DD/YYYY
+                      sessions.sort((a, b) {
+                        final da = a.data() as Map<String, dynamic>;
+                        final db = b.data() as Map<String, dynamic>;
+                        final dateA = _parseSessionDateStr(da['date']?.toString());
+                        final dateB = _parseSessionDateStr(db['date']?.toString());
+                        if (dateA == null && dateB == null) return 0;
+                        if (dateA == null) return 1;
+                        if (dateB == null) return -1;
+                        return dateB.compareTo(dateA);
+                      });
+
+                      if (sessions.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(40),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.event_busy, size: 56, color: Colors.grey[400]),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No sessions found for $clientName',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      // Compute totals
+                      double totalDuration = 0;
+                      double totalSessionAmt = 0;
+                      double totalCoachingAmt = 0;
+
+                      for (final doc in sessions) {
+                        final d = doc.data() as Map<String, dynamic>;
+                        totalDuration += _toDouble(d['duration']);
+                        totalSessionAmt += _toDouble(d['sessionAmount']);
+                        totalCoachingAmt += _toDouble(d['coachingRentalAmount']);
+                      }
+                      final grandTotal = totalSessionAmt + totalCoachingAmt;
+
+                      return Column(
+                        children: [
+                          // Table Header
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(8),
+                                topRight: Radius.circular(8),
+                              ),
+                            ),
+                            child: const Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: Text('Date',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1a1a1a))),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text('Session Amount',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1a1a1a))),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text('Coaching/Rental',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1a1a1a))),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: Text('Bay No.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1a1a1a))),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text('Personnel',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1a1a1a))),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text('Duration (hrs)',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1a1a1a))),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text('Total Amount',
+                                      textAlign: TextAlign.right,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1a1a1a))),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Rows
+                          Flexible(
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: sessions.length,
+                              itemBuilder: (context, index) {
+                                final s =
+                                    sessions[index].data() as Map<String, dynamic>;
+
+                                final dateDisplay = _formatSessionDateForDisplay(
+                                    s['date']?.toString() ?? '');
+                                final sessionAmt = _toDouble(s['sessionAmount']);
+                                final coachingAmt =
+                                    _toDouble(s['coachingRentalAmount']);
+                                final bayNumber =
+                                    s['bayNumber']?.toString() ?? 'N/A';
+                                final personnel =
+                                    s['personnel']?.toString() ?? 'N/A';
+                                final duration = _toDouble(s['duration']);
+                                final rowTotal = sessionAmt + coachingAmt;
+
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 13),
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(
+                                          color: Colors.grey.shade200),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(dateDisplay,
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey[800])),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                            '₱${sessionAmt.toStringAsFixed(2)}',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey[800])),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                            '₱${coachingAmt.toStringAsFixed(2)}',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey[800])),
+                                      ),
+                                      Expanded(
+                                        flex: 1,
+                                        child: Text(bayNumber,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey[800])),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(personnel,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey[800])),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                            '${duration % 1 == 0 ? duration.toInt() : duration} hrs',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey[800])),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                            '₱${rowTotal.toStringAsFixed(2)}',
+                                            textAlign: TextAlign.right,
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey[800],
+                                                fontWeight: FontWeight.w500)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+
+                          // Totals row
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 13),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              border: Border(
+                                top: BorderSide(
+                                    color: Colors.grey.shade300, width: 1.5),
+                              ),
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(8),
+                                bottomRight: Radius.circular(8),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Expanded(
+                                  flex: 2,
+                                  child: Text('Total',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1a1a1a))),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                      '₱${totalSessionAmt.toStringAsFixed(2)}',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1a1a1a))),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                      '₱${totalCoachingAmt.toStringAsFixed(2)}',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1a1a1a))),
+                                ),
+                                const Expanded(flex: 1, child: SizedBox()),
+                                const Expanded(flex: 2, child: SizedBox()),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                      '${totalDuration % 1 == 0 ? totalDuration.toInt() : totalDuration} hrs',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1a1a1a))),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                      '₱${grandTotal.toStringAsFixed(2)}',
+                                      textAlign: TextAlign.right,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF1a1a1a))),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
   void _deleteClient(DocumentSnapshot client) {
     showDialog(
       context: context,
@@ -334,11 +692,7 @@ class _ClientsPageState extends State<ClientsPage> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        leading: Icon(
-          icon,
-          color: Colors.white,
-          size: 24,
-        ),
+        leading: Icon(icon, color: Colors.white, size: 24),
         title: _isSidebarCollapsed
             ? null
             : Text(
@@ -349,9 +703,7 @@ class _ClientsPageState extends State<ClientsPage> {
                 ),
               ),
         onTap: onTap,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -365,13 +717,44 @@ class _ClientsPageState extends State<ClientsPage> {
   }
 
   Color _getAvatarColor(int index) {
-    final colors = [
-      const Color(0xFFC41E3A),
-      const Color(0xFF8B0000),
-      const Color(0xFFDC143C),
-      const Color(0xFFB22222),
+    const colors = [
+      Color(0xFFC41E3A),
+      Color(0xFF8B0000),
+      Color(0xFFDC143C),
+      Color(0xFFB22222),
     ];
     return colors[index % colors.length];
+  }
+
+  /// Safely converts a dynamic value to double.
+  double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString()) ?? 0.0;
+  }
+
+  /// Parses a date string stored as MM/DD/YYYY into a DateTime.
+  DateTime? _parseSessionDateStr(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return null;
+    final parts = dateStr.split('/');
+    if (parts.length != 3) return null;
+    final month = int.tryParse(parts[0]);
+    final day = int.tryParse(parts[1]);
+    final year = int.tryParse(parts[2]);
+    if (month == null || day == null || year == null) return null;
+    try {
+      return DateTime(year, month, day);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Formats a MM/DD/YYYY date string into a human-readable label like "Feb 16, 2026".
+  String _formatSessionDateForDisplay(String rawDate) {
+    final dt = _parseSessionDateStr(rawDate);
+    if (dt == null) return rawDate.isEmpty ? 'N/A' : rawDate;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
   }
 
   @override
@@ -391,15 +774,11 @@ class _ClientsPageState extends State<ClientsPage> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFC41E3A),
-                  Color(0xFF8B0000),
-                ],
+                colors: [Color(0xFFC41E3A), Color(0xFF8B0000)],
               ),
             ),
             child: Column(
               children: [
-                // Header
                 Container(
                   padding: const EdgeInsets.all(20),
                   child: Row(
@@ -429,7 +808,6 @@ class _ClientsPageState extends State<ClientsPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Menu Items
                 _buildMenuItem(
                   icon: Icons.dashboard_outlined,
                   label: 'Overview',
@@ -455,7 +833,6 @@ class _ClientsPageState extends State<ClientsPage> {
                   onTap: () => _navigateToPage('Personnel'),
                 ),
                 const Spacer(),
-                // User Profile
                 Container(
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(12),
@@ -580,35 +957,43 @@ class _ClientsPageState extends State<ClientsPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Search Bar
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
+                          TextField(
+                            controller: _searchController,
+                            onChanged: (value) {
+                              setState(() {
+                                _searchQuery = value.toLowerCase();
+                              });
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Search by client, date, personnel, bay...',
+                              hintStyle: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 14,
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.search,
+                                color: Color(0xFFC41E3A),
+                                size: 20,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 16,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(50),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                  width: 1,
                                 ),
-                              ],
-                            ),
-                            child: TextField(
-                              controller: _searchController,
-                              onChanged: (value) {
-                                setState(() {
-                                  _searchQuery = value.toLowerCase();
-                                });
-                              },
-                              decoration: InputDecoration(
-                                hintText:
-                                    'Search clients by name, email, or phone...',
-                                hintStyle: TextStyle(color: Colors.grey[400]),
-                                border: InputBorder.none,
-                                icon: Icon(Icons.search, color: Colors.grey[400]),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(50),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFC41E3A),
+                                  width: 1.2,
+                                ),
                               ),
                             ),
                           ),
@@ -628,9 +1013,9 @@ class _ClientsPageState extends State<ClientsPage> {
                                   int totalSessions = 0;
 
                                   if (clientSnapshot.hasData) {
-                                    totalClients = clientSnapshot.data!.docs.length;
+                                    totalClients =
+                                        clientSnapshot.data!.docs.length;
                                   }
-
                                   if (sessionSnapshot.hasData) {
                                     totalSessions =
                                         sessionSnapshot.data!.docs.length;
@@ -639,86 +1024,16 @@ class _ClientsPageState extends State<ClientsPage> {
                                   return Row(
                                     children: [
                                       Expanded(
-                                        child: Container(
-                                          padding: const EdgeInsets.all(24),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black
-                                                    .withOpacity(0.05),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Total Clients',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey[600],
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                totalClients.toString(),
-                                                style: const TextStyle(
-                                                  fontSize: 36,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF1a1a1a),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                        child: _buildStatCard(
+                                          'Total Clients',
+                                          totalClients.toString(),
                                         ),
                                       ),
                                       const SizedBox(width: 20),
                                       Expanded(
-                                        child: Container(
-                                          padding: const EdgeInsets.all(24),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black
-                                                    .withOpacity(0.05),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Total Sessions',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey[600],
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                totalSessions.toString(),
-                                                style: const TextStyle(
-                                                  fontSize: 36,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF1a1a1a),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                        child: _buildStatCard(
+                                          'Total Sessions',
+                                          totalSessions.toString(),
                                         ),
                                       ),
                                     ],
@@ -775,11 +1090,10 @@ class _ClientsPageState extends State<ClientsPage> {
 
                                     var clients = snapshot.data!.docs;
 
-                                    // Filter clients based on search query
                                     if (_searchQuery.isNotEmpty) {
                                       clients = clients.where((client) {
-                                        final data =
-                                            client.data() as Map<String, dynamic>;
+                                        final data = client.data()
+                                            as Map<String, dynamic>;
                                         final name =
                                             (data['name'] ?? '').toLowerCase();
                                         final email =
@@ -823,7 +1137,8 @@ class _ClientsPageState extends State<ClientsPage> {
                                       children: [
                                         // Table Header
                                         Container(
-                                          padding: const EdgeInsets.all(16),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 14),
                                           decoration: BoxDecoration(
                                             color: Colors.grey[100],
                                             borderRadius:
@@ -835,7 +1150,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                           child: const Row(
                                             children: [
                                               Expanded(
-                                                flex: 2,
+                                                flex: 3,
                                                 child: Text(
                                                   'Name',
                                                   style: TextStyle(
@@ -845,29 +1160,9 @@ class _ClientsPageState extends State<ClientsPage> {
                                                 ),
                                               ),
                                               Expanded(
-                                                flex: 2,
-                                                child: Text(
-                                                  'Contact',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF1a1a1a),
-                                                  ),
-                                                ),
-                                              ),
-                                              Expanded(
-                                                flex: 3,
+                                                flex: 4,
                                                 child: Text(
                                                   'Address',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF1a1a1a),
-                                                  ),
-                                                ),
-                                              ),
-                                              Expanded(
-                                                flex: 1,
-                                                child: Text(
-                                                  'Join Date',
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     color: Color(0xFF1a1a1a),
@@ -882,7 +1177,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                                     fontWeight: FontWeight.bold,
                                                     color: Color(0xFF1a1a1a),
                                                   ),
-                                                  textAlign: TextAlign.center,
+                                                  textAlign: TextAlign.right,
                                                 ),
                                               ),
                                             ],
@@ -894,9 +1189,10 @@ class _ClientsPageState extends State<ClientsPage> {
                                           final client = entry.value;
                                           final data = client.data()
                                               as Map<String, dynamic>;
-                                          
+
                                           return Container(
-                                            padding: const EdgeInsets.all(16),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 16, vertical: 12),
                                             decoration: BoxDecoration(
                                               border: Border(
                                                 bottom: BorderSide(
@@ -908,19 +1204,23 @@ class _ClientsPageState extends State<ClientsPage> {
                                               children: [
                                                 // Name with Avatar
                                                 Expanded(
-                                                  flex: 2,
+                                                  flex: 3,
                                                   child: Row(
                                                     children: [
                                                       CircleAvatar(
+                                                        radius: 22,
                                                         backgroundColor:
-                                                            _getAvatarColor(index),
+                                                            _getAvatarColor(
+                                                                index),
                                                         child: Text(
                                                           _getInitials(
-                                                              data['name'] ?? ''),
+                                                              data['name'] ??
+                                                                  ''),
                                                           style: const TextStyle(
                                                             color: Colors.white,
                                                             fontWeight:
                                                                 FontWeight.bold,
+                                                            fontSize: 13,
                                                           ),
                                                         ),
                                                       ),
@@ -931,8 +1231,8 @@ class _ClientsPageState extends State<ClientsPage> {
                                                           style: const TextStyle(
                                                             fontWeight:
                                                                 FontWeight.w500,
-                                                            color:
-                                                                Color(0xFF1a1a1a),
+                                                            color: Color(
+                                                                0xFF1a1a1a),
                                                           ),
                                                           overflow: TextOverflow
                                                               .ellipsis,
@@ -941,94 +1241,33 @@ class _ClientsPageState extends State<ClientsPage> {
                                                     ],
                                                   ),
                                                 ),
-                                                // Contact
-                                                Expanded(
-                                                  flex: 2,
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment.start,
-                                                    children: [
-                                                      Row(
-                                                        children: [
-                                                          Icon(Icons.email,
-                                                              size: 14,
-                                                              color: Colors
-                                                                  .grey[600]),
-                                                          const SizedBox(width: 6),
-                                                          Expanded(
-                                                            child: Text(
-                                                              data['email'] ?? 'N/A',
-                                                              style: TextStyle(
-                                                                fontSize: 13,
-                                                                color: Colors
-                                                                    .grey[700],
-                                                              ),
-                                                              overflow: TextOverflow
-                                                                  .ellipsis,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      const SizedBox(height: 4),
-                                                      Row(
-                                                        children: [
-                                                          Icon(Icons.phone,
-                                                              size: 14,
-                                                              color: Colors
-                                                                  .grey[600]),
-                                                          const SizedBox(width: 6),
-                                                          Text(
-                                                            data['phone'] ?? 'N/A',
-                                                            style: TextStyle(
-                                                              fontSize: 13,
-                                                              color:
-                                                                  Colors.grey[700],
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
                                                 // Address
                                                 Expanded(
-                                                  flex: 3,
+                                                  flex: 4,
                                                   child: Row(
                                                     children: [
                                                       Icon(
-                                                          Icons.location_on_outlined,
-                                                          size: 14,
-                                                          color: Colors.grey[600]),
+                                                        Icons
+                                                            .location_on_outlined,
+                                                        size: 15,
+                                                        color: Colors.grey[500],
+                                                      ),
                                                       const SizedBox(width: 6),
                                                       Expanded(
                                                         child: Text(
-                                                          data['address'] ?? 'N/A',
+                                                          data['address'] ??
+                                                              'N/A',
                                                           style: TextStyle(
                                                             fontSize: 13,
-                                                            color: Colors.grey[700],
+                                                            color:
+                                                                Colors.grey[700],
                                                           ),
-                                                          overflow:
-                                                              TextOverflow.ellipsis,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                           maxLines: 2,
                                                         ),
                                                       ),
                                                     ],
-                                                  ),
-                                                ),
-                                                // Join Date
-                                                Expanded(
-                                                  flex: 1,
-                                                  child: Text(
-                                                    data['joinDate'] != null
-                                                        ? DateTime.parse(
-                                                                data['joinDate'])
-                                                            .toString()
-                                                            .split(' ')[0]
-                                                        : 'N/A',
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      color: Colors.grey[700],
-                                                    ),
                                                   ),
                                                 ),
                                                 // Actions
@@ -1036,29 +1275,49 @@ class _ClientsPageState extends State<ClientsPage> {
                                                   flex: 2,
                                                   child: Row(
                                                     mainAxisAlignment:
-                                                        MainAxisAlignment.center,
+                                                        MainAxisAlignment.end,
                                                     children: [
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          // View details
-                                                        },
+                                                      OutlinedButton(
+                                                        onPressed: () => _showClientSessionsDialog(client),
+                                                        style: OutlinedButton
+                                                            .styleFrom(
+                                                          side: BorderSide(
+                                                              color: Colors
+                                                                  .grey.shade300),
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal: 12,
+                                                                  vertical: 8),
+                                                          shape:
+                                                              RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(6),
+                                                          ),
+                                                        ),
                                                         child: const Text(
                                                           'View Details',
                                                           style: TextStyle(
                                                             color: Color(
                                                                 0xFF1a1a1a),
+                                                            fontSize: 13,
                                                           ),
                                                         ),
                                                       ),
+                                                      const SizedBox(width: 4),
                                                       IconButton(
                                                         icon: const Icon(
                                                           Icons.edit_outlined,
                                                           size: 18,
+                                                          color:
+                                                              Color(0xFF1a1a1a),
                                                         ),
                                                         onPressed: () =>
                                                             _showEditClientDialog(
                                                                 client),
                                                         tooltip: 'Edit',
+                                                        splashRadius: 20,
                                                       ),
                                                       IconButton(
                                                         icon: const Icon(
@@ -1069,6 +1328,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                                         onPressed: () =>
                                                             _deleteClient(client),
                                                         tooltip: 'Delete',
+                                                        splashRadius: 20,
                                                       ),
                                                     ],
                                                   ),
@@ -1090,6 +1350,45 @@ class _ClientsPageState extends State<ClientsPage> {
                   ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1a1a1a),
             ),
           ),
         ],
