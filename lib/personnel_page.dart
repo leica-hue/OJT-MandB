@@ -117,13 +117,25 @@ class _PersonnelPageState extends State<PersonnelPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (nameController.text.isNotEmpty &&
-                  emailController.text.isNotEmpty) {
+              final name = nameController.text.trim();
+              final email = emailController.text.trim();
+              if (name.isEmpty || email.isEmpty) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please fill in Name and Email'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+                return;
+              }
+              try {
                 await FirebaseFirestore.instance.collection('personnel').add({
-                  'name': nameController.text,
-                  'role': roleController.text,
-                  'email': emailController.text,
-                  'phone': phoneController.text,
+                  'name': name,
+                  'role': roleController.text.trim(),
+                  'email': email,
+                  'phone': phoneController.text.trim(),
                   'active': true,
                   'createdAt': FieldValue.serverTimestamp(),
                 });
@@ -133,6 +145,15 @@ class _PersonnelPageState extends State<PersonnelPage> {
                     const SnackBar(
                       content: Text('Staff added successfully'),
                       backgroundColor: Color(0xFFC41E3A),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error saving to Firebase: $e'),
+                      backgroundColor: Colors.red,
                     ),
                   );
                 }
@@ -204,20 +225,43 @@ class _PersonnelPageState extends State<PersonnelPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              await staff.reference.update({
-                'name': nameController.text,
-                'role': roleController.text,
-                'email': emailController.text,
-                'phone': phoneController.text,
-              });
-              if (context.mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Staff updated successfully'),
-                    backgroundColor: Color(0xFFC41E3A),
-                  ),
-                );
+              if (nameController.text.trim().isEmpty ||
+                  emailController.text.trim().isEmpty) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please fill in Name and Email'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+                return;
+              }
+              try {
+                await staff.reference.update({
+                  'name': nameController.text.trim(),
+                  'role': roleController.text.trim(),
+                  'email': emailController.text.trim(),
+                  'phone': phoneController.text.trim(),
+                });
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Staff updated successfully'),
+                      backgroundColor: Color(0xFFC41E3A),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating in Firebase: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(
@@ -243,15 +287,27 @@ class _PersonnelPageState extends State<PersonnelPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              await staff.reference.delete();
-              if (context.mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Staff deleted successfully'),
-                    backgroundColor: Color(0xFFC41E3A),
-                  ),
-                );
+              try {
+                await staff.reference.delete();
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Staff deleted successfully'),
+                      backgroundColor: Color(0xFFC41E3A),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error deleting from Firebase: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(

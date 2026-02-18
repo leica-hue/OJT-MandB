@@ -1,75 +1,35 @@
-# Firebase Setup Instructions
+# Make Your App Data Appear in Firebase
 
-Your app is configured to use Firebase. Complete these steps to connect it to your Firebase project:
+Follow these steps so when you add clients, staff, or sessions in the app, they show up in Firebase.
 
-## 1. Create a Firebase Project
+---
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create a new project or select an existing one
-3. Enable **Google Analytics** (optional)
+## 1. Create / use a Firebase project
 
-## 2. Enable Authentication
+1. Go to [Firebase Console](https://console.firebase.google.com/).
+2. Open your project **mandb-maligaya** (or create one and re-run FlutterFire configure).
+3. In the left sidebar, click **Build → Firestore Database**.
 
-1. In Firebase Console, go to **Build** → **Authentication**
-2. Click **Get started**
-3. Go to **Sign-in method** tab
-4. Enable **Email/Password** provider
+---
 
-## 3. Enable Firestore (for user profiles)
+## 2. Create the Firestore database (if you haven’t)
 
-1. In Firebase Console, go to **Build** → **Firestore Database**
-2. Click **Create database**
-3. Choose **Start in test mode** (for development) or **Production mode**
-4. Select a region
+1. Click **Create database**.
+2. Choose **Start in production mode** (we’ll add rules next).
+3. Pick a location (e.g. `us-central1`) and confirm.
+4. Wait until the database is created.
 
-## 4. Add Your App to Firebase
+---
 
-### Web
-1. In Project settings (gear icon), click **Add app** → **Web** (</>)
-2. Register app with a nickname
-3. Copy the `firebaseConfig` values
+## 3. Set Firestore security rules
 
-### Android (if building for Android)
-1. Click **Add app** → **Android**
-2. Package name: `com.example.test` (or your app's package name from `android/app/build.gradle`)
-3. Download `google-services.json` and place it in `android/app/`
+Your app must be allowed to read/write. In Firestore:
 
-### iOS (if building for iOS)
-1. Click **Add app** → **iOS**
-2. Bundle ID: `com.example.test` (or your app's bundle ID)
-3. Download `GoogleService-Info.plist` and add it to the `ios/Runner` folder in Xcode
+1. Go to **Firestore Database → Rules**.
+2. Replace the existing rules with the contents of the **`firestore.rules`** file in this project (or copy below).
+3. Click **Publish**.
 
-## 5. Configure FlutterFire
-
-Run this command in your project directory:
-
-```bash
-dart run flutterfire_cli:flutterfire configure
-```
-
-This will:
-- Log you into Firebase (if not already)
-- Let you select your Firebase project
-- Generate `lib/firebase_options.dart` with your project's credentials
-- Create/update platform configuration files
-
-**Note:** If the command fails (e.g., due to Git not being in PATH), you can manually update `lib/firebase_options.dart` with the values from your Firebase Console project settings.
-
-## 6. Update firebase_options.dart (if not using FlutterFire CLI)
-
-If you couldn't run `flutterfire configure`, manually replace the placeholder values in `lib/firebase_options.dart` with your Firebase project credentials from **Project settings** → **Your apps** in the Firebase Console.
-
-## 7. Run the App
-
-```bash
-flutter run -d chrome
-# or
-flutter run -d windows
-```
-
-## Firestore Security Rules (login-accounts)
-
-For the `login-accounts` collection to accept writes, add these rules in Firebase Console → Firestore Database → Rules:
+**Rules to use (allow signed-in users to read/write your collections):**
 
 ```
 rules_version = '2';
@@ -78,14 +38,70 @@ service cloud.firestore {
     match /login-accounts/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+    match /clients/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    match /personnel/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    match /sessions/{docId} {
+      allow read, write: if request.auth != null;
+    }
   }
 }
 ```
 
-This lets each user read/write only their own document.
+---
 
-## Troubleshooting
+## 4. Enable Authentication (Email/Password)
 
-- **"Firebase not initialized"**: Make sure you've completed step 5 and `firebase_options.dart` has real values (not placeholders)
-- **"Email/password sign-in is disabled"**: Enable it in Authentication → Sign-in method
-- **"Permission denied" on Firestore**: Add the security rules above or use test mode for development
+1. In Firebase Console go to **Build → Authentication**.
+2. Click **Get started** if needed.
+3. Open the **Sign-in method** tab.
+4. Enable **Email/Password** and save.
+
+Your app only writes to Firestore when a user is **signed in**. So you must sign up / log in in the app first.
+
+---
+
+## 5. Use the app
+
+1. **Run the app** (e.g. `flutter run -d chrome` for web).
+2. **Sign up** or **Log in** with email and password.
+3. Then:
+   - **Add a client** (Clients page) → document in `clients`.
+   - **Add staff** (Personnel page) → document in `personnel`.
+   - **Add a session** (Dashboard → Add Session) → document in `sessions`.
+
+---
+
+## 6. Check that data appears in Firebase
+
+1. In Firebase Console go to **Firestore Database**.
+2. You should see collections: **clients**, **personnel**, **sessions**, **login-accounts**.
+3. Click a collection and open a document to see the fields you added in the app.
+
+---
+
+## Quick checklist
+
+| Step | Where | What to do |
+|------|--------|------------|
+| Firestore exists | Firebase Console → Firestore | Create database if missing |
+| Rules allow writes | Firestore → Rules | Paste rules above and **Publish** |
+| Auth enabled | Authentication → Sign-in method | Enable **Email/Password** |
+| You are signed in | In the app | Sign up or log in before adding data |
+| Add data | App (Clients / Personnel / Dashboard) | Add client, staff, or session |
+
+---
+
+## If data still doesn’t appear
+
+- **Red error in app**  
+  Check the browser/IDE console (F12 → Console). If you see “permission-denied”, the Firestore rules are blocking; re-publish the rules from step 3.
+
+- **No error but no collections**  
+  Make sure you clicked **Add** / **Save** in the app and saw a success message. Then refresh the Firestore Console and look at **clients**, **personnel**, or **sessions**.
+
+- **Wrong project**  
+  Your app uses project **mandb-maligaya** (see `lib/firebase_options.dart`). In Firebase Console, ensure you’re in that project.

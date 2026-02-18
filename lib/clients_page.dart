@@ -117,13 +117,25 @@ class _ClientsPageState extends State<ClientsPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (nameController.text.isNotEmpty &&
-                  emailController.text.isNotEmpty) {
+              final name = nameController.text.trim();
+              final email = emailController.text.trim();
+              if (name.isEmpty || email.isEmpty) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please fill in Name and Email'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+                return;
+              }
+              try {
                 await FirebaseFirestore.instance.collection('clients').add({
-                  'name': nameController.text,
-                  'email': emailController.text,
-                  'phone': phoneController.text,
-                  'address': addressController.text,
+                  'name': name,
+                  'email': email,
+                  'phone': phoneController.text.trim(),
+                  'address': addressController.text.trim(),
                   'joinDate': DateTime.now().toIso8601String(),
                   'createdAt': FieldValue.serverTimestamp(),
                 });
@@ -133,6 +145,15 @@ class _ClientsPageState extends State<ClientsPage> {
                     const SnackBar(
                       content: Text('Client added successfully'),
                       backgroundColor: Color(0xFFC41E3A),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error saving to Firebase: $e'),
+                      backgroundColor: Colors.red,
                     ),
                   );
                 }
@@ -205,20 +226,43 @@ class _ClientsPageState extends State<ClientsPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              await client.reference.update({
-                'name': nameController.text,
-                'email': emailController.text,
-                'phone': phoneController.text,
-                'address': addressController.text,
-              });
-              if (context.mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Client updated successfully'),
-                    backgroundColor: Color(0xFFC41E3A),
-                  ),
-                );
+              if (nameController.text.trim().isEmpty ||
+                  emailController.text.trim().isEmpty) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please fill in Name and Email'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+                return;
+              }
+              try {
+                await client.reference.update({
+                  'name': nameController.text.trim(),
+                  'email': emailController.text.trim(),
+                  'phone': phoneController.text.trim(),
+                  'address': addressController.text.trim(),
+                });
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Client updated successfully'),
+                      backgroundColor: Color(0xFFC41E3A),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating in Firebase: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(
@@ -244,15 +288,27 @@ class _ClientsPageState extends State<ClientsPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              await client.reference.delete();
-              if (context.mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Client deleted successfully'),
-                    backgroundColor: Color(0xFFC41E3A),
-                  ),
-                );
+              try {
+                await client.reference.delete();
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Client deleted successfully'),
+                      backgroundColor: Color(0xFFC41E3A),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error deleting from Firebase: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(

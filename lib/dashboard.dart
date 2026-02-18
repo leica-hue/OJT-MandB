@@ -14,13 +14,18 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
+enum SalesPeriod { daily, monthly, yearly, overall }
+
 class _DashboardPageState extends State<DashboardPage> {
   bool _isSidebarCollapsed = false;
   String _currentPage = 'Overview';
+  SalesPeriod _salesPeriod = SalesPeriod.daily;
   
   // Controllers for add session dialog
   final TextEditingController _clientSearchController = TextEditingController();
-  final TextEditingController _serviceController = TextEditingController();
+  final TextEditingController _sessionAmountController = TextEditingController();
+  final TextEditingController _coachingRentalAmountController = TextEditingController();
+  final TextEditingController _bayNumberController = TextEditingController();
   final TextEditingController _personnelController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
@@ -36,22 +41,29 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _showNewClientFields = false;
   List<DocumentSnapshot> _searchResults = [];
 
+  // Session list search/filter
+  final TextEditingController _sessionSearchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _syncToLoginAccounts();
+    _sessionSearchController.addListener(() => setState(() {}));
   }
   
   @override
   void dispose() {
     _clientSearchController.dispose();
-    _serviceController.dispose();
+    _sessionAmountController.dispose();
+    _coachingRentalAmountController.dispose();
+    _bayNumberController.dispose();
     _personnelController.dispose();
     _durationController.dispose();
     _timeController.dispose();
     _newClientEmailController.dispose();
     _newClientPhoneController.dispose();
     _newClientAddressController.dispose();
+    _sessionSearchController.dispose();
     super.dispose();
   }
 
@@ -154,7 +166,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _addSession() async {
     if (_clientSearchController.text.isEmpty ||
-        _serviceController.text.isEmpty ||
+        _sessionAmountController.text.isEmpty ||
+        _bayNumberController.text.isEmpty ||
         _personnelController.text.isEmpty ||
         _durationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -186,13 +199,18 @@ class _DashboardPageState extends State<DashboardPage> {
       // Format date
       final dateStr = '${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.year}';
 
+      final sessionAmount = double.tryParse(_sessionAmountController.text) ?? 0.0;
+      final coachingRentalAmount = double.tryParse(_coachingRentalAmountController.text) ?? 0.0;
+
       // Add session
       await FirebaseFirestore.instance.collection('sessions').add({
         'clientId': clientId,
         'clientName': clientName,
         'date': dateStr,
         'time': _timeController.text.isEmpty ? '09:00 AM' : _timeController.text,
-        'service': _serviceController.text,
+        'sessionAmount': sessionAmount,
+        'coachingRentalAmount': coachingRentalAmount,
+        'bayNumber': _bayNumberController.text.trim(),
         'personnel': _personnelController.text,
         'duration': double.parse(_durationController.text),
         'status': 'pending',
@@ -210,7 +228,9 @@ class _DashboardPageState extends State<DashboardPage> {
         
         // Clear form
         _clientSearchController.clear();
-        _serviceController.clear();
+        _sessionAmountController.clear();
+        _coachingRentalAmountController.clear();
+        _bayNumberController.clear();
         _personnelController.clear();
         _durationController.clear();
         _timeController.clear();
@@ -427,9 +447,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Service Field
+                  // Session Amount
                   const Text(
-                    'Service *',
+                    'Session Amount *',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -437,11 +457,49 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(height: 8),
                   TextField(
-                    controller: _serviceController,
+                    controller: _sessionAmountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
-                      hintText: 'e.g., Personal Training, Consultation',
+                      hintText: 'e.g., 500.00',
                       border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.work_outline),
+                      prefixIcon: Icon(Icons.payments),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Coaching/Rental Amount
+                  const Text(
+                    'Coaching/Rental Amount',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _coachingRentalAmountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      hintText: 'e.g., 200.00',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.account_balance_wallet),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Bay Number
+                  const Text(
+                    'Bay Number *',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _bayNumberController,
+                    decoration: const InputDecoration(
+                      hintText: 'e.g., Bay 1, A1',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.numbers),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -492,7 +550,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 Navigator.pop(context);
                 // Clear form
                 _clientSearchController.clear();
-                _serviceController.clear();
+                _sessionAmountController.clear();
+                _coachingRentalAmountController.clear();
+                _bayNumberController.clear();
                 _personnelController.clear();
                 _durationController.clear();
                 _timeController.clear();
@@ -578,6 +638,88 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(height: 4),
           Text(
             subtitle,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSalesStatCard(int salesCount, double totalAmount) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Sales',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC41E3A).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<SalesPeriod>(
+                    value: _salesPeriod,
+                    isDense: true,
+                    icon: const Icon(Icons.arrow_drop_down, color: Color(0xFFC41E3A), size: 20),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1a1a1a),
+                    ),
+                    items: SalesPeriod.values
+                        .map((p) => DropdownMenuItem(
+                              value: p,
+                              child: Text(_salesPeriodLabel(p)),
+                            ))
+                        .toList(),
+                    onChanged: (SalesPeriod? value) {
+                      if (value != null) {
+                        setState(() => _salesPeriod = value);
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '₱${_formatAmount(totalAmount)}',
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1a1a1a),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Total revenue · $salesCount ${_salesPeriodLabel(_salesPeriod).toLowerCase()} sessions',
             style: TextStyle(
               fontSize: 13,
               color: Colors.grey[600],
@@ -765,7 +907,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Recent client sessions and today\'s summary',
+                              'Client sessions and today\'s summary',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -783,39 +925,47 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   // Content
                   Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Stats Cards
-                          StreamBuilder<QuerySnapshot>(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Stats Cards
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(32, 32, 32, 16),
+                          child: StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection('sessions')
-                                .where('date', isEqualTo: _getTodayDate())
-                                .snapshots(),
+                                .snapshots(includeMetadataChanges: true),
                             builder: (context, snapshot) {
                               int todaySessions = 0;
-                              int completedSessions = 0;
                               int totalHours = 0;
                               int activeClients = 0;
+                              int salesCount = 0;
+                              double totalRevenueSalesPeriod = 0.0;
 
                               if (snapshot.hasData) {
-                                todaySessions = snapshot.data!.docs.length;
-                                completedSessions = snapshot.data!.docs
-                                    .where((doc) => doc['status'] == 'completed')
-                                    .length;
-                                totalHours = snapshot.data!.docs
-                                    .fold(0, (sum, doc) => sum + (doc['duration'] as num).toInt());
-                                activeClients = snapshot.data!.docs
+                                final allDocs = snapshot.data!.docs;
+                                final todayStr = _getTodayDate();
+                                final todayDocs = allDocs
+                                    .where((doc) => doc['date'] == todayStr)
+                                    .toList();
+
+                                todaySessions = todayDocs.length;
+                                totalHours = todayDocs.fold(
+                                    0, (sum, doc) => sum + ((doc['duration'] as num?)?.toInt() ?? 0));
+                                activeClients = todayDocs
                                     .map((doc) => doc['clientId'])
                                     .toSet()
                                     .length;
-                              }
 
-                              final completionRate = todaySessions > 0
-                                  ? ((completedSessions / todaySessions) * 100).toInt()
-                                  : 0;
+                                // Sales = all sessions in selected period + their total revenue (session + coaching/rental)
+                                final salesDocs = allDocs.where((doc) {
+                                  final dt = _parseSessionDate(doc['date'] as String?);
+                                  return _isDateInSalesPeriod(dt, _salesPeriod);
+                                }).toList();
+                                salesCount = salesDocs.length;
+                                totalRevenueSalesPeriod = salesDocs.fold(
+                                    0.0, (sum, doc) => sum + _getSessionTotal(doc.data() as Map<String, dynamic>));
+                              }
 
                               return GridView.count(
                                 shrinkWrap: true,
@@ -828,7 +978,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   _buildStatCard(
                                     title: 'Today\'s Sessions',
                                     value: todaySessions.toString(),
-                                    subtitle: '$completedSessions completed',
+                                    subtitle: 'Sessions today',
                                     icon: Icons.calendar_today,
                                     iconBgColor: const Color(0xFFC41E3A),
                                   ),
@@ -846,20 +996,17 @@ class _DashboardPageState extends State<DashboardPage> {
                                     icon: Icons.person,
                                     iconBgColor: const Color(0xFFC41E3A),
                                   ),
-                                  _buildStatCard(
-                                    title: 'Completion Rate',
-                                    value: '$completionRate%',
-                                    subtitle: '$completedSessions of $todaySessions sessions',
-                                    icon: Icons.pie_chart,
-                                    iconBgColor: const Color(0xFFC41E3A),
-                                  ),
+                                  _buildSalesStatCard(salesCount, totalRevenueSalesPeriod),
                                 ],
                               );
                             },
                           ),
-                          const SizedBox(height: 32),
-                          // Recent Client Sessions Table
-                          Container(
+                        ),
+                        const SizedBox(height: 16),
+                        // Recent Client Sessions - fills remaining space
+                        Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.fromLTRB(32, 0, 32, 32),
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -873,7 +1020,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               ],
                             ),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 const Text(
                                   'Recent Client Sessions',
@@ -883,18 +1030,64 @@ class _DashboardPageState extends State<DashboardPage> {
                                     color: Color(0xFF1a1a1a),
                                   ),
                                 ),
-                                const SizedBox(height: 24),
-                                StreamBuilder<QuerySnapshot>(
+                                const SizedBox(height: 16),
+                                // Search / filter bar
+                                TextField(
+                                  controller: _sessionSearchController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Search by client, date, personnel, bay...',
+                                    prefixIcon: const Icon(Icons.search, color: Color(0xFFC41E3A)),
+                                    suffixIcon: _sessionSearchController.text.isNotEmpty
+                                        ? IconButton(
+                                            icon: const Icon(Icons.clear, size: 20),
+                                            onPressed: () {
+                                              _sessionSearchController.clear();
+                                              setState(() {});
+                                            },
+                                          )
+                                        : null,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                  onChanged: (_) => setState(() {}),
+                                ),
+                                const SizedBox(height: 16),
+                                Expanded(
+                                  child: StreamBuilder<QuerySnapshot>(
                                   stream: FirebaseFirestore.instance
                                       .collection('sessions')
                                       .orderBy('date', descending: true)
-                                      .orderBy('time', descending: true)
-                                      .limit(10)
-                                      .snapshots(),
+                                      .limit(100)
+                                      .snapshots(includeMetadataChanges: true),
                                   builder: (context, snapshot) {
                                     if (snapshot.hasError) {
-                                      return const Center(
-                                        child: Text('Error loading sessions'),
+                                      return Center(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(24.0),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Text(
+                                                'Error loading sessions',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF1a1a1a),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                '${snapshot.error}',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.grey[600],
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       );
                                     }
 
@@ -906,32 +1099,57 @@ class _DashboardPageState extends State<DashboardPage> {
                                       );
                                     }
 
-                                    final sessions = snapshot.data!.docs;
+                                    final allSessions = snapshot.data!.docs;
+                                    final query = _sessionSearchController.text.trim().toLowerCase();
+                                    final sessions = query.isEmpty
+                                        ? allSessions
+                                        : allSessions.where((doc) {
+                                            final d = doc.data() as Map<String, dynamic>;
+                                            final clientName = (d['clientName'] ?? '').toString().toLowerCase();
+                                            final personnel = (d['personnel'] ?? '').toString().toLowerCase();
+                                            final date = (d['date'] ?? '').toString().toLowerCase();
+                                            final time = (d['time'] ?? '').toString().toLowerCase();
+                                            final bayNumber = (d['bayNumber'] ?? '').toString().toLowerCase();
+                                            return clientName.contains(query) ||
+                                                personnel.contains(query) ||
+                                                date.contains(query) ||
+                                                time.contains(query) ||
+                                                bayNumber.contains(query);
+                                          }).toList();
 
                                     if (sessions.isEmpty) {
-                                      return const Center(
+                                      return Center(
                                         child: Padding(
-                                          padding: EdgeInsets.all(32.0),
+                                          padding: const EdgeInsets.all(32.0),
                                           child: Text(
-                                            'No sessions yet',
+                                            query.isEmpty ? 'No sessions yet' : 'No sessions match "$query"',
                                             style: TextStyle(
-                                              color: Colors.grey,
+                                              color: Colors.grey[600],
                                               fontSize: 16,
                                             ),
+                                            textAlign: TextAlign.center,
                                           ),
                                         ),
                                       );
                                     }
 
-                                    return SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: DataTable(
-                                        headingRowColor: MaterialStateProperty.all(
-                                          Colors.grey[100],
-                                        ),
-                                        columns: const [
+                                    return LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        final tableWidth = constraints.maxWidth;
+                                        return SingleChildScrollView(
+                                          scrollDirection: Axis.vertical,
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: SizedBox(
+                                              width: tableWidth,
+                                              child: DataTable(
+                                                headingRowColor: MaterialStateProperty.all(
+                                                  Colors.grey[100],
+                                                ),
+                                                columns: [
                                           DataColumn(
-                                            label: Text(
+                                            columnWidth: const FlexColumnWidth(1),
+                                            label: const Text(
                                               'Client Name',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
@@ -939,7 +1157,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                             ),
                                           ),
                                           DataColumn(
-                                            label: Text(
+                                            columnWidth: const FlexColumnWidth(1),
+                                            label: const Text(
                                               'Date',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
@@ -947,7 +1166,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                             ),
                                           ),
                                           DataColumn(
-                                            label: Text(
+                                            columnWidth: const FlexColumnWidth(1),
+                                            label: const Text(
                                               'Time',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
@@ -955,15 +1175,35 @@ class _DashboardPageState extends State<DashboardPage> {
                                             ),
                                           ),
                                           DataColumn(
-                                            label: Text(
-                                              'Service',
+                                            columnWidth: const FlexColumnWidth(1),
+                                            label: const Text(
+                                              'Session Amount',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ),
                                           DataColumn(
-                                            label: Text(
+                                            columnWidth: const FlexColumnWidth(1),
+                                            label: const Text(
+                                              'Coaching/Rental',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          DataColumn(
+                                            columnWidth: const FlexColumnWidth(1),
+                                            label: const Text(
+                                              'Bay Number',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          DataColumn(
+                                            columnWidth: const FlexColumnWidth(1),
+                                            label: const Text(
                                               'Personnel',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
@@ -971,38 +1211,93 @@ class _DashboardPageState extends State<DashboardPage> {
                                             ),
                                           ),
                                           DataColumn(
-                                            label: Text(
+                                            columnWidth: const FlexColumnWidth(1),
+                                            label: const Text(
                                               'Duration (hrs)',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ),
+                                          DataColumn(
+                                            columnWidth: const FlexColumnWidth(1),
+                                            label: const Text(
+                                              'Total',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
                                         ],
-                                        rows: sessions.map((session) {
-                                          final data = session.data() as Map<String, dynamic>;
-                                          return DataRow(
+                                        rows: () {
+                                          final sessionList = sessions.map((session) => session.data() as Map<String, dynamic>).toList();
+                                          double sumSession = 0.0;
+                                          double sumCoaching = 0.0;
+                                          double sumTotal = 0.0;
+                                          for (final data in sessionList) {
+                                            final s = data['sessionAmount'] is num ? (data['sessionAmount'] as num).toDouble() : (double.tryParse(data['sessionAmount']?.toString() ?? '') ?? 0.0);
+                                            final c = data['coachingRentalAmount'] is num ? (data['coachingRentalAmount'] as num).toDouble() : (double.tryParse(data['coachingRentalAmount']?.toString() ?? '') ?? 0.0);
+                                            sumSession += s;
+                                            sumCoaching += c;
+                                            sumTotal += s + c;
+                                          }
+                                          final dataRows = sessionList.map((data) {
+                                            final total = _getSessionTotal(data);
+                                            return DataRow(
+                                              cells: [
+                                                DataCell(Text(data['clientName'] ?? 'N/A')),
+                                                DataCell(Text(data['date'] ?? 'N/A')),
+                                                DataCell(Text(data['time'] ?? 'N/A')),
+                                                DataCell(Text(
+                                                  data['sessionAmount'] != null
+                                                      ? (data['sessionAmount'] is num
+                                                          ? (data['sessionAmount'] as num).toString()
+                                                          : data['sessionAmount'].toString())
+                                                      : '—',
+                                                )),
+                                                DataCell(Text(
+                                                  data['coachingRentalAmount'] != null
+                                                      ? (data['coachingRentalAmount'] is num
+                                                          ? (data['coachingRentalAmount'] as num).toString()
+                                                          : data['coachingRentalAmount'].toString())
+                                                      : '—',
+                                                )),
+                                                DataCell(Text(data['bayNumber']?.toString() ?? '—')),
+                                                DataCell(Text(data['personnel'] ?? 'N/A')),
+                                                DataCell(Text(data['duration']?.toString() ?? '0.0')),
+                                                DataCell(Text('₱${_formatAmount(total)}')),
+                                              ],
+                                            );
+                                          }).toList();
+                                          dataRows.add(DataRow(
                                             cells: [
-                                              DataCell(Text(data['clientName'] ?? 'N/A')),
-                                              DataCell(Text(data['date'] ?? 'N/A')),
-                                              DataCell(Text(data['time'] ?? 'N/A')),
-                                              DataCell(Text(data['service'] ?? 'N/A')),
-                                              DataCell(Text(data['personnel'] ?? 'N/A')),
-                                              DataCell(Text(
-                                                data['duration']?.toString() ?? '0.0',
-                                              )),
+                                              DataCell(Text('TOTAL', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1a1a1a)))),
+                                              const DataCell(Text('')),
+                                              const DataCell(Text('')),
+                                              DataCell(Text('₱${_formatAmount(sumSession)}', style: const TextStyle(fontWeight: FontWeight.bold))),
+                                              DataCell(Text('₱${_formatAmount(sumCoaching)}', style: const TextStyle(fontWeight: FontWeight.bold))),
+                                              const DataCell(Text('')),
+                                              const DataCell(Text('')),
+                                              const DataCell(Text('')),
+                                              DataCell(Text('₱${_formatAmount(sumTotal)}', style: const TextStyle(fontWeight: FontWeight.bold))),
                                             ],
-                                          );
-                                        }).toList(),
+                                          ));
+                                          return dataRows;
+                                        }(),
                                       ),
-                                    );
+                                    ),
+                                  ),
+                                );
+                                },
+                              );
                                   },
                                 ),
+                              ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -1057,5 +1352,68 @@ class _DashboardPageState extends State<DashboardPage> {
   String _getTodayDate() {
     final now = DateTime.now();
     return '${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')}/${now.year}';
+  }
+
+  /// Sum of sessionAmount + coachingRentalAmount for a session doc.
+  double _getSessionTotal(Map<String, dynamic> data) {
+    final session = data['sessionAmount'];
+    final coaching = data['coachingRentalAmount'];
+    final s = session is num ? session.toDouble() : (double.tryParse(session?.toString() ?? '') ?? 0.0);
+    final c = coaching is num ? coaching.toDouble() : (double.tryParse(coaching?.toString() ?? '') ?? 0.0);
+    return s + c;
+  }
+
+  String _formatAmount(double value) {
+    return value.toStringAsFixed(2).replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+  }
+
+  /// Parses session date string "MM/DD/YYYY" to DateTime.
+  DateTime? _parseSessionDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return null;
+    final parts = dateStr.split('/');
+    if (parts.length != 3) return null;
+    final month = int.tryParse(parts[0]);
+    final day = int.tryParse(parts[1]);
+    final year = int.tryParse(parts[2]);
+    if (month == null || day == null || year == null) return null;
+    try {
+      return DateTime(year, month, day);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _isDateInSalesPeriod(DateTime? sessionDate, SalesPeriod period) {
+    if (sessionDate == null) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    switch (period) {
+      case SalesPeriod.daily:
+        return sessionDate.year == today.year &&
+            sessionDate.month == today.month &&
+            sessionDate.day == today.day;
+      case SalesPeriod.monthly:
+        return sessionDate.year == today.year && sessionDate.month == today.month;
+      case SalesPeriod.yearly:
+        return sessionDate.year == today.year;
+      case SalesPeriod.overall:
+        return true;
+    }
+  }
+
+  String _salesPeriodLabel(SalesPeriod period) {
+    switch (period) {
+      case SalesPeriod.daily:
+        return 'Daily';
+      case SalesPeriod.monthly:
+        return 'Monthly';
+      case SalesPeriod.yearly:
+        return 'Yearly';
+      case SalesPeriod.overall:
+        return 'Overall';
+    }
   }
 }
