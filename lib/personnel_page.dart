@@ -37,7 +37,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
 
   void _navigateToPage(String page) {
     if (page == _currentPage) return;
-
     Widget? targetPage;
     switch (page) {
       case 'Overview':
@@ -53,7 +52,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
       default:
         return;
     }
-
     if (targetPage != null) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => targetPage!),
@@ -63,7 +61,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
 
   void _showAddStaffDialog() {
     final nameController = TextEditingController();
-    final emailController = TextEditingController();
     final phoneController = TextEditingController();
     final roleController = TextEditingController();
 
@@ -83,29 +80,21 @@ class _PersonnelPageState extends State<PersonnelPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: roleController,
+              DropdownButtonFormField<String>(
+                value: roleController.text.isEmpty ? null : roleController.text,
                 decoration: const InputDecoration(
                   labelText: 'Role',
                   border: OutlineInputBorder(),
-                  hintText: 'e.g., Trainer, Consultant',
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  border: OutlineInputBorder(),
-                ),
+                items: const [
+                  DropdownMenuItem(value: 'Tee Girl', child: Text('Tee Girl')),
+                  DropdownMenuItem(value: 'Tee Boy', child: Text('Tee Boy')),
+                  DropdownMenuItem(value: 'Coach', child: Text('Coach')),
+                  DropdownMenuItem(value: 'Staff', child: Text('Staff')),
+                ],
+                onChanged: (value) {
+                  if (value != null) roleController.text = value;
+                },
               ),
             ],
           ),
@@ -118,12 +107,11 @@ class _PersonnelPageState extends State<PersonnelPage> {
           ElevatedButton(
             onPressed: () async {
               final name = nameController.text.trim();
-              final email = emailController.text.trim();
-              if (name.isEmpty || email.isEmpty) {
+              if (name.isEmpty) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Please fill in Name and Email'),
+                      content: Text('Please fill in Name'),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -134,7 +122,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
                 await FirebaseFirestore.instance.collection('personnel').add({
                   'name': name,
                   'role': roleController.text.trim(),
-                  'email': email,
                   'phone': phoneController.text.trim(),
                   'active': true,
                   'createdAt': FieldValue.serverTimestamp(),
@@ -172,8 +159,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
   void _showEditStaffDialog(DocumentSnapshot staff) {
     final data = staff.data() as Map<String, dynamic>;
     final nameController = TextEditingController(text: data['name']);
-    final emailController = TextEditingController(text: data['email']);
-    final phoneController = TextEditingController(text: data['phone']);
     final roleController = TextEditingController(text: data['role']);
 
     showDialog(
@@ -199,22 +184,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  border: OutlineInputBorder(),
-                ),
-              ),
             ],
           ),
         ),
@@ -225,8 +194,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (nameController.text.trim().isEmpty ||
-                  emailController.text.trim().isEmpty) {
+              if (nameController.text.trim().isEmpty ) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -240,9 +208,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
               try {
                 await staff.reference.update({
                   'name': nameController.text.trim(),
-                  'role': roleController.text.trim(),
-                  'email': emailController.text.trim(),
-                  'phone': phoneController.text.trim(),
+                  'role': roleController.text.trim()
                 });
                 if (context.mounted) {
                   Navigator.pop(context);
@@ -279,7 +245,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Staff'),
-        content: const Text('Are you sure you want to delete this staff member?'),
+        content:
+            const Text('Are you sure you want to delete this staff member?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -310,15 +277,333 @@ class _PersonnelPageState extends State<PersonnelPage> {
                 }
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Helpers for date parsing & formatting
+  // ---------------------------------------------------------------------------
+
+  /// Parses a Firestore date value (Timestamp or String "MM/dd/yyyy") into DateTime.
+  DateTime? _parseDate(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is String) {
+      // Try ISO format first
+      try {
+        return DateTime.parse(value);
+      } catch (_) {}
+      // Try MM/dd/yyyy
+      final parts = value.split('/');
+      if (parts.length == 3) {
+        try {
+          return DateTime(
+            int.parse(parts[2]),
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } catch (_) {}
+      }
+    }
+    return null;
+  }
+
+  String _formatDate(dynamic value) {
+    final dt = _parseDate(value);
+    if (dt == null) return value?.toString() ?? 'N/A';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+  }
+
+  // ---------------------------------------------------------------------------
+  // View Details dialog
+  //
+  // Queries `sessions` where the `personnel` field (first name stored in
+  // sessions) matches the personnel document's `name`.
+  //
+  // We intentionally skip `.orderBy()` to avoid requiring a composite
+  // Firestore index — instead we sort the results client-side by date.
+  // ---------------------------------------------------------------------------
+  void _showViewDetailsDialog(DocumentSnapshot staff) {
+    final data = staff.data() as Map<String, dynamic>;
+    final staffName = (data['name'] ?? '') as String;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          width: 600,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      '$staffName - Client Assignments',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1a1a1a),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                    style: IconButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFC41E3A)),
+                      foregroundColor: const Color(0xFFC41E3A),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Sessions stream
+              // Field mapping (from Firestore screenshot):
+              //   personnel  → staff name  (e.g. "Loren")
+              //   clientName → client name (e.g. "Bon Yu")
+              //   date       → session date (String "MM/dd/yyyy")
+              //   duration   → hours worked (num)
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('sessions')
+                    .where('personnel', isEqualTo: staffName)
+                    .snapshots(), // NO orderBy → avoids composite-index error
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        'Error loading sessions: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    );
+                  }
+                  if (!snapshot.hasData) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32),
+                        child:
+                            CircularProgressIndicator(color: Color(0xFFC41E3A)),
+                      ),
+                    );
+                  }
+
+                  // Sort by date descending — client-side
+                  final sessions = snapshot.data!.docs.toList()
+                    ..sort((a, b) {
+                      final ad = _parseDate(
+                          (a.data() as Map<String, dynamic>)['date']);
+                      final bd = _parseDate(
+                          (b.data() as Map<String, dynamic>)['date']);
+                      if (ad == null && bd == null) return 0;
+                      if (ad == null) return 1;
+                      if (bd == null) return -1;
+                      return bd.compareTo(ad);
+                    });
+
+                  if (sessions.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Center(
+                        child: Text(
+                          'No client assignments found.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                    );
+                  }
+
+                  // Sum total hours using the `duration` field
+                  double totalHours = 0;
+                  for (final s in sessions) {
+                    final sd = s.data() as Map<String, dynamic>;
+                    totalHours += (sd['duration'] as num?)?.toDouble() ?? 0;
+                  }
+
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Table header
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(color: Colors.grey.shade300)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Text('Date',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFFC41E3A))),
+                            ),
+                            Expanded(
+                              flex: 4,
+                              child: Text('Client',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFFC41E3A))),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text('Hours Worked',
+                                  textAlign: TextAlign.right,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFFC41E3A))),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Rows
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 320),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: sessions.length,
+                          itemBuilder: (context, index) {
+                            final sd =
+                                sessions[index].data() as Map<String, dynamic>;
+                            final hours =
+                                (sd['duration'] as num?)?.toDouble() ?? 0;
+                            final hoursLabel = hours % 1 == 0
+                                ? '${hours.toInt()} hrs'
+                                : '$hours hrs';
+
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: index % 2 == 0
+                                    ? Colors.transparent
+                                    : Colors.grey.shade50,
+                                border: Border(
+                                  bottom:
+                                      BorderSide(color: Colors.grey.shade200),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: Text(
+                                      _formatDate(sd['date']),
+                                      style: const TextStyle(
+                                          color: Color(0xFF1a1a1a),
+                                          fontSize: 14),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 4,
+                                    child: Text(
+                                      sd['clientName'] ?? 'N/A',
+                                      style: const TextStyle(
+                                          color: Color(0xFF1a1a1a),
+                                          fontSize: 14),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      hoursLabel,
+                                      textAlign: TextAlign.right,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1a1a1a),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Total
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                                color: Colors.grey.shade300, width: 1.5),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              flex: 7,
+                              child: Text(
+                                'Total Hours',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: Color(0xFF1a1a1a),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                totalHours % 1 == 0
+                                    ? '${totalHours.toInt()} hrs'
+                                    : '$totalHours hrs',
+                                textAlign: TextAlign.right,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: Color(0xFF1a1a1a),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sidebar helpers
+  // ---------------------------------------------------------------------------
 
   Widget _buildMenuItem({
     required IconData icon,
@@ -333,30 +618,20 @@ class _PersonnelPageState extends State<PersonnelPage> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        leading: Icon(
-          icon,
-          color: Colors.white,
-          size: 24,
-        ),
+        leading: Icon(icon, color: Colors.white, size: 24),
         title: _isSidebarCollapsed
             ? null
-            : Text(
-                label,
+            : Text(label,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+                    color: Colors.white, fontWeight: FontWeight.w500)),
         onTap: onTap,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
   String _getInitials(String name) {
-    final parts = name.split(' ');
+    final parts = name.trim().split(' ');
     if (parts.length >= 2) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
@@ -364,14 +639,18 @@ class _PersonnelPageState extends State<PersonnelPage> {
   }
 
   Color _getAvatarColor(int index) {
-    final colors = [
-      const Color(0xFFC41E3A),
-      const Color(0xFF8B0000),
-      const Color(0xFFDC143C),
-      const Color(0xFFB22222),
+    const colors = [
+      Color(0xFFC41E3A),
+      Color(0xFF8B0000),
+      Color(0xFFDC143C),
+      Color(0xFFB22222),
     ];
     return colors[index % colors.length];
   }
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -382,7 +661,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
     return Scaffold(
       body: Row(
         children: [
-          // Collapsible Sidebar
+          // ── Sidebar ────────────────────────────────────────────────────────
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             width: _isSidebarCollapsed ? 80 : 240,
@@ -390,45 +669,34 @@ class _PersonnelPageState extends State<PersonnelPage> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFC41E3A),
-                  Color(0xFF8B0000),
-                ],
+                colors: [Color(0xFFC41E3A), Color(0xFF8B0000)],
               ),
             ),
             child: Column(
               children: [
-                // Header
                 Container(
                   padding: const EdgeInsets.all(20),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       if (!_isSidebarCollapsed)
-                        const Text(
-                          'Dashboard',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        const Text('Dashboard',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold)),
                       IconButton(
                         icon: Icon(
                           _isSidebarCollapsed ? Icons.menu : Icons.menu_open,
                           color: Colors.white,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _isSidebarCollapsed = !_isSidebarCollapsed;
-                          });
-                        },
+                        onPressed: () => setState(
+                            () => _isSidebarCollapsed = !_isSidebarCollapsed),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Menu Items
                 _buildMenuItem(
                   icon: Icons.dashboard_outlined,
                   label: 'Overview',
@@ -454,7 +722,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
                   onTap: () => _navigateToPage('Personnel'),
                 ),
                 const Spacer(),
-                // User Profile
                 Container(
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(12),
@@ -469,9 +736,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
                         child: Text(
                           displayName[0].toUpperCase(),
                           style: const TextStyle(
-                            color: Color(0xFFC41E3A),
-                            fontWeight: FontWeight.bold,
-                          ),
+                              color: Color(0xFFC41E3A),
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                       if (!_isSidebarCollapsed) ...[
@@ -483,19 +749,14 @@ class _PersonnelPageState extends State<PersonnelPage> {
                               Text(
                                 displayName,
                                 style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14),
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const Text(
-                                'Administrator',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                ),
-                              ),
+                              const Text('Administrator',
+                                  style: TextStyle(
+                                      color: Colors.white70, fontSize: 12)),
                             ],
                           ),
                         ),
@@ -506,7 +767,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
               ],
             ),
           ),
-          // Main Content Area
+
+          // ── Main Content ───────────────────────────────────────────────────
           Expanded(
             child: Container(
               color: const Color(0xFFF5F5F5),
@@ -515,9 +777,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                   // Top Bar
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 20,
-                    ),
+                        horizontal: 32, vertical: 20),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       boxShadow: [
@@ -534,21 +794,16 @@ class _PersonnelPageState extends State<PersonnelPage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Personnel',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1a1a1a),
-                              ),
-                            ),
+                            const Text('Personnel',
+                                style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1a1a1a))),
                             const SizedBox(height: 4),
                             Text(
                               'Manage team members and staff information',
                               style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
+                                  fontSize: 14, color: Colors.grey[600]),
                             ),
                           ],
                         ),
@@ -560,18 +815,16 @@ class _PersonnelPageState extends State<PersonnelPage> {
                             backgroundColor: const Color(0xFFC41E3A),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
+                                horizontal: 24, vertical: 12),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                                borderRadius: BorderRadius.circular(8)),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // Main Content
+
+                  // Page body
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(32),
@@ -581,9 +834,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                           // Search Bar
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
+                                horizontal: 20, vertical: 12),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
@@ -597,138 +848,22 @@ class _PersonnelPageState extends State<PersonnelPage> {
                             ),
                             child: TextField(
                               controller: _searchController,
-                              onChanged: (value) {
-                                setState(() {
-                                  _searchQuery = value.toLowerCase();
-                                });
-                              },
+                              onChanged: (v) => setState(
+                                  () => _searchQuery = v.toLowerCase()),
                               decoration: InputDecoration(
                                 hintText:
-                                    'Search personnel by name, role, or email...',
+                                    'Search personnel by name or role...',
                                 hintStyle: TextStyle(color: Colors.grey[400]),
                                 border: InputBorder.none,
-                                icon: Icon(Icons.search, color: Colors.grey[400]),
+                                icon:
+                                    Icon(Icons.search, color: Colors.grey[400]),
                               ),
                             ),
                           ),
+
                           const SizedBox(height: 32),
-                          // Statistics Cards
-                          StreamBuilder<QuerySnapshot>(
-                            stream: FirebaseFirestore.instance
-                                .collection('personnel')
-                                .snapshots(),
-                            builder: (context, personnelSnapshot) {
-                              return StreamBuilder<QuerySnapshot>(
-                                stream: FirebaseFirestore.instance
-                                    .collection('sessions')
-                                    .snapshots(),
-                                builder: (context, sessionSnapshot) {
-                                  int totalStaff = 0;
-                                  int activeAssignments = 0;
 
-                                  if (personnelSnapshot.hasData) {
-                                    totalStaff =
-                                        personnelSnapshot.data!.docs.length;
-                                  }
-
-                                  if (sessionSnapshot.hasData) {
-                                    activeAssignments =
-                                        sessionSnapshot.data!.docs.length;
-                                  }
-
-                                  return Row(
-                                    children: [
-                                      Expanded(
-                                        child: Container(
-                                          padding: const EdgeInsets.all(24),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black
-                                                    .withOpacity(0.05),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Total Staff',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey[600],
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                totalStaff.toString(),
-                                                style: const TextStyle(
-                                                  fontSize: 36,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF1a1a1a),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 20),
-                                      Expanded(
-                                        child: Container(
-                                          padding: const EdgeInsets.all(24),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black
-                                                    .withOpacity(0.05),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Active Assignments',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey[600],
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                activeAssignments.toString(),
-                                                style: const TextStyle(
-                                                  fontSize: 36,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF1a1a1a),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 32),
-                          // Staff Information Table
+                          // Staff Table Card
                           Container(
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
@@ -745,15 +880,32 @@ class _PersonnelPageState extends State<PersonnelPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Staff Information',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1a1a1a),
-                                  ),
+                                const Text('Staff Information',
+                                    style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1a1a1a))),
+
+                                // Total count
+                                StreamBuilder<QuerySnapshot>(
+                                  stream: FirebaseFirestore.instance
+                                      .collection('personnel')
+                                      .snapshots(),
+                                  builder: (context, snap) {
+                                    final count = snap.data?.docs.length ?? 0;
+                                    return Text(
+                                      'Total Staff: $count',
+                                      textAlign: TextAlign.end,
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          color: Color(0xFF1a1a1a),
+                                          fontWeight: FontWeight.w500),
+                                    );
+                                  },
                                 ),
+
                                 const SizedBox(height: 24),
+
                                 StreamBuilder<QuerySnapshot>(
                                   stream: FirebaseFirestore.instance
                                       .collection('personnel')
@@ -761,34 +913,28 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                   builder: (context, snapshot) {
                                     if (snapshot.hasError) {
                                       return const Center(
-                                        child: Text('Error loading personnel'),
-                                      );
+                                          child:
+                                              Text('Error loading personnel'));
                                     }
-
                                     if (!snapshot.hasData) {
                                       return const Center(
                                         child: CircularProgressIndicator(
-                                          color: Color(0xFFC41E3A),
-                                        ),
+                                            color: Color(0xFFC41E3A)),
                                       );
                                     }
 
                                     var personnel = snapshot.data!.docs;
 
-                                    // Filter personnel based on search query
                                     if (_searchQuery.isNotEmpty) {
-                                      personnel = personnel.where((staff) {
-                                        final data =
-                                            staff.data() as Map<String, dynamic>;
-                                        final name =
-                                            (data['name'] ?? '').toLowerCase();
-                                        final role =
-                                            (data['role'] ?? '').toLowerCase();
-                                        final email =
-                                            (data['email'] ?? '').toLowerCase();
-                                        return name.contains(_searchQuery) ||
-                                            role.contains(_searchQuery) ||
-                                            email.contains(_searchQuery);
+                                      personnel = personnel.where((s) {
+                                        final d =
+                                            s.data() as Map<String, dynamic>;
+                                        return (d['name'] ?? '')
+                                                .toLowerCase()
+                                                .contains(_searchQuery) ||
+                                            (d['role'] ?? '')
+                                                .toLowerCase()
+                                                .contains(_searchQuery);
                                       }).toList();
                                     }
 
@@ -798,20 +944,17 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                           padding: const EdgeInsets.all(32.0),
                                           child: Column(
                                             children: [
-                                              Icon(
-                                                Icons.person_outline,
-                                                size: 64,
-                                                color: Colors.grey[400],
-                                              ),
+                                              Icon(Icons.person_outline,
+                                                  size: 64,
+                                                  color: Colors.grey[400]),
                                               const SizedBox(height: 16),
                                               Text(
                                                 _searchQuery.isEmpty
                                                     ? 'No staff members yet'
                                                     : 'No staff found',
                                                 style: TextStyle(
-                                                  color: Colors.grey[600],
-                                                  fontSize: 16,
-                                                ),
+                                                    color: Colors.grey[600],
+                                                    fontSize: 16),
                                               ),
                                             ],
                                           ),
@@ -821,7 +964,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
 
                                     return Column(
                                       children: [
-                                        // Table Header
+                                        // Header row
                                         Container(
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
@@ -835,54 +978,45 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                           child: const Row(
                                             children: [
                                               Expanded(
-                                                flex: 3,
-                                                child: Text(
-                                                  'Name',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF1a1a1a),
-                                                  ),
-                                                ),
-                                              ),
-                                              Expanded(
-                                                flex: 2,
-                                                child: Text(
-                                                  'Role',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF1a1a1a),
-                                                  ),
-                                                ),
+                                                flex: 4,
+                                                child: Text('Name',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Color(0xFF1a1a1a))),
                                               ),
                                               Expanded(
                                                 flex: 3,
-                                                child: Text(
-                                                  'Contact',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF1a1a1a),
-                                                  ),
-                                                ),
+                                                child: Text('Role',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Color(0xFF1a1a1a))),
                                               ),
                                               Expanded(
                                                 flex: 2,
-                                                child: Text(
-                                                  'Actions',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF1a1a1a),
-                                                  ),
-                                                  textAlign: TextAlign.center,
-                                                ),
+                                                child: Text('Actions',
+                                                    textAlign: TextAlign.center,
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Color(0xFF1a1a1a))),
                                               ),
                                             ],
                                           ),
                                         ),
-                                        // Table Rows
-                                        ...personnel.asMap().entries.map((entry) {
+
+                                        // Data rows
+                                        ...personnel
+                                            .asMap()
+                                            .entries
+                                            .map((entry) {
                                           final index = entry.key;
                                           final staff = entry.value;
-                                          final data = staff.data()
+                                          final d = staff.data()
                                               as Map<String, dynamic>;
 
                                           return Container(
@@ -890,15 +1024,15 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                             decoration: BoxDecoration(
                                               border: Border(
                                                 bottom: BorderSide(
-                                                  color: Colors.grey.shade200,
-                                                ),
+                                                    color:
+                                                        Colors.grey.shade200),
                                               ),
                                             ),
                                             child: Row(
                                               children: [
-                                                // Name with Avatar
+                                                // Name + Avatar
                                                 Expanded(
-                                                  flex: 3,
+                                                  flex: 4,
                                                   child: Row(
                                                     children: [
                                                       CircleAvatar(
@@ -907,24 +1041,25 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                                                 index),
                                                         child: Text(
                                                           _getInitials(
-                                                              data['name'] ?? ''),
+                                                              d['name'] ?? ''),
                                                           style: const TextStyle(
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
+                                                              color:
+                                                                  Colors.white,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
                                                         ),
                                                       ),
                                                       const SizedBox(width: 12),
                                                       Expanded(
                                                         child: Text(
-                                                          data['name'] ?? 'N/A',
+                                                          d['name'] ?? 'N/A',
                                                           style: const TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            color:
-                                                                Color(0xFF1a1a1a),
-                                                          ),
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
+                                                              color: Color(
+                                                                  0xFF1a1a1a)),
                                                           overflow: TextOverflow
                                                               .ellipsis,
                                                         ),
@@ -934,76 +1069,24 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                                 ),
                                                 // Role
                                                 Expanded(
-                                                  flex: 2,
+                                                  flex: 3,
                                                   child: Row(
                                                     children: [
-                                                      Icon(
-                                                        Icons.badge_outlined,
-                                                        size: 16,
-                                                        color: Colors.grey[600],
-                                                      ),
+                                                      Icon(Icons.badge_outlined,
+                                                          size: 16,
+                                                          color:
+                                                              Colors.grey[600]),
                                                       const SizedBox(width: 8),
                                                       Expanded(
                                                         child: Text(
-                                                          data['role'] ?? 'N/A',
+                                                          d['role'] ?? 'N/A',
                                                           style: TextStyle(
-                                                            fontSize: 14,
-                                                            color: Colors
-                                                                .grey[700],
-                                                          ),
+                                                              fontSize: 14,
+                                                              color: Colors
+                                                                  .grey[700]),
                                                           overflow: TextOverflow
                                                               .ellipsis,
                                                         ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                // Contact
-                                                Expanded(
-                                                  flex: 3,
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment.start,
-                                                    children: [
-                                                      Row(
-                                                        children: [
-                                                          Icon(Icons.email,
-                                                              size: 14,
-                                                              color: Colors
-                                                                  .grey[600]),
-                                                          const SizedBox(width: 6),
-                                                          Expanded(
-                                                            child: Text(
-                                                              data['email'] ??
-                                                                  'N/A',
-                                                              style: TextStyle(
-                                                                fontSize: 13,
-                                                                color: Colors
-                                                                    .grey[700],
-                                                              ),
-                                                              overflow: TextOverflow
-                                                                  .ellipsis,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      const SizedBox(height: 4),
-                                                      Row(
-                                                        children: [
-                                                          Icon(Icons.phone,
-                                                              size: 14,
-                                                              color: Colors
-                                                                  .grey[600]),
-                                                          const SizedBox(width: 6),
-                                                          Text(
-                                                            data['phone'] ?? 'N/A',
-                                                            style: TextStyle(
-                                                              fontSize: 13,
-                                                              color:
-                                                                  Colors.grey[700],
-                                                            ),
-                                                          ),
-                                                        ],
                                                       ),
                                                     ],
                                                   ),
@@ -1013,25 +1096,24 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                                   flex: 2,
                                                   child: Row(
                                                     mainAxisAlignment:
-                                                        MainAxisAlignment.center,
+                                                        MainAxisAlignment
+                                                            .center,
                                                     children: [
                                                       TextButton(
-                                                        onPressed: () {
-                                                          // View details
-                                                        },
+                                                        onPressed: () =>
+                                                            _showViewDetailsDialog(
+                                                                staff),
                                                         child: const Text(
                                                           'View Details',
                                                           style: TextStyle(
-                                                            color: Color(
-                                                                0xFF1a1a1a),
-                                                          ),
+                                                              color: Color(
+                                                                  0xFF1a1a1a)),
                                                         ),
                                                       ),
                                                       IconButton(
                                                         icon: const Icon(
-                                                          Icons.edit_outlined,
-                                                          size: 18,
-                                                        ),
+                                                            Icons.edit_outlined,
+                                                            size: 18),
                                                         onPressed: () =>
                                                             _showEditStaffDialog(
                                                                 staff),

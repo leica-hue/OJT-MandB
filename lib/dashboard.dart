@@ -216,7 +216,6 @@ class _DashboardPageState extends State<DashboardPage> {
         'bayNumber': _bayNumberController.text.trim(),
         'personnel': _personnelController.text,
         'duration': double.parse(_durationController.text),
-        'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
       });
 
