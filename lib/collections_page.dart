@@ -18,7 +18,6 @@ class _CollectionsPageState extends State<CollectionsPage> {
   bool _isSidebarCollapsed = false;
   String _currentPage = 'Collections';
   DateTime _selectedDate = DateTime.now();
-  bool _isDailyView = true;
 
   String _formatDate(DateTime date) {
     return DateFormat('MMM dd, yyyy').format(date);
@@ -28,24 +27,30 @@ class _CollectionsPageState extends State<CollectionsPage> {
     return '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
   }
 
-  void _previousDate() {
-    setState(() {
-      if (_isDailyView) {
-        _selectedDate = _selectedDate.subtract(const Duration(days: 1));
-      } else {
-        _selectedDate = DateTime(_selectedDate.year, _selectedDate.month - 1, 1);
-      }
-    });
-  }
-
-  void _nextDate() {
-    setState(() {
-      if (_isDailyView) {
-        _selectedDate = _selectedDate.add(const Duration(days: 1));
-      } else {
-        _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + 1, 1);
-      }
-    });
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFFC41E3A),
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF1a1a1a),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
   }
 
   Future<void> _signOut(BuildContext context) async {
@@ -308,8 +313,9 @@ class _CollectionsPageState extends State<CollectionsPage> {
               color: const Color(0xFFF5F5F5),
               child: Column(
                 children: [
-                  // Top Bar with View Toggles
+                  // Top Bar Header
                   Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -321,124 +327,25 @@ class _CollectionsPageState extends State<CollectionsPage> {
                         ),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Collections',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1a1a1a),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Client session hours and statistics',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
+                        const Text(
+                          'Collections',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1a1a1a),
+                          ),
                         ),
-                        Row(
-                          children: [
-                            // Daily View Button
-                            ElevatedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _isDailyView = true;
-                                });
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _isDailyView
-                                    ? const Color(0xFFC41E3A)
-                                    : Colors.white,
-                                foregroundColor: _isDailyView
-                                    ? Colors.white
-                                    : const Color(0xFF1a1a1a),
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  side: BorderSide(
-                                    color: _isDailyView
-                                        ? const Color(0xFFC41E3A)
-                                        : Colors.grey.shade300,
-                                  ),
-                                ),
-                              ),
-                              child: const Text(
-                                'Daily View',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Last 30 Days Button
-                            OutlinedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _isDailyView = false;
-                                });
-                              },
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: !_isDailyView
-                                    ? const Color(0xFFC41E3A)
-                                    : Colors.white,
-                                foregroundColor: !_isDailyView
-                                    ? Colors.white
-                                    : const Color(0xFF1a1a1a),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 12,
-                                ),
-                                side: BorderSide(
-                                  color: !_isDailyView
-                                      ? const Color(0xFFC41E3A)
-                                      : Colors.grey.shade300,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text(
-                                'Last 30 Days',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Export Button
-                            OutlinedButton.icon(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Export functionality coming soon'),
-                                    backgroundColor: Color(0xFFC41E3A),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.download, size: 18),
-                              label: const Text('Export'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF1a1a1a),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 12,
-                                ),
-                                side: BorderSide(color: Colors.grey.shade300),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 4),
+                        Text(
+                          'Client session hours and statistics',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
                         ),
                       ],
                     ),
@@ -450,7 +357,7 @@ class _CollectionsPageState extends State<CollectionsPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Date Navigation
+                          // Date Picker
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
@@ -464,54 +371,59 @@ class _CollectionsPageState extends State<CollectionsPage> {
                                 ),
                               ],
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                IconButton(
-                                  onPressed: _previousDate,
-                                  icon: const Icon(Icons.chevron_left),
-                                  color: const Color(0xFF1a1a1a),
-                                ),
-                                const SizedBox(width: 20),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.calendar_today,
-                                      color: Color(0xFFC41E3A),
-                                      size: 20,
+                            child: Center(
+                              child: InkWell(
+                                onTap: () => _selectDate(context),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: const Color(0xFFC41E3A),
+                                      width: 2,
                                     ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      _formatDate(_selectedDate),
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF1a1a1a),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.calendar_today,
+                                        color: Color(0xFFC41E3A),
+                                        size: 24,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        _formatDate(_selectedDate),
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF1a1a1a),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Icon(
+                                        Icons.arrow_drop_down,
+                                        color: Color(0xFFC41E3A),
+                                        size: 24,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(width: 20),
-                                IconButton(
-                                  onPressed: _nextDate,
-                                  icon: const Icon(Icons.chevron_right),
-                                  color: const Color(0xFF1a1a1a),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                           const SizedBox(height: 32),
                           // Statistics Cards
                           StreamBuilder<QuerySnapshot>(
-                            stream: _isDailyView
-                                ? FirebaseFirestore.instance
-                                    .collection('sessions')
-                                    .where('date',
-                                        isEqualTo: _formatDateForFirestore(_selectedDate))
-                                    .snapshots()
-                                : FirebaseFirestore.instance
-                                    .collection('sessions')
-                                    .snapshots(),
+                            stream: FirebaseFirestore.instance
+                                .collection('sessions')
+                                .where('date',
+                                    isEqualTo: _formatDateForFirestore(_selectedDate))
+                                .snapshots(),
                             builder: (context, snapshot) {
                               int dailySessions = 0;
                               double totalHours = 0.0;
@@ -519,46 +431,15 @@ class _CollectionsPageState extends State<CollectionsPage> {
 
                               if (snapshot.hasData) {
                                 final sessions = snapshot.data!.docs;
-
-                                if (_isDailyView) {
-                                  dailySessions = sessions.length;
-                                  totalHours = sessions.fold(
-                                      0.0,
-                                      (sum, doc) =>
-                                          sum + ((doc['duration'] as num).toDouble()));
-                                  uniqueClients = sessions
-                                      .map((doc) => doc['clientId'])
-                                      .toSet()
-                                      .length;
-                                } else {
-                                  // Last 30 days calculation
-                                  final thirtyDaysAgo = DateTime.now()
-                                      .subtract(const Duration(days: 30));
-                                  final recentSessions = sessions.where((doc) {
-                                    final dateStr = doc['date'] as String;
-                                    try {
-                                      final parts = dateStr.split('/');
-                                      final sessionDate = DateTime(
-                                        int.parse(parts[2]),
-                                        int.parse(parts[0]),
-                                        int.parse(parts[1]),
-                                      );
-                                      return sessionDate.isAfter(thirtyDaysAgo);
-                                    } catch (e) {
-                                      return false;
-                                    }
-                                  }).toList();
-
-                                  dailySessions = recentSessions.length;
-                                  totalHours = recentSessions.fold(
-                                      0.0,
-                                      (sum, doc) =>
-                                          sum + ((doc['duration'] as num).toDouble()));
-                                  uniqueClients = recentSessions
-                                      .map((doc) => doc['clientId'])
-                                      .toSet()
-                                      .length;
-                                }
+                                dailySessions = sessions.length;
+                                totalHours = sessions.fold(
+                                    0.0,
+                                    (sum, doc) =>
+                                        sum + ((doc['duration'] as num).toDouble()));
+                                uniqueClients = sessions
+                                    .map((doc) => doc['clientId'])
+                                    .toSet()
+                                    .length;
                               }
 
                               return GridView.count(
@@ -572,23 +453,17 @@ class _CollectionsPageState extends State<CollectionsPage> {
                                   _buildStatCard(
                                     title: 'Daily Sessions',
                                     value: dailySessions.toString(),
-                                    subtitle: _isDailyView
-                                        ? 'Today\'s sessions'
-                                        : 'Last 30 days',
+                                    subtitle: 'Sessions for selected date',
                                   ),
                                   _buildStatCard(
                                     title: 'Total Hours Per Day',
                                     value: totalHours.toStringAsFixed(1),
-                                    subtitle: _isDailyView
-                                        ? 'Session hours today'
-                                        : 'Total hours',
+                                    subtitle: 'Session hours',
                                   ),
                                   _buildStatCard(
                                     title: 'Clients Per Day',
                                     value: uniqueClients.toString(),
-                                    subtitle: _isDailyView
-                                        ? 'Unique clients today'
-                                        : 'Unique clients',
+                                    subtitle: 'Unique clients',
                                   ),
                                 ],
                               );
@@ -622,18 +497,12 @@ class _CollectionsPageState extends State<CollectionsPage> {
                                 ),
                                 const SizedBox(height: 24),
                                 StreamBuilder<QuerySnapshot>(
-                                  stream: _isDailyView
-                                      ? FirebaseFirestore.instance
-                                          .collection('sessions')
-                                          .where('date',
-                                              isEqualTo:
-                                                  _formatDateForFirestore(_selectedDate))
-                                          .snapshots()
-                                      : FirebaseFirestore.instance
-                                          .collection('sessions')
-                                          .orderBy('date', descending: true)
-                                          .limit(30)
-                                          .snapshots(),
+                                  stream: FirebaseFirestore.instance
+                                      .collection('sessions')
+                                      .where('date',
+                                          isEqualTo:
+                                              _formatDateForFirestore(_selectedDate))
+                                      .snapshots(),
                                   builder: (context, snapshot) {
                                     if (snapshot.hasError) {
                                       return const Center(

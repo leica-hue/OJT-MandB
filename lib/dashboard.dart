@@ -21,6 +21,15 @@ class _DashboardPageState extends State<DashboardPage> {
   String _currentPage = 'Overview';
   SalesPeriod _salesPeriod = SalesPeriod.daily;
 
+  // Daily: specific date filter
+  DateTime _selectedSalesDate = DateTime.now();
+
+  // Monthly: specific month+year filter
+  DateTime _selectedSalesMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+
+  // Yearly: specific year filter
+  DateTime _selectedSalesYear = DateTime(DateTime.now().year, 1, 1);
+
   // Controllers for add session dialog
   final TextEditingController _clientSearchController = TextEditingController();
   final TextEditingController _sessionAmountController = TextEditingController();
@@ -28,6 +37,16 @@ class _DashboardPageState extends State<DashboardPage> {
   final TextEditingController _bayNumberController = TextEditingController();
   final TextEditingController _personnelController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
+
+  // Controllers for add expense dialog
+  final TextEditingController _expenseAmountController = TextEditingController();
+  final TextEditingController _expenseDescriptionController = TextEditingController();
+  DateTime _expenseDate = DateTime.now();
+
+  // Controllers for add additional profit dialog
+  final TextEditingController _profitAmountController = TextEditingController();
+  final TextEditingController _profitDescriptionController = TextEditingController();
+  DateTime _profitDate = DateTime.now();
 
 
   String? _selectedClientId;
@@ -59,6 +78,10 @@ class _DashboardPageState extends State<DashboardPage> {
     _personnelController.dispose();
     _durationController.dispose();
     _sessionSearchController.dispose();
+    _expenseAmountController.dispose();
+    _expenseDescriptionController.dispose();
+    _profitAmountController.dispose();
+    _profitDescriptionController.dispose();
     super.dispose();
   }
 
@@ -251,6 +274,8 @@ class _DashboardPageState extends State<DashboardPage> {
         'clientId': clientId,
         'clientName': clientName,
         'date': dateStr,
+        'sessionAmount': sessionAmount,
+        'coachingRentalAmount': coachingRentalAmount,
         'bayNumber': _bayNumberController.text.trim(),
         'personnel': _personnelController.text,
         'duration': double.parse(_durationController.text),
@@ -732,6 +757,661 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  void _showAddExpenseDialog() {
+    _expenseAmountController.clear();
+    _expenseDescriptionController.clear();
+    _expenseDate = DateTime.now();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Add Expense'),
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Date Field
+                  const Text(
+                    'Date *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _expenseDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
+                      );
+                      if (date != null) {
+                        setDialogState(() {
+                          _expenseDate = date;
+                        });
+                      }
+                    },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.calendar_today),
+                      ),
+                      child: Text(
+                        '${_expenseDate.month.toString().padLeft(2, '0')}/${_expenseDate.day.toString().padLeft(2, '0')}/${_expenseDate.year}',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Amount Field
+                  const Text(
+                    'Amount *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _expenseAmountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      hintText: 'e.g., 500.00',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.payments),
+                      prefixText: '₱',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Description Field
+                  const Text(
+                    'Description *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _expenseDescriptionController,
+                    decoration: const InputDecoration(
+                      hintText: 'e.g., Office supplies, Utilities',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.description),
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _expenseAmountController.clear();
+                _expenseDescriptionController.clear();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await _addExpense(closeDialog: true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC41E3A),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Add Expense'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addExpense({bool closeDialog = true}) async {
+    if (_expenseAmountController.text.isEmpty ||
+        _expenseDescriptionController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all required fields'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final amount = double.tryParse(_expenseAmountController.text);
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid amount'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFFC41E3A),
+        ),
+      ),
+    );
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('User must be signed in to add expenses');
+      }
+
+      final dateStr =
+          '${_expenseDate.month.toString().padLeft(2, '0')}/${_expenseDate.day.toString().padLeft(2, '0')}/${_expenseDate.year}';
+
+      final expenseData = {
+        'date': dateStr,
+        'amount': amount,
+        'description': _expenseDescriptionController.text.trim(),
+        'userId': user.uid,
+        'userEmail': user.email ?? '',
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      final docRef = await FirebaseFirestore.instance
+          .collection('expenses')
+          .add(expenseData);
+
+      final savedDoc = await docRef.get();
+      if (!savedDoc.exists) {
+        throw Exception('Failed to save expense to Firebase');
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+        
+        if (closeDialog) {
+          Navigator.pop(context);
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Expense of ₱${_formatAmount(amount)} saved successfully to Firebase'),
+            backgroundColor: const Color(0xFFC41E3A),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        
+        _expenseAmountController.clear();
+        _expenseDescriptionController.clear();
+        _expenseDate = DateTime.now();
+        
+        if (!closeDialog && mounted) {
+          setState(() {});
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving expense to Firebase: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showExpensesHistoryDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Expenses History'),
+            IconButton(
+              icon: const Icon(Icons.add_circle, color: Color(0xFFC41E3A)),
+              onPressed: () {
+                Navigator.pop(context);
+                _showAddExpenseDialog();
+              },
+              tooltip: 'Add New Expense',
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.6,
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('expenses')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Error loading expenses: ${snapshot.error}'),
+                );
+              }
+
+              if (!snapshot.hasData) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFC41E3A),
+                  ),
+                );
+              }
+
+              final expenses = snapshot.data!.docs;
+
+              if (expenses.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No expenses yet',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showAddExpenseDialog();
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Expense'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFC41E3A),
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      children: [
+                        Expanded(flex: 2, child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(flex: 2, child: Text('Description', style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(flex: 1, child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.right)),
+                        Expanded(flex: 1, child: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: expenses.length,
+                      itemBuilder: (context, index) {
+                        final expense = expenses[index];
+                        final data = expense.data() as Map<String, dynamic>;
+                        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+                        final description = data['description'] ?? 'N/A';
+                        final date = data['date'] ?? 'N/A';
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Colors.grey.shade200),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Text(date, style: const TextStyle(fontSize: 14)),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(description, style: const TextStyle(fontSize: 14)),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  '₱${_formatAmount(amount)}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        _showEditExpenseDialog(expense);
+                                      },
+                                      tooltip: 'Edit',
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                                      onPressed: () => _deleteExpense(expense.id),
+                                      tooltip: 'Delete',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _showAddExpenseDialog();
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Expense'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC41E3A),
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditExpenseDialog(DocumentSnapshot expense) {
+    final data = expense.data() as Map<String, dynamic>;
+    final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+    final description = data['description'] ?? '';
+    final dateStr = data['date'] ?? '';
+
+    DateTime expenseDate = DateTime.now();
+    if (dateStr.isNotEmpty) {
+      try {
+        final parts = dateStr.split('/');
+        if (parts.length == 3) {
+          expenseDate = DateTime(
+            int.parse(parts[2]),
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        }
+      } catch (e) {
+        // Use current date if parsing fails
+      }
+    }
+
+    _expenseAmountController.text = amount.toString();
+    _expenseDescriptionController.text = description;
+    _expenseDate = expenseDate;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Edit Expense'),
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Date *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _expenseDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
+                      );
+                      if (date != null) {
+                        setDialogState(() {
+                          _expenseDate = date;
+                        });
+                      }
+                    },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.calendar_today),
+                      ),
+                      child: Text(
+                        '${_expenseDate.month.toString().padLeft(2, '0')}/${_expenseDate.day.toString().padLeft(2, '0')}/${_expenseDate.year}',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Amount *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _expenseAmountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      hintText: 'e.g., 500.00',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.payments),
+                      prefixText: '₱',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Description *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _expenseDescriptionController,
+                    decoration: const InputDecoration(
+                      hintText: 'e.g., Office supplies, Utilities',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.description),
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _expenseAmountController.clear();
+                _expenseDescriptionController.clear();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => _updateExpense(expense.id),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC41E3A),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Update Expense'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updateExpense(String expenseId) async {
+    if (_expenseAmountController.text.isEmpty ||
+        _expenseDescriptionController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all required fields'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final amount = double.tryParse(_expenseAmountController.text);
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid amount'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFFC41E3A),
+        ),
+      ),
+    );
+
+    try {
+      final dateStr =
+          '${_expenseDate.month.toString().padLeft(2, '0')}/${_expenseDate.day.toString().padLeft(2, '0')}/${_expenseDate.year}';
+
+      await FirebaseFirestore.instance.collection('expenses').doc(expenseId).update({
+        'date': dateStr,
+        'amount': amount,
+        'description': _expenseDescriptionController.text.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        Navigator.pop(context);
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Expense updated successfully'),
+            backgroundColor: Color(0xFFC41E3A),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        
+        _expenseAmountController.clear();
+        _expenseDescriptionController.clear();
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating expense: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteExpense(String expenseId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Expense'),
+        content: const Text('Are you sure you want to delete this expense? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFFC41E3A),
+        ),
+      ),
+    );
+
+    try {
+      await FirebaseFirestore.instance.collection('expenses').doc(expenseId).delete();
+
+      if (mounted) {
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Expense deleted successfully'),
+            backgroundColor: Color(0xFFC41E3A),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting expense: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildStatCard({
     required String title,
     required String value,
@@ -795,7 +1475,314 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildSalesStatCard(int salesCount, double totalAmount) {
+  Widget _buildExpensesStatCard(double totalExpenses) {
+    return GestureDetector(
+      onTap: () => _showExpensesHistoryDialog(),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Expenses',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC41E3A).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.receipt_long, color: Color(0xFFC41E3A), size: 20),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '₱${_formatAmount(totalExpenses)}',
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1a1a1a),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tap to view/edit expenses',
+              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdditionalProfitStatCard(double totalProfits) {
+    return GestureDetector(
+      onTap: () => _showAdditionalProfitHistoryDialog(),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Additional Profit',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC41E3A).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.trending_up, color: Color(0xFFC41E3A), size: 20),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '₱${_formatAmount(totalProfits)}',
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1a1a1a),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tap to view/edit profits',
+              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Builds the label shown on the date-picker button in the Sales card ──
+  String _buildSalesFilterLabel() {
+    switch (_salesPeriod) {
+      case SalesPeriod.daily:
+        return '${_selectedSalesDate.month.toString().padLeft(2, '0')}/'
+            '${_selectedSalesDate.day.toString().padLeft(2, '0')}/'
+            '${_selectedSalesDate.year}';
+      case SalesPeriod.monthly:
+        return '${_getMonthName(_selectedSalesMonth.month)} ${_selectedSalesMonth.year}';
+      case SalesPeriod.yearly:
+        return '${_selectedSalesYear.year}';
+      case SalesPeriod.overall:
+        return '';
+    }
+  }
+
+  // ── Opens the appropriate picker for the current period ──
+  Future<void> _pickSalesFilter() async {
+    switch (_salesPeriod) {
+      // ── Daily: full date picker ──────────────────────────────────────────
+      case SalesPeriod.daily:
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: _selectedSalesDate,
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          helpText: 'Select Date',
+          builder: (context, child) => Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: const ColorScheme.light(
+                primary: Color(0xFFC41E3A),
+                onPrimary: Colors.white,
+                onSurface: Color(0xFF1a1a1a),
+              ),
+            ),
+            child: child!,
+          ),
+        );
+        if (picked != null) {
+          setState(() => _selectedSalesDate = picked);
+        }
+        break;
+
+      // ── Monthly: month + year picker via dialog ──────────────────────────
+      case SalesPeriod.monthly:
+        await _showMonthYearPicker();
+        break;
+
+      // ── Yearly: year-only picker ─────────────────────────────────────────
+      case SalesPeriod.yearly:
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: _selectedSalesYear,
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          initialDatePickerMode: DatePickerMode.year,
+          helpText: 'Select Year',
+          builder: (context, child) => Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: const ColorScheme.light(
+                primary: Color(0xFFC41E3A),
+                onPrimary: Colors.white,
+                onSurface: Color(0xFF1a1a1a),
+              ),
+            ),
+            child: child!,
+          ),
+        );
+        if (picked != null) {
+          setState(() => _selectedSalesYear = DateTime(picked.year, 1, 1));
+        }
+        break;
+
+      case SalesPeriod.overall:
+        break;
+    }
+  }
+
+  // ── Month + Year picker dialog ───────────────────────────────────────────
+  Future<void> _showMonthYearPicker() async {
+    int tempYear = _selectedSalesMonth.year;
+    int tempMonth = _selectedSalesMonth.month;
+
+    const months = [
+      'January', 'February', 'March', 'April',
+      'May', 'June', 'July', 'August',
+      'September', 'October', 'November', 'December',
+    ];
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Select Month & Year'),
+          content: SizedBox(
+            width: 320,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── Year row ──────────────────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left),
+                      onPressed: () => setDialogState(() => tempYear--),
+                    ),
+                    Text(
+                      '$tempYear',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right),
+                      onPressed: () => setDialogState(() => tempYear++),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // ── Month grid ────────────────────────────────────────────
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 2.2,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: 12,
+                  itemBuilder: (context, index) {
+                    final isSelected = (index + 1) == tempMonth;
+                    return GestureDetector(
+                      onTap: () => setDialogState(() => tempMonth = index + 1),
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFFC41E3A)
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          months[index].substring(0, 3),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? Colors.white : const Color(0xFF1a1a1a),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _selectedSalesMonth = DateTime(tempYear, tempMonth, 1);
+                });
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC41E3A),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Apply'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSalesStatCard(int salesCount, double netSales, double totalExpenses, double totalAdditionalProfits) {
+    final filterLabel = _buildSalesFilterLabel();
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -823,51 +1810,97 @@ class _DashboardPageState extends State<DashboardPage> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFC41E3A).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<SalesPeriod>(
-                    value: _salesPeriod,
-                    isDense: true,
-                    icon: const Icon(Icons.arrow_drop_down,
-                        color: Color(0xFFC41E3A), size: 20),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1a1a1a),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ── Period dropdown ──────────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFC41E3A).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    items: SalesPeriod.values
-                        .map((p) => DropdownMenuItem(
-                              value: p,
-                              child: Text(_salesPeriodLabel(p)),
-                            ))
-                        .toList(),
-                    onChanged: (SalesPeriod? value) {
-                      if (value != null) {
-                        setState(() => _salesPeriod = value);
-                      }
-                    },
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<SalesPeriod>(
+                        value: _salesPeriod,
+                        isDense: true,
+                        icon: const Icon(Icons.arrow_drop_down,
+                            color: Color(0xFFC41E3A), size: 20),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1a1a1a),
+                        ),
+                        items: SalesPeriod.values
+                            .map((p) => DropdownMenuItem(
+                                  value: p,
+                                  child: Text(_salesPeriodLabel(p)),
+                                ))
+                            .toList(),
+                        onChanged: (SalesPeriod? value) {
+                          if (value != null) {
+                            setState(() => _salesPeriod = value);
+                          }
+                        },
+                      ),
+                    ),
                   ),
-                ),
+
+                  // ── Date picker button (hidden for Overall) ──────────────
+                  if (_salesPeriod != SalesPeriod.overall) ...[
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: _pickSalesFilter,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC41E3A).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: const Color(0xFFC41E3A).withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _salesPeriod == SalesPeriod.daily
+                                  ? Icons.today
+                                  : _salesPeriod == SalesPeriod.monthly
+                                      ? Icons.calendar_month
+                                      : Icons.calendar_today,
+                              color: const Color(0xFFC41E3A),
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              filterLabel,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1a1a1a),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
           const SizedBox(height: 16),
           Text(
-            '₱${_formatAmount(totalAmount)}',
-            style: const TextStyle(
+            '₱${_formatAmount(netSales)}',
+            style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1a1a1a),
+              color: netSales < 0 ? Colors.red : const Color(0xFF1a1a1a),
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            'Total revenue · $salesCount ${_salesPeriodLabel(_salesPeriod).toLowerCase()} sessions',
+            _getSalesSubtitle(salesCount, totalExpenses, totalAdditionalProfits),
             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
           ),
         ],
@@ -1082,78 +2115,111 @@ class _DashboardPageState extends State<DashboardPage> {
                                 .collection('sessions')
                                 .snapshots(includeMetadataChanges: true),
                             builder: (context, snapshot) {
-                              int todaySessions = 0;
-                              int totalHours = 0;
-                              int activeClients = 0;
-                              int salesCount = 0;
-                              double totalRevenueSalesPeriod = 0.0;
+                              return StreamBuilder<QuerySnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('expenses')
+                                    .snapshots(includeMetadataChanges: true),
+                                builder: (context, expensesSnapshot) {
+                                  return StreamBuilder<QuerySnapshot>(
+                                    stream: FirebaseFirestore.instance
+                                        .collection('additional-profits')
+                                        .snapshots(includeMetadataChanges: true),
+                                    builder: (context, profitsSnapshot) {
+                                      int todaySessions = 0;
+                                      double totalAdditionalProfits = 0.0;
+                                      double totalExpenses = 0.0;
+                                      int salesCount = 0;
+                                      double totalRevenueSalesPeriod = 0.0;
 
-                              if (snapshot.hasData) {
-                                final allDocs = snapshot.data!.docs;
-                                final todayStr = _getTodayDate();
-                                final todayDocs = allDocs
-                                    .where((doc) => doc['date'] == todayStr)
-                                    .toList();
+                                      if (snapshot.hasData) {
+                                        final allDocs = snapshot.data!.docs;
+                                        final todayStr = _getTodayDate();
+                                        final todayDocs = allDocs
+                                            .where((doc) => doc['date'] == todayStr)
+                                            .toList();
 
-                                todaySessions = todayDocs.length;
-                                totalHours = todayDocs.fold(
-                                    0,
-                                    (sum, doc) =>
-                                        sum +
-                                        ((doc['duration'] as num?)?.toInt() ??
-                                            0));
-                                activeClients = todayDocs
-                                    .map((doc) => doc['clientId'])
-                                    .toSet()
-                                    .length;
+                                        todaySessions = todayDocs.length;
 
-                                final salesDocs = allDocs.where((doc) {
-                                  final dt = _parseSessionDate(
-                                      doc['date'] as String?);
-                                  return _isDateInSalesPeriod(
-                                      dt, _salesPeriod);
-                                }).toList();
-                                salesCount = salesDocs.length;
-                                totalRevenueSalesPeriod = salesDocs.fold(
-                                    0.0,
-                                    (sum, doc) =>
-                                        sum +
-                                        _getSessionTotal(doc.data()
-                                            as Map<String, dynamic>));
-                              }
+                                        final salesDocs = allDocs.where((doc) {
+                                          final dt = _parseSessionDate(
+                                              doc['date'] as String?);
+                                          return _isDateInSalesPeriod(dt);
+                                        }).toList();
+                                        salesCount = salesDocs.length;
+                                        totalRevenueSalesPeriod = salesDocs.fold(
+                                            0.0,
+                                            (sum, doc) =>
+                                                sum +
+                                                _getSessionTotal(doc.data()
+                                                    as Map<String, dynamic>));
+                                      }
 
-                              return GridView.count(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                crossAxisCount: 4,
-                                crossAxisSpacing: 20,
-                                mainAxisSpacing: 20,
-                                childAspectRatio: 1.5,
-                                children: [
-                                  _buildStatCard(
-                                    title: 'Today\'s Sessions',
-                                    value: todaySessions.toString(),
-                                    subtitle: 'Sessions today',
-                                    icon: Icons.calendar_today,
-                                    iconBgColor: const Color(0xFFC41E3A),
-                                  ),
-                                  _buildStatCard(
-                                    title: 'Total Hours',
-                                    value: totalHours.toString(),
-                                    subtitle: 'Today\'s schedule',
-                                    icon: Icons.access_time,
-                                    iconBgColor: const Color(0xFFC41E3A),
-                                  ),
-                                  _buildStatCard(
-                                    title: 'Active Clients',
-                                    value: activeClients.toString(),
-                                    subtitle: 'Currently engaged',
-                                    icon: Icons.person,
-                                    iconBgColor: const Color(0xFFC41E3A),
-                                  ),
-                                  _buildSalesStatCard(
-                                      salesCount, totalRevenueSalesPeriod),
-                                ],
+                                      if (expensesSnapshot.hasData) {
+                                        final expensesDocs = expensesSnapshot.data!.docs;
+                                        final filteredExpenses = expensesDocs.where((doc) {
+                                          final dateStr = doc['date'] as String?;
+                                          if (dateStr == null) return false;
+                                          final dt = _parseSessionDate(dateStr);
+                                          return _isDateInSalesPeriod(dt);
+                                        }).toList();
+                                        
+                                        totalExpenses = filteredExpenses.fold(
+                                            0.0,
+                                            (sum, doc) {
+                                              final amount = doc['amount'];
+                                              if (amount is num) {
+                                                return sum + amount.toDouble();
+                                              }
+                                              return sum + (double.tryParse(amount?.toString() ?? '') ?? 0.0);
+                                            });
+                                      }
+
+                                      if (profitsSnapshot.hasData) {
+                                        final profitsDocs = profitsSnapshot.data!.docs;
+                                        final filteredProfits = profitsDocs.where((doc) {
+                                          final dateStr = doc['date'] as String?;
+                                          if (dateStr == null) return false;
+                                          final dt = _parseSessionDate(dateStr);
+                                          return _isDateInSalesPeriod(dt);
+                                        }).toList();
+                                        
+                                        totalAdditionalProfits = filteredProfits.fold(
+                                            0.0,
+                                            (sum, doc) {
+                                              final amount = doc['amount'];
+                                              if (amount is num) {
+                                                return sum + amount.toDouble();
+                                              }
+                                              return sum + (double.tryParse(amount?.toString() ?? '') ?? 0.0);
+                                            });
+                                      }
+
+                                      final netSales = totalRevenueSalesPeriod - totalExpenses + totalAdditionalProfits;
+
+                                      return GridView.count(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        crossAxisCount: 4,
+                                        crossAxisSpacing: 20,
+                                        mainAxisSpacing: 20,
+                                        childAspectRatio: 1.5,
+                                        children: [
+                                          _buildStatCard(
+                                            title: 'Today\'s Sessions',
+                                            value: todaySessions.toString(),
+                                            subtitle: 'Sessions today',
+                                            icon: Icons.calendar_today,
+                                            iconBgColor: const Color(0xFFC41E3A),
+                                          ),
+                                          _buildAdditionalProfitStatCard(totalAdditionalProfits),
+                                          _buildExpensesStatCard(totalExpenses),
+                                          _buildSalesStatCard(
+                                              salesCount, netSales, totalExpenses, totalAdditionalProfits),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
                               );
                             },
                           ),
@@ -1188,7 +2254,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                // Search / filter bar
                                 TextField(
                                   controller: _sessionSearchController,
                                   decoration: InputDecoration(
@@ -1409,31 +2474,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                                                 as Map<String,
                                                                     dynamic>)
                                                         .toList();
-                                                    double sumSession = 0.0;
-                                                    double sumCoaching = 0.0;
-                                                    double sumTotal = 0.0;
-                                                    for (final data
-                                                        in sessionList) {
-                                                      final s = data['sessionAmount'] is num
-                                                          ? (data['sessionAmount']
-                                                                  as num)
-                                                              .toDouble()
-                                                          : (double.tryParse(data['sessionAmount']
-                                                                      ?.toString() ??
-                                                                  '') ??
-                                                              0.0);
-                                                      final c = data['coachingRentalAmount'] is num
-                                                          ? (data['coachingRentalAmount']
-                                                                  as num)
-                                                              .toDouble()
-                                                          : (double.tryParse(data['coachingRentalAmount']
-                                                                      ?.toString() ??
-                                                                  '') ??
-                                                              0.0);
-                                                      sumSession += s;
-                                                      sumCoaching += c;
-                                                      sumTotal += s + c;
-                                                    }
                                                     final dataRows = sessionList
                                                         .map((data) {
                                                       final total =
@@ -1485,43 +2525,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                                             '₱${_formatAmount(total)}')),
                                                       ]);
                                                     }).toList();
-                                                    dataRows.add(DataRow(
-                                                      cells: [
-                                                        DataCell(Text('TOTAL',
-                                                            style: const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                color: Color(
-                                                                    0xFF1a1a1a)))),
-                                                        const DataCell(
-                                                            Text('')),
-                                                        DataCell(Text(
-                                                            '₱${_formatAmount(sumSession)}',
-                                                            style: const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold))),
-                                                        DataCell(Text(
-                                                            '₱${_formatAmount(sumCoaching)}',
-                                                            style: const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold))),
-                                                        const DataCell(
-                                                            Text('')),
-                                                        const DataCell(
-                                                            Text('')),
-                                                        const DataCell(
-                                                            Text('')),
-                                                        DataCell(Text(
-                                                            '₱${_formatAmount(sumTotal)}',
-                                                            style: const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold))),
-                                                      ],
-                                                    ));
                                                     return dataRows;
                                                   }(),
                                                 ),
@@ -1622,23 +2625,35 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  bool _isDateInSalesPeriod(DateTime? sessionDate, SalesPeriod period) {
+  /// Single method — reads `_salesPeriod` + the appropriate selected date field.
+  bool _isDateInSalesPeriod(DateTime? sessionDate) {
     if (sessionDate == null) return false;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    switch (period) {
+    final sd = DateTime(sessionDate.year, sessionDate.month, sessionDate.day);
+
+    switch (_salesPeriod) {
       case SalesPeriod.daily:
-        return sessionDate.year == today.year &&
-            sessionDate.month == today.month &&
-            sessionDate.day == today.day;
+        final d = DateTime(
+            _selectedSalesDate.year, _selectedSalesDate.month, _selectedSalesDate.day);
+        return sd == d;
+
       case SalesPeriod.monthly:
-        return sessionDate.year == today.year &&
-            sessionDate.month == today.month;
+        return sd.year == _selectedSalesMonth.year &&
+            sd.month == _selectedSalesMonth.month;
+
       case SalesPeriod.yearly:
-        return sessionDate.year == today.year;
+        return sd.year == _selectedSalesYear.year;
+
       case SalesPeriod.overall:
         return true;
     }
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return months[month - 1];
   }
 
   String _salesPeriodLabel(SalesPeriod period) {
@@ -1651,6 +2666,659 @@ class _DashboardPageState extends State<DashboardPage> {
         return 'Yearly';
       case SalesPeriod.overall:
         return 'Overall';
+    }
+  }
+
+  String _getSalesSubtitle(int salesCount, double totalExpenses, double totalAdditionalProfits) {
+    final periodLabel = _salesPeriodLabel(_salesPeriod).toLowerCase();
+    if (totalExpenses > 0 && totalAdditionalProfits > 0) {
+      return 'Net revenue (after expenses + profits) · $salesCount $periodLabel sessions';
+    } else if (totalExpenses > 0) {
+      return 'Net revenue (after expenses) · $salesCount $periodLabel sessions';
+    } else if (totalAdditionalProfits > 0) {
+      return 'Total revenue (with profits) · $salesCount $periodLabel sessions';
+    } else {
+      return 'Total revenue · $salesCount $periodLabel sessions';
+    }
+  }
+
+  void _showAdditionalProfitHistoryDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Additional Profit History'),
+            IconButton(
+              icon: const Icon(Icons.add_circle, color: Color(0xFFC41E3A)),
+              onPressed: () {
+                Navigator.pop(context);
+                _showAddProfitDialog();
+              },
+              tooltip: 'Add New Profit',
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.6,
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('additional-profits')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Error loading profits: ${snapshot.error}'),
+                );
+              }
+
+              if (!snapshot.hasData) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFC41E3A),
+                  ),
+                );
+              }
+
+              final profits = snapshot.data!.docs;
+
+              if (profits.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.trending_up, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No additional profits yet',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showAddProfitDialog();
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Profit'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFC41E3A),
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      children: [
+                        Expanded(flex: 2, child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(flex: 2, child: Text('Description', style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(flex: 1, child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.right)),
+                        Expanded(flex: 1, child: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: profits.length,
+                      itemBuilder: (context, index) {
+                        final profit = profits[index];
+                        final data = profit.data() as Map<String, dynamic>;
+                        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+                        final description = data['description'] ?? 'N/A';
+                        final date = data['date'] ?? 'N/A';
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Colors.grey.shade200),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Text(date, style: const TextStyle(fontSize: 14)),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(description, style: const TextStyle(fontSize: 14)),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  '₱${_formatAmount(amount)}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        _showEditProfitDialog(profit);
+                                      },
+                                      tooltip: 'Edit',
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                                      onPressed: () => _deleteProfit(profit.id),
+                                      tooltip: 'Delete',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _showAddProfitDialog();
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Profit'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC41E3A),
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddProfitDialog() {
+    _profitAmountController.clear();
+    _profitDescriptionController.clear();
+    _profitDate = DateTime.now();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Add Additional Profit'),
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Date *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _profitDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
+                      );
+                      if (date != null) {
+                        setDialogState(() {
+                          _profitDate = date;
+                        });
+                      }
+                    },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.calendar_today),
+                      ),
+                      child: Text(
+                        '${_profitDate.month.toString().padLeft(2, '0')}/${_profitDate.day.toString().padLeft(2, '0')}/${_profitDate.year}',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Amount *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _profitAmountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      hintText: 'e.g., 500.00',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.payments),
+                      prefixText: '₱',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Description *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _profitDescriptionController,
+                    decoration: const InputDecoration(
+                      hintText: 'e.g., Extra services, Bonuses',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.description),
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _profitAmountController.clear();
+                _profitDescriptionController.clear();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => _addProfit(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC41E3A),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Add Profit'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addProfit() async {
+    if (_profitAmountController.text.isEmpty ||
+        _profitDescriptionController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all required fields'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final amount = double.tryParse(_profitAmountController.text);
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid amount'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFFC41E3A),
+        ),
+      ),
+    );
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('User must be signed in to add profits');
+      }
+
+      final dateStr =
+          '${_profitDate.month.toString().padLeft(2, '0')}/${_profitDate.day.toString().padLeft(2, '0')}/${_profitDate.year}';
+
+      final profitData = {
+        'date': dateStr,
+        'amount': amount,
+        'description': _profitDescriptionController.text.trim(),
+        'userId': user.uid,
+        'userEmail': user.email ?? '',
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      final docRef = await FirebaseFirestore.instance
+          .collection('additional-profits')
+          .add(profitData);
+
+      final savedDoc = await docRef.get();
+      if (!savedDoc.exists) {
+        throw Exception('Failed to save profit to Firebase');
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Profit of ₱${_formatAmount(amount)} saved successfully to Firebase'),
+            backgroundColor: const Color(0xFFC41E3A),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        
+        _profitAmountController.clear();
+        _profitDescriptionController.clear();
+        _profitDate = DateTime.now();
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving profit to Firebase: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showEditProfitDialog(DocumentSnapshot profit) {
+    final data = profit.data() as Map<String, dynamic>;
+    final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+    final description = data['description'] ?? '';
+    final dateStr = data['date'] ?? '';
+
+    DateTime profitDate = DateTime.now();
+    if (dateStr.isNotEmpty) {
+      try {
+        final parts = dateStr.split('/');
+        if (parts.length == 3) {
+          profitDate = DateTime(
+            int.parse(parts[2]),
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        }
+      } catch (e) {
+        // Use current date if parsing fails
+      }
+    }
+
+    _profitAmountController.text = amount.toString();
+    _profitDescriptionController.text = description;
+    _profitDate = profitDate;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Edit Additional Profit'),
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Date *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _profitDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
+                      );
+                      if (date != null) {
+                        setDialogState(() {
+                          _profitDate = date;
+                        });
+                      }
+                    },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.calendar_today),
+                      ),
+                      child: Text(
+                        '${_profitDate.month.toString().padLeft(2, '0')}/${_profitDate.day.toString().padLeft(2, '0')}/${_profitDate.year}',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Amount *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _profitAmountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      hintText: 'e.g., 500.00',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.payments),
+                      prefixText: '₱',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Description *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _profitDescriptionController,
+                    decoration: const InputDecoration(
+                      hintText: 'e.g., Extra services, Bonuses',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.description),
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _profitAmountController.clear();
+                _profitDescriptionController.clear();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => _updateProfit(profit.id),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC41E3A),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Update Profit'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updateProfit(String profitId) async {
+    if (_profitAmountController.text.isEmpty ||
+        _profitDescriptionController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all required fields'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final amount = double.tryParse(_profitAmountController.text);
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid amount'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFFC41E3A),
+        ),
+      ),
+    );
+
+    try {
+      final dateStr =
+          '${_profitDate.month.toString().padLeft(2, '0')}/${_profitDate.day.toString().padLeft(2, '0')}/${_profitDate.year}';
+
+      await FirebaseFirestore.instance.collection('additional-profits').doc(profitId).update({
+        'date': dateStr,
+        'amount': amount,
+        'description': _profitDescriptionController.text.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        Navigator.pop(context);
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profit updated successfully'),
+            backgroundColor: Color(0xFFC41E3A),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        
+        _profitAmountController.clear();
+        _profitDescriptionController.clear();
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating profit: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteProfit(String profitId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Additional Profit'),
+        content: const Text('Are you sure you want to delete this profit? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFFC41E3A),
+        ),
+      ),
+    );
+
+    try {
+      await FirebaseFirestore.instance.collection('additional-profits').doc(profitId).delete();
+
+      if (mounted) {
+        Navigator.pop(context);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profit deleted successfully'),
+            backgroundColor: Color(0xFFC41E3A),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting profit: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     }
   }
 }
