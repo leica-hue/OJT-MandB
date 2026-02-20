@@ -36,6 +36,10 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _showNewClientFields = false;
   List<DocumentSnapshot> _searchResults = [];
 
+  // Personnel search state
+  String? _selectedPersonnelName;
+  List<DocumentSnapshot> _personnelSearchResults = [];
+
   // Session list search/filter
   final TextEditingController _sessionSearchController = TextEditingController();
 
@@ -152,6 +156,43 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
+  // ── Personnel search ──────────────────────────────────────────────────────
+
+  void _searchPersonnel(String query, StateSetter setDialogState) async {
+    if (query.isEmpty) {
+      setDialogState(() {
+        _personnelSearchResults = [];
+      });
+      return;
+    }
+
+    final results =
+        await FirebaseFirestore.instance.collection('personnel').get();
+
+    final filtered = results.docs.where((doc) {
+      final data = doc.data();
+      // Support both 'name' and 'fullName' fields
+      final name = (data['name'] ?? data['fullName'] ?? '').toLowerCase();
+      return name.contains(query.toLowerCase());
+    }).toList();
+
+    setDialogState(() {
+      _personnelSearchResults = filtered;
+    });
+  }
+
+  void _selectPersonnel(DocumentSnapshot personnel, StateSetter setDialogState) {
+    final data = personnel.data() as Map<String, dynamic>;
+    final name = data['name'] ?? data['fullName'] ?? '';
+    setDialogState(() {
+      _selectedPersonnelName = name;
+      _personnelController.text = name;
+      _personnelSearchResults = [];
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+
   void _clearSessionForm() {
     _clientSearchController.clear();
     _sessionAmountController.clear();
@@ -166,6 +207,8 @@ class _DashboardPageState extends State<DashboardPage> {
       _showNewClientFields = false;
       _searchResults = [];
       _selectedDate = DateTime.now();
+      _selectedPersonnelName = null;
+      _personnelSearchResults = [];
     });
   }
 
@@ -240,8 +283,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   /// Opens a separate modal to create a brand-new client.
-  /// [prefillName] pre-populates the name field.
-  /// [onClientCreated] is called with the new client's id and name on success.
   void _showAddNewClientDialog({
     required String prefillName,
     required Function(String clientId, String clientName) onClientCreated,
@@ -350,7 +391,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Client Search Field
+                  // ── Client Search Field ──────────────────────────────────
                   const Text(
                     'Client Name *',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -375,7 +416,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     },
                   ),
 
-                  // Search Results Dropdown
+                  // Client Search Results Dropdown
                   if (_searchResults.isNotEmpty)
                     Container(
                       margin: const EdgeInsets.only(top: 4),
@@ -411,7 +452,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
 
-                  // Client not found — show button to open Add New Client modal
+                  // Client not found
                   if (_showNewClientFields)
                     Container(
                       margin: const EdgeInsets.only(top: 8),
@@ -479,7 +520,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                   const SizedBox(height: 16),
 
-                  // Date Field
+                  // ── Date Field ───────────────────────────────────────────
                   const Text(
                     'Date *',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -511,7 +552,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Time Field
+                  // ── Time Field ───────────────────────────────────────────
                   const Text(
                     'Time',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -527,7 +568,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Session Amount
+                  // ── Session Amount ───────────────────────────────────────
                   const Text(
                     'Session Amount *',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -544,7 +585,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Coaching/Rental Amount
+                  // ── Coaching/Rental Amount ───────────────────────────────
                   const Text(
                     'Coaching/Rental Amount',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -561,7 +602,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Bay Number
+                  // ── Bay Number ───────────────────────────────────────────
                   const Text(
                     'Bay Number *',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -577,7 +618,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Personnel Field
+                  // ── Personnel Search Field ───────────────────────────────
                   const Text(
                     'Personnel *',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -585,15 +626,92 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _personnelController,
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., Sarah Williams',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person_outline),
+                    decoration: InputDecoration(
+                      hintText: 'Search personnel...',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.person_outline),
+                      suffixIcon: _selectedPersonnelName != null
+                          ? const Icon(Icons.check_circle, color: Color(0xFFC41E3A))
+                          : const Icon(Icons.search),
                     ),
+                    onChanged: (value) {
+                      setDialogState(() {
+                        _selectedPersonnelName = null;
+                      });
+                      _searchPersonnel(value, setDialogState);
+                    },
                   ),
+
+                  // Personnel Search Results Dropdown
+                  if (_personnelSearchResults.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(4),
+                        color: Colors.white,
+                      ),
+                      constraints: const BoxConstraints(maxHeight: 200),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _personnelSearchResults.length,
+                        itemBuilder: (context, index) {
+                          final personnel = _personnelSearchResults[index];
+                          final data = personnel.data() as Map<String, dynamic>;
+                          final name = data['name'] ?? data['fullName'] ?? 'Unknown';
+                          final role = data['role'] ?? data['position'] ?? '';
+                          return ListTile(
+                            dense: true,
+                            leading: CircleAvatar(
+                              backgroundColor: const Color(0xFFC41E3A),
+                              child: Text(
+                                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            title: Text(name),
+                            subtitle: role.isNotEmpty ? Text(role) : null,
+                            onTap: () {
+                              _selectPersonnel(personnel, setDialogState);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+
+                  // No personnel found notice
+                  if (_personnelSearchResults.isEmpty &&
+                      _personnelController.text.isNotEmpty &&
+                      _selectedPersonnelName == null)
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.orange.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline,
+                              color: Colors.orange.shade700, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'No personnel found. Check the Personnel page to add staff.',
+                              style: TextStyle(
+                                color: Colors.orange.shade700,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   const SizedBox(height: 16),
 
-                  // Duration Field
+                  // ── Duration Field ───────────────────────────────────────
                   const Text(
                     'Duration (hours) *',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
