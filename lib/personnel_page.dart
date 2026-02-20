@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'login_page.dart';
-import 'collections_page.dart';
 import 'clients_page.dart';
 import 'dashboard.dart';
 
@@ -41,9 +40,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
     switch (page) {
       case 'Overview':
         targetPage = const DashboardPage();
-        break;
-      case 'Collections':
-        targetPage = const CollectionsPage();
         break;
       case 'Clients':
         targetPage = const ClientsPage();
@@ -148,6 +144,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC41E3A),
+              foregroundColor: Colors.white,
             ),
             child: const Text('Add Staff'),
           ),
@@ -277,7 +274,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                 }
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             child: const Text('Delete'),
           ),
         ],
@@ -392,7 +389,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                 stream: FirebaseFirestore.instance
                     .collection('sessions')
                     .where('personnel', isEqualTo: staffName)
-                    .snapshots(), // NO orderBy → avoids composite-index error
+                    .snapshots(includeMetadataChanges: true),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Padding(
@@ -496,8 +493,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
                             final hours =
                                 (sd['duration'] as num?)?.toDouble() ?? 0;
                             final hoursLabel = hours % 1 == 0
-                                ? '${hours.toInt()} hrs'
-                                : '$hours hrs';
+                                ? '${hours.toInt()}'
+                                : '$hours';
 
                             return Container(
                               padding: const EdgeInsets.symmetric(
@@ -704,12 +701,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
                   onTap: () => _navigateToPage('Overview'),
                 ),
                 _buildMenuItem(
-                  icon: Icons.folder_outlined,
-                  label: 'Collections',
-                  isSelected: _currentPage == 'Collections',
-                  onTap: () => _navigateToPage('Collections'),
-                ),
-                _buildMenuItem(
                   icon: Icons.people_outline,
                   label: 'Clients',
                   isSelected: _currentPage == 'Clients',
@@ -890,7 +881,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                 StreamBuilder<QuerySnapshot>(
                                   stream: FirebaseFirestore.instance
                                       .collection('personnel')
-                                      .snapshots(),
+                                      .snapshots(includeMetadataChanges: true),
                                   builder: (context, snap) {
                                     final count = snap.data?.docs.length ?? 0;
                                     return Text(
@@ -909,7 +900,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                 StreamBuilder<QuerySnapshot>(
                                   stream: FirebaseFirestore.instance
                                       .collection('personnel')
-                                      .snapshots(),
+                                      .snapshots(includeMetadataChanges: true),
                                   builder: (context, snapshot) {
                                     if (snapshot.hasError) {
                                       return const Center(

@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'firestore_helpers.dart';
 import 'login_page.dart';
-import 'collections_page.dart';
 import 'personnel_page.dart';
 import 'dashboard.dart';
 
@@ -42,9 +42,6 @@ class _ClientsPageState extends State<ClientsPage> {
     switch (page) {
       case 'Overview':
         targetPage = const DashboardPage();
-        break;
-      case 'Collections':
-        targetPage = const CollectionsPage();
         break;
       case 'Personnel':
         targetPage = const PersonnelPage();
@@ -140,6 +137,7 @@ class _ClientsPageState extends State<ClientsPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC41E3A),
+              foregroundColor: Colors.white,
             ),
             child: const Text('Add Client'),
           ),
@@ -275,16 +273,14 @@ class _ClientsPageState extends State<ClientsPage> {
                 ),
                 const Divider(height: 24),
 
-                // Sessions content — FutureBuilder fetches all sessions,
-                // then filters where clientName in session matches this client's name,
-                // OR where clientId matches the document ID.
+                // Sessions content — StreamBuilder so list updates immediately when sessions are added/deleted
                 Flexible(
-                  child: FutureBuilder<QuerySnapshot>(
-                    future: FirebaseFirestore.instance
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
                         .collection('sessions')
-                        .get(),
+                        .snapshots(includeMetadataChanges: true),
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
+                      if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                         return const Center(
                           child: Padding(
                             padding: EdgeInsets.all(40),
@@ -528,7 +524,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                       Expanded(
                                         flex: 2,
                                         child: Text(
-                                            '${duration % 1 == 0 ? duration.toInt() : duration} hrs',
+                                            '${duration % 1 == 0 ? duration.toInt() : duration}',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                                 fontSize: 13,
@@ -647,12 +643,12 @@ class _ClientsPageState extends State<ClientsPage> {
           ElevatedButton(
             onPressed: () async {
               try {
-                await client.reference.delete();
+                await deleteClientAndSessions(client);
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Client deleted successfully'),
+                      content: Text('Client and their sessions deleted successfully'),
                       backgroundColor: Color(0xFFC41E3A),
                     ),
                   );
@@ -671,6 +667,7 @@ class _ClientsPageState extends State<ClientsPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Delete'),
           ),
@@ -813,12 +810,6 @@ class _ClientsPageState extends State<ClientsPage> {
                   label: 'Overview',
                   isSelected: _currentPage == 'Overview',
                   onTap: () => _navigateToPage('Overview'),
-                ),
-                _buildMenuItem(
-                  icon: Icons.folder_outlined,
-                  label: 'Collections',
-                  isSelected: _currentPage == 'Collections',
-                  onTap: () => _navigateToPage('Collections'),
                 ),
                 _buildMenuItem(
                   icon: Icons.people_outline,
@@ -998,16 +989,16 @@ class _ClientsPageState extends State<ClientsPage> {
                             ),
                           ),
                           const SizedBox(height: 32),
-                          // Statistics Cards
+                          // Statistics Cards (real-time: updates when clients or sessions change)
                           StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection('clients')
-                                .snapshots(),
+                                .snapshots(includeMetadataChanges: true),
                             builder: (context, clientSnapshot) {
                               return StreamBuilder<QuerySnapshot>(
                                 stream: FirebaseFirestore.instance
                                     .collection('sessions')
-                                    .snapshots(),
+                                    .snapshots(includeMetadataChanges: true),
                                 builder: (context, sessionSnapshot) {
                                   int totalClients = 0;
                                   int totalSessions = 0;
@@ -1072,7 +1063,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                 StreamBuilder<QuerySnapshot>(
                                   stream: FirebaseFirestore.instance
                                       .collection('clients')
-                                      .snapshots(),
+                                      .snapshots(includeMetadataChanges: true),
                                   builder: (context, snapshot) {
                                     if (snapshot.hasError) {
                                       return const Center(

@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'login_page.dart';
-import 'collections_page.dart';
 import 'clients_page.dart';
 import 'personnel_page.dart';
 import 'dashboard.dart';
@@ -217,9 +216,6 @@ class _ProfilePageState extends State<ProfilePage> {
       case 'Overview':
         targetPage = const DashboardPage();
         break;
-      case 'Collections':
-        targetPage = const CollectionsPage();
-        break;
       case 'Clients':
         targetPage = const ClientsPage();
         break;
@@ -343,12 +339,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   label: 'Overview',
                   isSelected: _currentPage == 'Overview',
                   onTap: () => _navigateToPage('Overview'),
-                ),
-                _buildMenuItem(
-                  icon: Icons.folder_outlined,
-                  label: 'Collections',
-                  isSelected: _currentPage == 'Collections',
-                  onTap: () => _navigateToPage('Collections'),
                 ),
                 _buildMenuItem(
                   icon: Icons.people_outline,

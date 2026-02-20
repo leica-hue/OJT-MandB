@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'login_page.dart';
-import 'collections_page.dart';
 import 'clients_page.dart';
 import 'personnel_page.dart';
 import 'profile_page.dart';
@@ -122,9 +121,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
     Widget? targetPage;
     switch (page) {
-      case 'Collections':
-        targetPage = const CollectionsPage();
-        break;
       case 'Clients':
         targetPage = const ClientsPage();
         break;
@@ -758,139 +754,43 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _showAddExpenseDialog() {
-    _expenseAmountController.clear();
-    _expenseDescriptionController.clear();
     _expenseDate = DateTime.now();
-
+    final formKey = GlobalKey<_ExpenseLineItemsFormState>();
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add Expense'),
-          content: SingleChildScrollView(
-            child: SizedBox(
-              width: 400,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Date Field
-                  const Text(
-                    'Date *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _expenseDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2030),
-                      );
-                      if (date != null) {
-                        setDialogState(() {
-                          _expenseDate = date;
-                        });
-                      }
-                    },
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      child: Text(
-                        '${_expenseDate.month.toString().padLeft(2, '0')}/${_expenseDate.day.toString().padLeft(2, '0')}/${_expenseDate.year}',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Amount Field
-                  const Text(
-                    'Amount *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _expenseAmountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., 500.00',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.payments),
-                      prefixText: '₱',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Description Field
-                  const Text(
-                    'Description *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _expenseDescriptionController,
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., Office supplies, Utilities',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.description),
-                    ),
-                    maxLines: 2,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _expenseAmountController.clear();
-                _expenseDescriptionController.clear();
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                await _addExpense(closeDialog: true);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC41E3A),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Add Expense'),
-            ),
-          ],
+      builder: (context) => AlertDialog(
+        title: const Text('Add Expense'),
+        content: _ExpenseLineItemsForm(
+          key: formKey,
+          initialDate: _expenseDate,
+          onSave: (items, date) async {
+            Navigator.pop(context);
+            await _addExpenseWithItems(items, date, closeDialog: true);
+          },
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => formKey.currentState?._submit(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC41E3A),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Add Expense'),
+          ),
+        ],
       ),
     );
   }
 
-  Future<void> _addExpense({bool closeDialog = true}) async {
-    if (_expenseAmountController.text.isEmpty ||
-        _expenseDescriptionController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all required fields'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final amount = double.tryParse(_expenseAmountController.text);
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid amount'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
+  Future<void> _addExpenseWithItems(
+    List<Map<String, String>> items,
+    DateTime date, {
+    bool closeDialog = true,
+  }) async {
     if (!mounted) return;
     showDialog(
       context: context,
@@ -909,12 +809,25 @@ class _DashboardPageState extends State<DashboardPage> {
       }
 
       final dateStr =
-          '${_expenseDate.month.toString().padLeft(2, '0')}/${_expenseDate.day.toString().padLeft(2, '0')}/${_expenseDate.year}';
+          '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
 
+      double totalAmount = 0;
+      final itemsData = <Map<String, dynamic>>[];
+      for (final item in items) {
+        final amt = double.tryParse(item['amount'] ?? '0') ?? 0;
+        totalAmount += amt;
+        itemsData.add({
+          'description': item['description'] ?? '',
+          'amount': amt,
+        });
+      }
+
+      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
       final expenseData = {
         'date': dateStr,
-        'amount': amount,
-        'description': _expenseDescriptionController.text.trim(),
+        'amount': totalAmount,
+        'description': firstDesc,
+        'items': itemsData,
         'userId': user.uid,
         'userEmail': user.email ?? '',
         'createdAt': FieldValue.serverTimestamp(),
@@ -931,34 +844,26 @@ class _DashboardPageState extends State<DashboardPage> {
 
       if (mounted) {
         Navigator.pop(context);
-        
         if (closeDialog) {
           Navigator.pop(context);
         }
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Expense of ₱${_formatAmount(amount)} saved successfully to Firebase'),
+            content: Text(
+                'Expense of ₱${_formatAmount(totalAmount)} saved successfully'),
             backgroundColor: const Color(0xFFC41E3A),
             duration: const Duration(seconds: 2),
           ),
         );
-        
-        _expenseAmountController.clear();
-        _expenseDescriptionController.clear();
-        _expenseDate = DateTime.now();
-        
-        if (!closeDialog && mounted) {
-          setState(() {});
-        }
+        _expenseDate = date;
+        if (!closeDialog && mounted) setState(() {});
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving expense to Firebase: $e'),
+            content: Text('Error saving expense: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),
@@ -991,7 +896,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('expenses')
-                .snapshots(),
+                .snapshots(includeMetadataChanges: true),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
@@ -1063,7 +968,21 @@ class _DashboardPageState extends State<DashboardPage> {
                         final expense = expenses[index];
                         final data = expense.data() as Map<String, dynamic>;
                         final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
-                        final description = data['description'] ?? 'N/A';
+                        String description = data['description'] ?? 'N/A';
+                        if (data['items'] != null && data['items'] is List) {
+                          final itemsList = data['items'] as List;
+                          if (itemsList.isNotEmpty) {
+                            final first = itemsList.first;
+                            final firstDesc = first is Map
+                                ? (first['description'] ?? '').toString()
+                                : 'N/A';
+                            if (itemsList.length > 1) {
+                              description = '$firstDesc (+${itemsList.length - 1} more)';
+                            } else {
+                              description = firstDesc;
+                            }
+                          }
+                        }
                         final date = data['date'] ?? 'N/A';
 
                         return Container(
@@ -1151,8 +1070,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _showEditExpenseDialog(DocumentSnapshot expense) {
     final data = expense.data() as Map<String, dynamic>;
-    final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
-    final description = data['description'] ?? '';
     final dateStr = data['date'] ?? '';
 
     DateTime expenseDate = DateTime.now();
@@ -1171,132 +1088,62 @@ class _DashboardPageState extends State<DashboardPage> {
       }
     }
 
-    _expenseAmountController.text = amount.toString();
-    _expenseDescriptionController.text = description;
-    _expenseDate = expenseDate;
+    List<Map<String, String>>? initialItems;
+    if (data['items'] != null && data['items'] is List) {
+      final list = data['items'] as List;
+      initialItems = list.map<Map<String, String>>((e) {
+        final m = e is Map ? Map<String, dynamic>.from(e as Map) : <String, dynamic>{};
+        final amt = m['amount'];
+        return {
+          'description': (m['description'] ?? '').toString(),
+          'amount': amt != null ? amt.toString() : '0',
+        };
+      }).toList();
+    } else {
+      final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+      final description = data['description'] ?? '';
+      initialItems = [
+        {'description': description, 'amount': amount.toString()},
+      ];
+    }
 
+    final formKey = GlobalKey<_ExpenseLineItemsFormState>();
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Edit Expense'),
-          content: SingleChildScrollView(
-            child: SizedBox(
-              width: 400,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Date *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _expenseDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2030),
-                      );
-                      if (date != null) {
-                        setDialogState(() {
-                          _expenseDate = date;
-                        });
-                      }
-                    },
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      child: Text(
-                        '${_expenseDate.month.toString().padLeft(2, '0')}/${_expenseDate.day.toString().padLeft(2, '0')}/${_expenseDate.year}',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Amount *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _expenseAmountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., 500.00',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.payments),
-                      prefixText: '₱',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Description *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _expenseDescriptionController,
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., Office supplies, Utilities',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.description),
-                    ),
-                    maxLines: 2,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _expenseAmountController.clear();
-                _expenseDescriptionController.clear();
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => _updateExpense(expense.id),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC41E3A),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Update Expense'),
-            ),
-          ],
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Expense'),
+        content: _ExpenseLineItemsForm(
+          key: formKey,
+          initialDate: expenseDate,
+          initialItems: initialItems,
+          onSave: (items, date) async {
+            Navigator.pop(context);
+            await _updateExpenseWithItems(expense.id, items, date);
+          },
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => formKey.currentState?._submit(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC41E3A),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Update Expense'),
+          ),
+        ],
       ),
     );
   }
 
-  Future<void> _updateExpense(String expenseId) async {
-    if (_expenseAmountController.text.isEmpty ||
-        _expenseDescriptionController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all required fields'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final amount = double.tryParse(_expenseAmountController.text);
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid amount'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
+  Future<void> _updateExpenseWithItems(
+    String expenseId,
+    List<Map<String, String>> items,
+    DateTime date,
+  ) async {
     if (!mounted) return;
     showDialog(
       context: context,
@@ -1310,19 +1157,31 @@ class _DashboardPageState extends State<DashboardPage> {
 
     try {
       final dateStr =
-          '${_expenseDate.month.toString().padLeft(2, '0')}/${_expenseDate.day.toString().padLeft(2, '0')}/${_expenseDate.year}';
+          '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
+
+      double totalAmount = 0;
+      final itemsData = <Map<String, dynamic>>[];
+      for (final item in items) {
+        final amt = double.tryParse(item['amount'] ?? '0') ?? 0;
+        totalAmount += amt;
+        itemsData.add({
+          'description': item['description'] ?? '',
+          'amount': amt,
+        });
+      }
+      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
 
       await FirebaseFirestore.instance.collection('expenses').doc(expenseId).update({
         'date': dateStr,
-        'amount': amount,
-        'description': _expenseDescriptionController.text.trim(),
+        'amount': totalAmount,
+        'description': firstDesc,
+        'items': itemsData,
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
       if (mounted) {
         Navigator.pop(context);
         Navigator.pop(context);
-        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Expense updated successfully'),
@@ -1330,9 +1189,6 @@ class _DashboardPageState extends State<DashboardPage> {
             duration: Duration(seconds: 2),
           ),
         );
-        
-        _expenseAmountController.clear();
-        _expenseDescriptionController.clear();
       }
     } catch (e) {
       if (mounted) {
@@ -1966,12 +1822,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   label: 'Overview',
                   isSelected: _currentPage == 'Overview',
                   onTap: () => _navigateToPage('Overview'),
-                ),
-                _buildMenuItem(
-                  icon: Icons.folder_outlined,
-                  label: 'Collections',
-                  isSelected: _currentPage == 'Collections',
-                  onTap: () => _navigateToPage('Collections'),
                 ),
                 _buildMenuItem(
                   icon: Icons.people_outline,
@@ -2706,7 +2556,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('additional-profits')
-                .snapshots(),
+                .snapshots(includeMetadataChanges: true),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
@@ -2778,7 +2628,21 @@ class _DashboardPageState extends State<DashboardPage> {
                         final profit = profits[index];
                         final data = profit.data() as Map<String, dynamic>;
                         final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
-                        final description = data['description'] ?? 'N/A';
+                        String description = data['description'] ?? 'N/A';
+                        if (data['items'] != null && data['items'] is List) {
+                          final itemsList = data['items'] as List;
+                          if (itemsList.isNotEmpty) {
+                            final first = itemsList.first;
+                            final firstDesc = first is Map
+                                ? (first['description'] ?? '').toString()
+                                : 'N/A';
+                            if (itemsList.length > 1) {
+                              description = '$firstDesc (+${itemsList.length - 1} more)';
+                            } else {
+                              description = firstDesc;
+                            }
+                          }
+                        }
                         final date = data['date'] ?? 'N/A';
 
                         return Container(
@@ -2865,132 +2729,42 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _showAddProfitDialog() {
-    _profitAmountController.clear();
-    _profitDescriptionController.clear();
     _profitDate = DateTime.now();
-
+    final formKey = GlobalKey<_ExpenseLineItemsFormState>();
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add Additional Profit'),
-          content: SingleChildScrollView(
-            child: SizedBox(
-              width: 400,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Date *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _profitDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2030),
-                      );
-                      if (date != null) {
-                        setDialogState(() {
-                          _profitDate = date;
-                        });
-                      }
-                    },
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      child: Text(
-                        '${_profitDate.month.toString().padLeft(2, '0')}/${_profitDate.day.toString().padLeft(2, '0')}/${_profitDate.year}',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Amount *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _profitAmountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., 500.00',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.payments),
-                      prefixText: '₱',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Description *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _profitDescriptionController,
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., Extra services, Bonuses',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.description),
-                    ),
-                    maxLines: 2,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _profitAmountController.clear();
-                _profitDescriptionController.clear();
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => _addProfit(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC41E3A),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Add Profit'),
-            ),
-          ],
+      builder: (context) => AlertDialog(
+        title: const Text('Add Additional Profit'),
+        content: _ExpenseLineItemsForm(
+          key: formKey,
+          initialDate: _profitDate,
+          onSave: (items, date) async {
+            Navigator.pop(context);
+            await _addProfitWithItems(items, date);
+          },
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => formKey.currentState?._submit(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC41E3A),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Add Profit'),
+          ),
+        ],
       ),
     );
   }
 
-  Future<void> _addProfit() async {
-    if (_profitAmountController.text.isEmpty ||
-        _profitDescriptionController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all required fields'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final amount = double.tryParse(_profitAmountController.text);
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid amount'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
+  Future<void> _addProfitWithItems(
+    List<Map<String, String>> items,
+    DateTime date,
+  ) async {
     if (!mounted) return;
     showDialog(
       context: context,
@@ -3009,12 +2783,25 @@ class _DashboardPageState extends State<DashboardPage> {
       }
 
       final dateStr =
-          '${_profitDate.month.toString().padLeft(2, '0')}/${_profitDate.day.toString().padLeft(2, '0')}/${_profitDate.year}';
+          '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
+
+      double totalAmount = 0;
+      final itemsData = <Map<String, dynamic>>[];
+      for (final item in items) {
+        final amt = double.tryParse(item['amount'] ?? '0') ?? 0;
+        totalAmount += amt;
+        itemsData.add({
+          'description': item['description'] ?? '',
+          'amount': amt,
+        });
+      }
+      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
 
       final profitData = {
         'date': dateStr,
-        'amount': amount,
-        'description': _profitDescriptionController.text.trim(),
+        'amount': totalAmount,
+        'description': firstDesc,
+        'items': itemsData,
         'userId': user.uid,
         'userEmail': user.email ?? '',
         'createdAt': FieldValue.serverTimestamp(),
@@ -3032,18 +2819,15 @@ class _DashboardPageState extends State<DashboardPage> {
       if (mounted) {
         Navigator.pop(context);
         Navigator.pop(context);
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Profit of ₱${_formatAmount(amount)} saved successfully to Firebase'),
+            content: Text(
+                'Profit of ₱${_formatAmount(totalAmount)} saved successfully'),
             backgroundColor: const Color(0xFFC41E3A),
             duration: const Duration(seconds: 2),
           ),
         );
-        
-        _profitAmountController.clear();
-        _profitDescriptionController.clear();
-        _profitDate = DateTime.now();
+        _profitDate = date;
       }
     } catch (e) {
       if (mounted) {
@@ -3061,8 +2845,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void _showEditProfitDialog(DocumentSnapshot profit) {
     final data = profit.data() as Map<String, dynamic>;
-    final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
-    final description = data['description'] ?? '';
     final dateStr = data['date'] ?? '';
 
     DateTime profitDate = DateTime.now();
@@ -3081,132 +2863,62 @@ class _DashboardPageState extends State<DashboardPage> {
       }
     }
 
-    _profitAmountController.text = amount.toString();
-    _profitDescriptionController.text = description;
-    _profitDate = profitDate;
+    List<Map<String, String>>? initialItems;
+    if (data['items'] != null && data['items'] is List) {
+      final list = data['items'] as List;
+      initialItems = list.map<Map<String, String>>((e) {
+        final m = e is Map ? Map<String, dynamic>.from(e as Map) : <String, dynamic>{};
+        final amt = m['amount'];
+        return {
+          'description': (m['description'] ?? '').toString(),
+          'amount': amt != null ? amt.toString() : '0',
+        };
+      }).toList();
+    } else {
+      final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+      final description = data['description'] ?? '';
+      initialItems = [
+        {'description': description, 'amount': amount.toString()},
+      ];
+    }
 
+    final formKey = GlobalKey<_ExpenseLineItemsFormState>();
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Edit Additional Profit'),
-          content: SingleChildScrollView(
-            child: SizedBox(
-              width: 400,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Date *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _profitDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2030),
-                      );
-                      if (date != null) {
-                        setDialogState(() {
-                          _profitDate = date;
-                        });
-                      }
-                    },
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      child: Text(
-                        '${_profitDate.month.toString().padLeft(2, '0')}/${_profitDate.day.toString().padLeft(2, '0')}/${_profitDate.year}',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Amount *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _profitAmountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., 500.00',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.payments),
-                      prefixText: '₱',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Description *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _profitDescriptionController,
-                    decoration: const InputDecoration(
-                      hintText: 'e.g., Extra services, Bonuses',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.description),
-                    ),
-                    maxLines: 2,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _profitAmountController.clear();
-                _profitDescriptionController.clear();
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => _updateProfit(profit.id),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC41E3A),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Update Profit'),
-            ),
-          ],
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Additional Profit'),
+        content: _ExpenseLineItemsForm(
+          key: formKey,
+          initialDate: profitDate,
+          initialItems: initialItems,
+          onSave: (items, date) async {
+            Navigator.pop(context);
+            await _updateProfitWithItems(profit.id, items, date);
+          },
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => formKey.currentState?._submit(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC41E3A),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Update Profit'),
+          ),
+        ],
       ),
     );
   }
 
-  Future<void> _updateProfit(String profitId) async {
-    if (_profitAmountController.text.isEmpty ||
-        _profitDescriptionController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all required fields'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final amount = double.tryParse(_profitAmountController.text);
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid amount'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
+  Future<void> _updateProfitWithItems(
+    String profitId,
+    List<Map<String, String>> items,
+    DateTime date,
+  ) async {
     if (!mounted) return;
     showDialog(
       context: context,
@@ -3220,19 +2932,31 @@ class _DashboardPageState extends State<DashboardPage> {
 
     try {
       final dateStr =
-          '${_profitDate.month.toString().padLeft(2, '0')}/${_profitDate.day.toString().padLeft(2, '0')}/${_profitDate.year}';
+          '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
+
+      double totalAmount = 0;
+      final itemsData = <Map<String, dynamic>>[];
+      for (final item in items) {
+        final amt = double.tryParse(item['amount'] ?? '0') ?? 0;
+        totalAmount += amt;
+        itemsData.add({
+          'description': item['description'] ?? '',
+          'amount': amt,
+        });
+      }
+      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
 
       await FirebaseFirestore.instance.collection('additional-profits').doc(profitId).update({
         'date': dateStr,
-        'amount': amount,
-        'description': _profitDescriptionController.text.trim(),
+        'amount': totalAmount,
+        'description': firstDesc,
+        'items': itemsData,
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
       if (mounted) {
         Navigator.pop(context);
         Navigator.pop(context);
-        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profit updated successfully'),
@@ -3240,9 +2964,6 @@ class _DashboardPageState extends State<DashboardPage> {
             duration: Duration(seconds: 2),
           ),
         );
-        
-        _profitAmountController.clear();
-        _profitDescriptionController.clear();
       }
     } catch (e) {
       if (mounted) {
@@ -3320,5 +3041,248 @@ class _DashboardPageState extends State<DashboardPage> {
         );
       }
     }
+  }
+}
+
+/// Form content for Add/Edit Expense with multiple description+price rows.
+class _ExpenseLineItemsForm extends StatefulWidget {
+  const _ExpenseLineItemsForm({
+    super.key,
+    required this.initialDate,
+    this.initialItems,
+    required this.onSave,
+  });
+
+  final DateTime initialDate;
+  final List<Map<String, String>>? initialItems;
+  final void Function(List<Map<String, String>> items, DateTime date) onSave;
+
+  @override
+  State<_ExpenseLineItemsForm> createState() => _ExpenseLineItemsFormState();
+}
+
+class _ExpenseLineItemsFormState extends State<_ExpenseLineItemsForm> {
+  late DateTime _date;
+  final List<TextEditingController> _descControllers = [];
+  final List<TextEditingController> _amountControllers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _date = widget.initialDate;
+    if (widget.initialItems != null && widget.initialItems!.isNotEmpty) {
+      for (final item in widget.initialItems!) {
+        _descControllers.add(TextEditingController(text: item['description'] ?? ''));
+        _amountControllers.add(TextEditingController(text: item['amount'] ?? ''));
+      }
+    } else {
+      _descControllers.add(TextEditingController());
+      _amountControllers.add(TextEditingController());
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _descControllers) {
+      c.dispose();
+    }
+    for (final c in _amountControllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _addRow() {
+    setState(() {
+      _descControllers.add(TextEditingController());
+      _amountControllers.add(TextEditingController());
+    });
+  }
+
+  void _removeRow(int index) {
+    if (_descControllers.length <= 1) return;
+    setState(() {
+      _descControllers[index].dispose();
+      _amountControllers[index].dispose();
+      _descControllers.removeAt(index);
+      _amountControllers.removeAt(index);
+    });
+  }
+
+  void _submit() {
+    final items = <Map<String, String>>[];
+    for (var i = 0; i < _descControllers.length; i++) {
+      final desc = _descControllers[i].text.trim();
+      final amountStr = _amountControllers[i].text.trim();
+      if (desc.isEmpty && amountStr.isEmpty) continue;
+      if (desc.isEmpty || amountStr.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Fill description and price for each row, or remove empty rows'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      final amount = double.tryParse(amountStr);
+      if (amount == null || amount < 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Enter a valid price for each row'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      items.add({'description': desc, 'amount': amountStr});
+    }
+    if (items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Add at least one description and price'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    widget.onSave(items, _date);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: SizedBox(
+        width: 500,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Date *',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: _date,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2030),
+                );
+                if (picked != null) setState(() => _date = picked);
+              },
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.calendar_today),
+                ),
+                child: Text(
+                  '${_date.month.toString().padLeft(2, '0')}/${_date.day.toString().padLeft(2, '0')}/${_date.year}',
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Description & Price *',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            ...List.generate(_descControllers.length, (index) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Description',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          TextField(
+                            controller: _descControllers[index],
+                              decoration: const InputDecoration(
+                                hintText: 'e.g., Staff Water, Utilities',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.description, size: 20),
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 12),
+                              ),
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Price',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          TextField(
+                              controller: _amountControllers[index],
+                              keyboardType: const TextInputType.numberWithOptions(
+                                  decimal: true),
+                              decoration: const InputDecoration(
+                                hintText: '0',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.payments, size: 20),
+                                prefixText: '₱',
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (_descControllers.length > 1)
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle_outline,
+                            color: Colors.red, size: 22),
+                        onPressed: () => _removeRow(index),
+                        tooltip: 'Remove row',
+                      )
+                    else
+                      const SizedBox(width: 48),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: _addRow,
+              icon: const Icon(Icons.add, size: 20),
+              label: const Text('Add another'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFC41E3A),
+                side: const BorderSide(color: Color(0xFFC41E3A)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
