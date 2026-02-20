@@ -28,7 +28,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final TextEditingController _bayNumberController = TextEditingController();
   final TextEditingController _personnelController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
-  final TextEditingController _timeController = TextEditingController();
+
 
   String? _selectedClientId;
   String? _selectedClientName;
@@ -58,7 +58,6 @@ class _DashboardPageState extends State<DashboardPage> {
     _bayNumberController.dispose();
     _personnelController.dispose();
     _durationController.dispose();
-    _timeController.dispose();
     _sessionSearchController.dispose();
     super.dispose();
   }
@@ -200,7 +199,6 @@ class _DashboardPageState extends State<DashboardPage> {
     _bayNumberController.clear();
     _personnelController.clear();
     _durationController.clear();
-    _timeController.clear();
     setState(() {
       _selectedClientId = null;
       _selectedClientName = null;
@@ -253,9 +251,6 @@ class _DashboardPageState extends State<DashboardPage> {
         'clientId': clientId,
         'clientName': clientName,
         'date': dateStr,
-        'time': _timeController.text.isEmpty ? '09:00 AM' : _timeController.text,
-        'sessionAmount': sessionAmount,
-        'coachingRentalAmount': coachingRentalAmount,
         'bayNumber': _bayNumberController.text.trim(),
         'personnel': _personnelController.text,
         'duration': double.parse(_durationController.text),
@@ -548,22 +543,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: Text(
                         '${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.year}',
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ── Time Field ───────────────────────────────────────────
-                  const Text(
-                    'Time',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _timeController,
-                    decoration: const InputDecoration(
-                      hintText: '09:00 AM',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.access_time),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1303,9 +1282,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                               final date = (d['date'] ?? '')
                                                   .toString()
                                                   .toLowerCase();
-                                              final time = (d['time'] ?? '')
-                                                  .toString()
-                                                  .toLowerCase();
                                               final bayNumber =
                                                   (d['bayNumber'] ?? '')
                                                       .toString()
@@ -1314,7 +1290,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                                       .contains(query) ||
                                                   personnel.contains(query) ||
                                                   date.contains(query) ||
-                                                  time.contains(query) ||
                                                   bayNumber.contains(query);
                                             }).toList();
 
@@ -1364,15 +1339,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                                       columnWidth:
                                                           FlexColumnWidth(1),
                                                       label: Text('Date',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                    DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(1),
-                                                      label: Text('Time',
                                                           style: TextStyle(
                                                               fontWeight:
                                                                   FontWeight
@@ -1481,9 +1447,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                                             data['date'] ??
                                                                 'N/A')),
                                                         DataCell(Text(
-                                                            data['time'] ??
-                                                                'N/A')),
-                                                        DataCell(Text(
                                                           data['sessionAmount'] !=
                                                                   null
                                                               ? (data['sessionAmount']
@@ -1531,8 +1494,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                                                         .bold,
                                                                 color: Color(
                                                                     0xFF1a1a1a)))),
-                                                        const DataCell(
-                                                            Text('')),
                                                         const DataCell(
                                                             Text('')),
                                                         DataCell(Text(
