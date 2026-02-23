@@ -1393,7 +1393,7 @@ class _DashboardPageState extends State<DashboardPage> {
     required Color iconBgColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -1407,6 +1407,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1414,34 +1415,40 @@ class _DashboardPageState extends State<DashboardPage> {
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   color: Colors.grey[600],
                   fontWeight: FontWeight.w500,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: iconBgColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: iconBgColor, size: 20),
+                child: Icon(icon, color: iconBgColor, size: 16),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1a1a1a),
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1a1a1a),
+              ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             subtitle,
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -1453,7 +1460,7 @@ class _DashboardPageState extends State<DashboardPage> {
       onTap: () => _showExpensesHistoryDialog(),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -1467,6 +1474,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1474,34 +1482,40 @@ class _DashboardPageState extends State<DashboardPage> {
                 Text(
                   'Expenses',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: const Color(0xFFC41E3A).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.receipt_long, color: Color(0xFFC41E3A), size: 20),
+                  child: const Icon(Icons.receipt_long, color: Color(0xFFC41E3A), size: 16),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              '₱${_formatAmount(totalExpenses)}',
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1a1a1a),
+            const SizedBox(height: 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '₱${_formatAmount(totalExpenses)}',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1a1a1a),
+                ),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               'Tap to view/edit expenses',
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -1514,7 +1528,7 @@ class _DashboardPageState extends State<DashboardPage> {
       onTap: () => _showAdditionalProfitHistoryDialog(),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -1528,6 +1542,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1541,28 +1556,34 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: const Color(0xFFC41E3A).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.trending_up, color: Color(0xFFC41E3A), size: 20),
+                  child: const Icon(Icons.trending_up, color: Color(0xFFC41E3A), size: 16),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              '₱${_formatAmount(totalProfits)}',
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1a1a1a),
+            const SizedBox(height: 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '₱${_formatAmount(totalProfits)}',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1a1a1a),
+                ),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               'Tap to view/edit profits',
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -1603,6 +1624,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 primary: Color(0xFFC41E3A),
                 onPrimary: Colors.white,
                 onSurface: Color(0xFF1a1a1a),
+                surface: Color(0xFFFBE9E7), // light pinkish-beige calendar background
+                onSurfaceVariant: Color(0xFF1a1a1a),
               ),
             ),
             child: child!,
@@ -1618,29 +1641,9 @@ class _DashboardPageState extends State<DashboardPage> {
         await _showMonthYearPicker();
         break;
 
-      // ── Yearly: year-only picker ─────────────────────────────────────────
+      // ── Yearly: year picker dialog (same style as monthly) ─────────────────
       case SalesPeriod.yearly:
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: _selectedSalesYear,
-          firstDate: DateTime(2020),
-          lastDate: DateTime(2030),
-          initialDatePickerMode: DatePickerMode.year,
-          helpText: 'Select Year',
-          builder: (context, child) => Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: const ColorScheme.light(
-                primary: Color(0xFFC41E3A),
-                onPrimary: Colors.white,
-                onSurface: Color(0xFF1a1a1a),
-              ),
-            ),
-            child: child!,
-          ),
-        );
-        if (picked != null) {
-          setState(() => _selectedSalesYear = DateTime(picked.year, 1, 1));
-        }
+        await _showYearPicker();
         break;
 
       case SalesPeriod.overall:
@@ -1753,11 +1756,126 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  // ── Year picker dialog (same grid style as monthly) ────────────────────────
+  Future<void> _showYearPicker() async {
+    const int minStartYear = 2008;
+    const int maxStartYear = 2032;
+    const int yearsPerPage = 12;
+
+    int tempYear = _selectedSalesYear.year;
+    // Start with the page that contains the currently selected year
+    int tempStartYear = minStartYear;
+    while (tempStartYear + yearsPerPage <= tempYear) {
+      tempStartYear += yearsPerPage;
+    }
+    tempStartYear = tempStartYear.clamp(minStartYear, maxStartYear);
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Select Year'),
+          content: SizedBox(
+            width: 320,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── Year range navigation (like month picker's year row) ─────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left),
+                      onPressed: tempStartYear > minStartYear
+                          ? () => setDialogState(() =>
+                              tempStartYear = (tempStartYear - yearsPerPage).clamp(minStartYear, maxStartYear))
+                          : null,
+                    ),
+                    Text(
+                      '$tempStartYear – ${tempStartYear + yearsPerPage - 1}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right),
+                      onPressed: tempStartYear < maxStartYear
+                          ? () => setDialogState(() =>
+                              tempStartYear = (tempStartYear + yearsPerPage).clamp(minStartYear, maxStartYear))
+                          : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // ── Year grid (same 4x3 layout and style as month grid) ────
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 2.2,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: yearsPerPage,
+                  itemBuilder: (context, index) {
+                    final year = tempStartYear + index;
+                    final isSelected = year == tempYear;
+                    return GestureDetector(
+                      onTap: () => setDialogState(() => tempYear = year),
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFFC41E3A)
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '$year',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? Colors.white : const Color(0xFF1a1a1a),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _selectedSalesYear = DateTime(tempYear, 1, 1);
+                });
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC41E3A),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Apply'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSalesStatCard(int salesCount, double netSales, double totalExpenses, double totalAdditionalProfits) {
     final filterLabel = _buildSalesFilterLabel();
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -1771,6 +1889,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1778,103 +1897,117 @@ class _DashboardPageState extends State<DashboardPage> {
               Text(
                 'Sales',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   color: Colors.grey[600],
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ── Period dropdown ──────────────────────────────────────
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFC41E3A).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<SalesPeriod>(
-                        value: _salesPeriod,
-                        isDense: true,
-                        icon: const Icon(Icons.arrow_drop_down,
-                            color: Color(0xFFC41E3A), size: 20),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF1a1a1a),
-                        ),
-                        items: SalesPeriod.values
-                            .map((p) => DropdownMenuItem(
-                                  value: p,
-                                  child: Text(_salesPeriodLabel(p)),
-                                ))
-                            .toList(),
-                        onChanged: (SalesPeriod? value) {
-                          if (value != null) {
-                            setState(() => _salesPeriod = value);
-                          }
-                        },
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFC41E3A).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ),
-                  ),
-
-                  // ── Date picker button (hidden for Overall) ──────────────
-                  if (_salesPeriod != SalesPeriod.overall) ...[
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: _pickSalesFilter,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFC41E3A).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color: const Color(0xFFC41E3A).withOpacity(0.3)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _salesPeriod == SalesPeriod.daily
-                                  ? Icons.today
-                                  : _salesPeriod == SalesPeriod.monthly
-                                      ? Icons.calendar_month
-                                      : Icons.calendar_today,
-                              color: const Color(0xFFC41E3A),
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              filterLabel,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF1a1a1a),
-                              ),
-                            ),
-                          ],
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<SalesPeriod>(
+                          value: _salesPeriod,
+                          isDense: true,
+                          icon: const Icon(Icons.arrow_drop_down,
+                              color: Color(0xFFC41E3A), size: 18),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1a1a1a),
+                          ),
+                          items: SalesPeriod.values
+                              .map((p) => DropdownMenuItem(
+                                    value: p,
+                                    child: Text(_salesPeriodLabel(p)),
+                                  ))
+                              .toList(),
+                          onChanged: (SalesPeriod? value) {
+                            if (value != null) {
+                              setState(() => _salesPeriod = value);
+                            }
+                          },
                         ),
                       ),
                     ),
+                    if (_salesPeriod != SalesPeriod.overall) ...[
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: GestureDetector(
+                          onTap: _pickSalesFilter,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFC41E3A).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: const Color(0xFFC41E3A).withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  _salesPeriod == SalesPeriod.daily
+                                      ? Icons.today
+                                      : _salesPeriod == SalesPeriod.monthly
+                                          ? Icons.calendar_month
+                                          : Icons.calendar_today,
+                                  color: const Color(0xFFC41E3A),
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    filterLabel,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1a1a1a),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            '₱${_formatAmount(netSales)}',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: netSales < 0 ? Colors.red : const Color(0xFF1a1a1a),
+          const SizedBox(height: 6),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '₱${_formatAmount(netSales)}',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: netSales < 0 ? Colors.red : const Color(0xFF1a1a1a),
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             _getSalesSubtitle(salesCount, totalExpenses, totalAdditionalProfits),
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -2023,7 +2156,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   // Top Bar
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 20),
+                        horizontal: 24, vertical: 16),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       boxShadow: [
@@ -2076,7 +2209,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         // Stats Cards
                         SingleChildScrollView(
                           padding:
-                              const EdgeInsets.fromLTRB(32, 32, 32, 16),
+                              const EdgeInsets.fromLTRB(16, 16, 16, 8),
                           child: StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection('sessions')
@@ -2163,26 +2296,50 @@ class _DashboardPageState extends State<DashboardPage> {
 
                                       final netSales = totalRevenueSalesPeriod - totalExpenses + totalAdditionalProfits;
 
-                                      return GridView.count(
-                                        shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(),
-                                        crossAxisCount: 4,
-                                        crossAxisSpacing: 20,
-                                        mainAxisSpacing: 20,
-                                        childAspectRatio: 1.5,
-                                        children: [
-                                          _buildStatCard(
-                                            title: 'Today\'s Sessions',
-                                            value: todaySessions.toString(),
-                                            subtitle: 'Sessions today',
-                                            icon: Icons.calendar_today,
-                                            iconBgColor: const Color(0xFFC41E3A),
-                                          ),
-                                          _buildAdditionalProfitStatCard(totalAdditionalProfits),
-                                          _buildExpensesStatCard(totalExpenses),
-                                          _buildSalesStatCard(
-                                              salesCount, netSales, totalExpenses, totalAdditionalProfits),
-                                        ],
+                                      return LayoutBuilder(
+                                        builder: (context, constraints) {
+                                          const double spacing = 12;
+                                          final double cardWidth = (constraints.maxWidth - spacing * 3) / 4;
+                                          final double cardHeight = (cardWidth / 1.4).clamp(120.0, 180.0);
+                                          return SizedBox(
+                                            height: cardHeight,
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.only(right: 6),
+                                                    child: _buildStatCard(
+                                                      title: 'Today\'s Sessions',
+                                                      value: todaySessions.toString(),
+                                                      subtitle: 'Sessions today',
+                                                      icon: Icons.calendar_today,
+                                                      iconBgColor: const Color(0xFFC41E3A),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                                                    child: _buildAdditionalProfitStatCard(totalAdditionalProfits),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                                                    child: _buildExpensesStatCard(totalExpenses),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.only(left: 6),
+                                                    child: _buildSalesStatCard(
+                                                        salesCount, netSales, totalExpenses, totalAdditionalProfits),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
                                       );
                                     },
                                   );
@@ -2191,13 +2348,13 @@ class _DashboardPageState extends State<DashboardPage> {
                             },
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
 
                         // Recent Client Sessions
                         Expanded(
                           child: Container(
-                            margin: const EdgeInsets.fromLTRB(32, 0, 32, 32),
-                            padding: const EdgeInsets.all(24),
+                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
@@ -2211,16 +2368,17 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Text(
                                   'Recent Client Sessions',
                                   style: TextStyle(
-                                    fontSize: 20,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF1a1a1a),
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 10),
                                 TextField(
                                   controller: _sessionSearchController,
                                   decoration: InputDecoration(
@@ -2247,7 +2405,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                     fillColor: Colors.white,
                                     contentPadding:
                                         const EdgeInsets.symmetric(
-                                            horizontal: 16, vertical: 12),
+                                            horizontal: 12, vertical: 10),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide(
@@ -2263,7 +2421,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   ),
                                   onChanged: (_) => setState(() {}),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 10),
                                 Expanded(
                                   child: StreamBuilder<QuerySnapshot>(
                                     stream: FirebaseFirestore.instance
@@ -2369,86 +2527,77 @@ class _DashboardPageState extends State<DashboardPage> {
                                               child: SizedBox(
                                                 width: tableWidth,
                                                 child: DataTable(
-                                                  headingRowColor:
-                                                      MaterialStateProperty.all(
-                                                          Colors.grey[100]),
-                                                  columns: const [
-                                                    DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(1),
-                                                      label: Text('Client Name',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                    DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(1),
-                                                      label: Text('Date',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                    DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(1),
-                                                      label: Text(
-                                                          'Session Amount',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                    DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(1),
-                                                      label: Text(
-                                                          'Coaching/Rental',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                    DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(1),
-                                                      label: Text('Bay Number',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                    DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(1),
-                                                      label: Text('Personnel',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                    DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(1),
-                                                      label: Text(
-                                                          'Duration (hrs)',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                    DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(1),
-                                                      label: Text('Total',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                    ),
-                                                  ],
+                                                  columnSpacing: 8,
+                                                  horizontalMargin: 12,
+                                                headingRowColor:
+                                                    MaterialStateProperty.all(
+                                                        Colors.grey[100]),
+                                                columns: [
+                                                  const DataColumn(
+                                                    columnWidth:
+                                                        FlexColumnWidth(2.0),
+                                                    label: Text('Client Name',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold)),
+                                                  ),
+                                                  const DataColumn(
+                                                    columnWidth:
+                                                        FlexColumnWidth(1.0),
+                                                    label: Text('Date',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold)),
+                                                  ),
+                                                  const DataColumn(
+                                                    columnWidth:
+                                                        FlexColumnWidth(0.85),
+                                                    label: Text('Session Amount',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold)),
+                                                  ),
+                                                  const DataColumn(
+                                                    columnWidth:
+                                                        FlexColumnWidth(0.9),
+                                                    label: Text('Coaching/Rental',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold)),
+                                                  ),
+                                                  const DataColumn(
+                                                    columnWidth:
+                                                        FlexColumnWidth(0.5),
+                                                    label: Text('Bay',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold)),
+                                                  ),
+                                                  const DataColumn(
+                                                    columnWidth:
+                                                        FlexColumnWidth(1.0),
+                                                    label: Text('Personnel',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold)),
+                                                  ),
+                                                  const DataColumn(
+                                                    columnWidth:
+                                                        FlexColumnWidth(0.55),
+                                                    label: Text('Duration (hrs)',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold)),
+                                                  ),
+                                                  const DataColumn(
+                                                    columnWidth:
+                                                        FlexColumnWidth(1.0),
+                                                    label: Text('Total',
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold)),
+                                                  ),
+                                                ],
                                                   rows: () {
                                                     final sessionList = sessions
                                                         .map((session) =>
