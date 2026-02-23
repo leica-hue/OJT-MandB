@@ -2736,11 +2736,19 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     const DataColumn(
                                                       columnWidth:
                                                           FlexColumnWidth(1.0),
-                                                      label: Text('Total',
+                                                      numeric:
+                                                          true, // this right-aligns the header
+                                                      label: Expanded(
+                                                        child: Text(
+                                                          'Total',
+                                                          textAlign:
+                                                              TextAlign.right,
                                                           style: TextStyle(
                                                               fontWeight:
                                                                   FontWeight
-                                                                      .bold)),
+                                                                      .bold),
+                                                        ),
+                                                      ),
                                                     ),
                                                   ],
                                                   rows: () {
