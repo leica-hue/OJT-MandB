@@ -2156,7 +2156,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   // Top Bar
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 16),
+                        horizontal: 32, vertical: 20),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       boxShadow: [

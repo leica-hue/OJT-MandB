@@ -229,7 +229,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC41E3A),
-              foregroundColor: Colors.white,
             ),
             child: const Text('Update'),
           ),
