@@ -24,15 +24,18 @@ class _DashboardPageState extends State<DashboardPage> {
   DateTime _selectedSalesDate = DateTime.now();
 
   // Monthly: specific month+year filter
-  DateTime _selectedSalesMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+  DateTime _selectedSalesMonth =
+      DateTime(DateTime.now().year, DateTime.now().month, 1);
 
   // Yearly: specific year filter
   DateTime _selectedSalesYear = DateTime(DateTime.now().year, 1, 1);
 
   // Controllers for add session dialog
   final TextEditingController _clientSearchController = TextEditingController();
-  final TextEditingController _sessionAmountController = TextEditingController();
-  final TextEditingController _coachingRentalAmountController = TextEditingController();
+  final TextEditingController _sessionAmountController =
+      TextEditingController();
+  final TextEditingController _coachingRentalAmountController =
+      TextEditingController();
   final TextEditingController _bayNumberController = TextEditingController();
   final TextEditingController _personnelController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
@@ -42,15 +45,17 @@ class _DashboardPageState extends State<DashboardPage> {
   String _sessionModeOfPayment = 'cash';
 
   // Controllers for add expense dialog
-  final TextEditingController _expenseAmountController = TextEditingController();
-  final TextEditingController _expenseDescriptionController = TextEditingController();
+  final TextEditingController _expenseAmountController =
+      TextEditingController();
+  final TextEditingController _expenseDescriptionController =
+      TextEditingController();
   DateTime _expenseDate = DateTime.now();
 
   // Controllers for add additional profit dialog
   final TextEditingController _profitAmountController = TextEditingController();
-  final TextEditingController _profitDescriptionController = TextEditingController();
+  final TextEditingController _profitDescriptionController =
+      TextEditingController();
   DateTime _profitDate = DateTime.now();
-
 
   String? _selectedClientId;
   String? _selectedClientName;
@@ -63,7 +68,8 @@ class _DashboardPageState extends State<DashboardPage> {
   List<DocumentSnapshot> _personnelSearchResults = [];
 
   // Session list search/filter
-  final TextEditingController _sessionSearchController = TextEditingController();
+  final TextEditingController _sessionSearchController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -153,13 +159,15 @@ class _DashboardPageState extends State<DashboardPage> {
       return;
     }
 
-    final results = await FirebaseFirestore.instance.collection('clients').get();
+    final results =
+        await FirebaseFirestore.instance.collection('clients').get();
 
     final filtered = results.docs.where((doc) {
       final data = doc.data();
       final name = (data['name'] ?? '').toLowerCase();
       final email = (data['email'] ?? '').toLowerCase();
-      return name.contains(query.toLowerCase()) || email.contains(query.toLowerCase());
+      return name.contains(query.toLowerCase()) ||
+          email.contains(query.toLowerCase());
     }).toList();
 
     setState(() {
@@ -204,7 +212,8 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  void _selectPersonnel(DocumentSnapshot personnel, StateSetter setDialogState) {
+  void _selectPersonnel(
+      DocumentSnapshot personnel, StateSetter setDialogState) {
     final data = personnel.data() as Map<String, dynamic>;
     final name = data['name'] ?? data['fullName'] ?? '';
     setDialogState(() {
@@ -263,7 +272,8 @@ class _DashboardPageState extends State<DashboardPage> {
         _paymentOtherController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please specify the mode of payment when selecting "Other"'),
+          content:
+              Text('Please specify the mode of payment when selecting "Other"'),
           backgroundColor: Colors.red,
         ),
       );
@@ -278,7 +288,8 @@ class _DashboardPageState extends State<DashboardPage> {
       final dateStr =
           '${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.year}';
 
-      final sessionAmount = double.tryParse(_sessionAmountController.text) ?? 0.0;
+      final sessionAmount =
+          double.tryParse(_sessionAmountController.text) ?? 0.0;
       final coachingRentalAmount =
           double.tryParse(_coachingRentalAmountController.text) ?? 0.0;
 
@@ -386,9 +397,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 return;
               }
               try {
-                final newClient = await FirebaseFirestore.instance
-                    .collection('clients')
-                    .add({
+                final newClient =
+                    await FirebaseFirestore.instance.collection('clients').add({
                   'name': name,
                   'address': addressController.text.trim(),
                   'joinDate': DateTime.now().toIso8601String(),
@@ -455,8 +465,8 @@ class _DashboardPageState extends State<DashboardPage> {
                           horizontal: 16, vertical: 12),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: Colors.grey.shade300, width: 1),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade300, width: 1),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -514,7 +524,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   if (_showNewClientFields)
                     Container(
                       margin: const EdgeInsets.only(top: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.blue.shade50,
                         borderRadius: BorderRadius.circular(8),
@@ -522,7 +533,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                          Icon(Icons.info_outline,
+                              color: Colors.blue.shade700, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -535,11 +547,13 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                           TextButton.icon(
                             style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
                             ),
                             onPressed: () {
                               _showAddNewClientDialog(
-                                prefillName: _clientSearchController.text.trim(),
+                                prefillName:
+                                    _clientSearchController.text.trim(),
                                 onClientCreated: (clientId, clientName) {
                                   setState(() {
                                     _selectedClientId = clientId;
@@ -551,7 +565,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                   setDialogState(() {});
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Client "$clientName" added & selected!'),
+                                      content: Text(
+                                          'Client "$clientName" added & selected!'),
                                       backgroundColor: const Color(0xFFC41E3A),
                                     ),
                                   );
@@ -618,9 +633,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _sessionAmountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
-                      hintText: 'e.g., 500.00',
+                      hintText: 'e.g., 500',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.payments),
                     ),
@@ -635,9 +651,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _coachingRentalAmountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
-                      hintText: 'e.g., 200.00',
+                      hintText: 'e.g., 200',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.account_balance_wallet),
                     ),
@@ -653,7 +670,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   TextField(
                     controller: _bayNumberController,
                     decoration: const InputDecoration(
-                      hintText: 'e.g., Bay 1, A1',
+                      hintText: 'e.g., 1, 2',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.numbers),
                     ),
@@ -686,8 +703,8 @@ class _DashboardPageState extends State<DashboardPage> {
                           horizontal: 16, vertical: 12),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: Colors.grey.shade300, width: 1),
+                        borderSide:
+                            BorderSide(color: Colors.grey.shade300, width: 1),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -719,7 +736,8 @@ class _DashboardPageState extends State<DashboardPage> {
                         itemBuilder: (context, index) {
                           final personnel = _personnelSearchResults[index];
                           final data = personnel.data() as Map<String, dynamic>;
-                          final name = data['name'] ?? data['fullName'] ?? 'Unknown';
+                          final name =
+                              data['name'] ?? data['fullName'] ?? 'Unknown';
                           final role = data['role'] ?? data['position'] ?? '';
                           return ListTile(
                             dense: true,
@@ -746,7 +764,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       _selectedPersonnelName == null)
                     Container(
                       margin: const EdgeInsets.only(top: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.orange.shade50,
                         borderRadius: BorderRadius.circular(8),
@@ -803,7 +822,8 @@ class _DashboardPageState extends State<DashboardPage> {
                         selected: _sessionModeOfPayment == 'cash',
                         onSelected: (selected) {
                           if (selected) {
-                            setDialogState(() => _sessionModeOfPayment = 'cash');
+                            setDialogState(
+                                () => _sessionModeOfPayment = 'cash');
                           }
                         },
                         selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
@@ -814,7 +834,8 @@ class _DashboardPageState extends State<DashboardPage> {
                         selected: _sessionModeOfPayment == 'gcash',
                         onSelected: (selected) {
                           if (selected) {
-                            setDialogState(() => _sessionModeOfPayment = 'gcash');
+                            setDialogState(
+                                () => _sessionModeOfPayment = 'gcash');
                           }
                         },
                         selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
@@ -825,7 +846,8 @@ class _DashboardPageState extends State<DashboardPage> {
                         selected: _sessionModeOfPayment == 'other',
                         onSelected: (selected) {
                           if (selected) {
-                            setDialogState(() => _sessionModeOfPayment = 'other');
+                            setDialogState(
+                                () => _sessionModeOfPayment = 'other');
                           }
                         },
                         selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
@@ -837,7 +859,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     TextField(
                       controller: _paymentOtherController,
                       decoration: const InputDecoration(
-                        hintText: 'Specify mode of payment (e.g., Bank Transfer, Check)',
+                        hintText:
+                            'Specify mode of payment (e.g., Bank Transfer, Check)',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.edit),
                       ),
@@ -939,7 +962,8 @@ class _DashboardPageState extends State<DashboardPage> {
         });
       }
 
-      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
+      final firstDesc =
+          items.isNotEmpty ? (items.first['description'] ?? '') : '';
       final expenseData = {
         'date': dateStr,
         'amount': totalAmount,
@@ -1036,7 +1060,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
+                      Icon(Icons.receipt_long,
+                          size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
                         'No expenses yet',
@@ -1070,10 +1095,24 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     child: const Row(
                       children: [
-                        Expanded(flex: 2, child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold))),
-                        Expanded(flex: 2, child: Text('Description', style: TextStyle(fontWeight: FontWeight.bold))),
-                        Expanded(flex: 1, child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.right)),
-                        Expanded(flex: 1, child: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+                        Expanded(
+                            flex: 2,
+                            child: Text('Date',
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(
+                            flex: 2,
+                            child: Text('Description',
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(
+                            flex: 1,
+                            child: Text('Amount',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.right)),
+                        Expanded(
+                            flex: 1,
+                            child: Text('Actions',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center)),
                       ],
                     ),
                   ),
@@ -1084,7 +1123,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       itemBuilder: (context, index) {
                         final expense = expenses[index];
                         final data = expense.data() as Map<String, dynamic>;
-                        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+                        final amount =
+                            (data['amount'] as num?)?.toDouble() ?? 0.0;
                         String description = data['description'] ?? 'N/A';
                         if (data['items'] != null && data['items'] is List) {
                           final itemsList = data['items'] as List;
@@ -1094,7 +1134,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ? (first['description'] ?? '').toString()
                                 : 'N/A';
                             if (itemsList.length > 1) {
-                              description = '$firstDesc (+${itemsList.length - 1} more)';
+                              description =
+                                  '$firstDesc (+${itemsList.length - 1} more)';
                             } else {
                               description = firstDesc;
                             }
@@ -1114,11 +1155,13 @@ class _DashboardPageState extends State<DashboardPage> {
                             children: [
                               Expanded(
                                 flex: 2,
-                                child: Text(date, style: const TextStyle(fontSize: 14)),
+                                child: Text(date,
+                                    style: const TextStyle(fontSize: 14)),
                               ),
                               Expanded(
                                 flex: 2,
-                                child: Text(description, style: const TextStyle(fontSize: 14)),
+                                child: Text(description,
+                                    style: const TextStyle(fontSize: 14)),
                               ),
                               Expanded(
                                 flex: 1,
@@ -1137,7 +1180,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
+                                      icon: const Icon(Icons.edit,
+                                          size: 20, color: Colors.blue),
                                       onPressed: () {
                                         Navigator.pop(context);
                                         _showEditExpenseDialog(expense);
@@ -1145,8 +1189,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                       tooltip: 'Edit',
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-                                      onPressed: () => _deleteExpense(expense.id),
+                                      icon: const Icon(Icons.delete,
+                                          size: 20, color: Colors.red),
+                                      onPressed: () =>
+                                          _deleteExpense(expense.id),
                                       tooltip: 'Delete',
                                     ),
                                   ],
@@ -1209,7 +1255,9 @@ class _DashboardPageState extends State<DashboardPage> {
     if (data['items'] != null && data['items'] is List) {
       final list = data['items'] as List;
       initialItems = list.map<Map<String, String>>((e) {
-        final m = e is Map ? Map<String, dynamic>.from(e as Map) : <String, dynamic>{};
+        final m = e is Map
+            ? Map<String, dynamic>.from(e as Map)
+            : <String, dynamic>{};
         final amt = m['amount'];
         return {
           'description': (m['description'] ?? '').toString(),
@@ -1286,9 +1334,13 @@ class _DashboardPageState extends State<DashboardPage> {
           'amount': amt,
         });
       }
-      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
+      final firstDesc =
+          items.isNotEmpty ? (items.first['description'] ?? '') : '';
 
-      await FirebaseFirestore.instance.collection('expenses').doc(expenseId).update({
+      await FirebaseFirestore.instance
+          .collection('expenses')
+          .doc(expenseId)
+          .update({
         'date': dateStr,
         'amount': totalAmount,
         'description': firstDesc,
@@ -1326,7 +1378,8 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Expense'),
-        content: const Text('Are you sure you want to delete this expense? This action cannot be undone.'),
+        content: const Text(
+            'Are you sure you want to delete this expense? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -1358,11 +1411,14 @@ class _DashboardPageState extends State<DashboardPage> {
     );
 
     try {
-      await FirebaseFirestore.instance.collection('expenses').doc(expenseId).delete();
+      await FirebaseFirestore.instance
+          .collection('expenses')
+          .doc(expenseId)
+          .delete();
 
       if (mounted) {
         Navigator.pop(context);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Expense deleted successfully'),
@@ -1493,7 +1549,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     color: const Color(0xFFC41E3A).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.receipt_long, color: Color(0xFFC41E3A), size: 16),
+                  child: const Icon(Icons.receipt_long,
+                      color: Color(0xFFC41E3A), size: 16),
                 ),
               ],
             ),
@@ -1561,7 +1618,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     color: const Color(0xFFC41E3A).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.trending_up, color: Color(0xFFC41E3A), size: 16),
+                  child: const Icon(Icons.trending_up,
+                      color: Color(0xFFC41E3A), size: 16),
                 ),
               ],
             ),
@@ -1624,7 +1682,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 primary: Color(0xFFC41E3A),
                 onPrimary: Colors.white,
                 onSurface: Color(0xFF1a1a1a),
-                surface: Color(0xFFFBE9E7), // light pinkish-beige calendar background
+                surface: Color(
+                    0xFFFBE9E7), // light pinkish-beige calendar background
                 onSurfaceVariant: Color(0xFF1a1a1a),
               ),
             ),
@@ -1657,9 +1716,18 @@ class _DashboardPageState extends State<DashboardPage> {
     int tempMonth = _selectedSalesMonth.month;
 
     const months = [
-      'January', 'February', 'March', 'April',
-      'May', 'June', 'July', 'August',
-      'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
 
     await showDialog(
@@ -1722,7 +1790,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: isSelected ? Colors.white : const Color(0xFF1a1a1a),
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFF1a1a1a),
                           ),
                         ),
                       ),
@@ -1787,8 +1857,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     IconButton(
                       icon: const Icon(Icons.chevron_left),
                       onPressed: tempStartYear > minStartYear
-                          ? () => setDialogState(() =>
-                              tempStartYear = (tempStartYear - yearsPerPage).clamp(minStartYear, maxStartYear))
+                          ? () => setDialogState(() => tempStartYear =
+                              (tempStartYear - yearsPerPage)
+                                  .clamp(minStartYear, maxStartYear))
                           : null,
                     ),
                     Text(
@@ -1801,8 +1872,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     IconButton(
                       icon: const Icon(Icons.chevron_right),
                       onPressed: tempStartYear < maxStartYear
-                          ? () => setDialogState(() =>
-                              tempStartYear = (tempStartYear + yearsPerPage).clamp(minStartYear, maxStartYear))
+                          ? () => setDialogState(() => tempStartYear =
+                              (tempStartYear + yearsPerPage)
+                                  .clamp(minStartYear, maxStartYear))
                           : null,
                     ),
                   ],
@@ -1837,7 +1909,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: isSelected ? Colors.white : const Color(0xFF1a1a1a),
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFF1a1a1a),
                           ),
                         ),
                       ),
@@ -1871,7 +1945,8 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildSalesStatCard(int salesCount, double netSales, double totalExpenses, double totalAdditionalProfits) {
+  Widget _buildSalesStatCard(int salesCount, double netSales,
+      double totalExpenses, double totalAdditionalProfits) {
     final filterLabel = _buildSalesFilterLabel();
 
     return Container(
@@ -1908,7 +1983,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: const Color(0xFFC41E3A).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -1944,12 +2020,14 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: GestureDetector(
                           onTap: _pickSalesFilter,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 4),
                             decoration: BoxDecoration(
                               color: const Color(0xFFC41E3A).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                  color: const Color(0xFFC41E3A).withOpacity(0.3)),
+                                  color:
+                                      const Color(0xFFC41E3A).withOpacity(0.3)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -2004,7 +2082,8 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           const SizedBox(height: 2),
           Text(
-            _getSalesSubtitle(salesCount, totalExpenses, totalAdditionalProfits),
+            _getSalesSubtitle(
+                salesCount, totalExpenses, totalAdditionalProfits),
             style: TextStyle(fontSize: 11, color: Colors.grey[600]),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -2087,6 +2166,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const Spacer(),
                 // User Profile - Clickable
+                // User Profile - Clickable
                 InkWell(
                   onTap: () {
                     Navigator.of(context).push(
@@ -2101,46 +2181,59 @@ class _DashboardPageState extends State<DashboardPage> {
                       color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.white,
-                          child: Text(
-                            displayName[0].toUpperCase(),
-                            style: const TextStyle(
-                              color: Color(0xFFC41E3A),
-                              fontWeight: FontWeight.bold,
+                    child: _isSidebarCollapsed
+                        // ✅ When collapsed: just center the avatar, no Row
+                        ? Center(
+                            child: CircleAvatar(
+                              backgroundColor: Colors.white,
+                              child: Text(
+                                displayName[0].toUpperCase(),
+                                style: const TextStyle(
+                                  color: Color(0xFFC41E3A),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        if (!_isSidebarCollapsed) ...[
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  displayName,
+                          )
+                        // When expanded: full Row with name/role
+                        : Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: Colors.white,
+                                child: Text(
+                                  displayName[0].toUpperCase(),
                                   style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const Text(
-                                  'Administrator',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
+                                    color: Color(0xFFC41E3A),
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      displayName,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const Text(
+                                      'Administrator',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ],
-                    ),
                   ),
                 ),
               ],
@@ -2208,8 +2301,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       children: [
                         // Stats Cards
                         SingleChildScrollView(
-                          padding:
-                              const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                           child: StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection('sessions')
@@ -2223,7 +2315,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                   return StreamBuilder<QuerySnapshot>(
                                     stream: FirebaseFirestore.instance
                                         .collection('additional-profits')
-                                        .snapshots(includeMetadataChanges: true),
+                                        .snapshots(
+                                            includeMetadataChanges: true),
                                     builder: (context, profitsSnapshot) {
                                       int todaySessions = 0;
                                       double totalAdditionalProfits = 0.0;
@@ -2235,7 +2328,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                         final allDocs = snapshot.data!.docs;
                                         final todayStr = _getTodayDate();
                                         final todayDocs = allDocs
-                                            .where((doc) => doc['date'] == todayStr)
+                                            .where((doc) =>
+                                                doc['date'] == todayStr)
                                             .toList();
 
                                         todaySessions = todayDocs.length;
@@ -2246,94 +2340,134 @@ class _DashboardPageState extends State<DashboardPage> {
                                           return _isDateInSalesPeriod(dt);
                                         }).toList();
                                         salesCount = salesDocs.length;
-                                        totalRevenueSalesPeriod = salesDocs.fold(
-                                            0.0,
-                                            (sum, doc) =>
-                                                sum +
-                                                _getSessionTotal(doc.data()
-                                                    as Map<String, dynamic>));
+                                        totalRevenueSalesPeriod =
+                                            salesDocs.fold(
+                                                0.0,
+                                                (sum, doc) =>
+                                                    sum +
+                                                    _getSessionTotal(doc.data()
+                                                        as Map<String,
+                                                            dynamic>));
                                       }
 
                                       if (expensesSnapshot.hasData) {
-                                        final expensesDocs = expensesSnapshot.data!.docs;
-                                        final filteredExpenses = expensesDocs.where((doc) {
-                                          final dateStr = doc['date'] as String?;
+                                        final expensesDocs =
+                                            expensesSnapshot.data!.docs;
+                                        final filteredExpenses =
+                                            expensesDocs.where((doc) {
+                                          final dateStr =
+                                              doc['date'] as String?;
                                           if (dateStr == null) return false;
                                           final dt = _parseSessionDate(dateStr);
                                           return _isDateInSalesPeriod(dt);
                                         }).toList();
-                                        
-                                        totalExpenses = filteredExpenses.fold(
-                                            0.0,
-                                            (sum, doc) {
-                                              final amount = doc['amount'];
-                                              if (amount is num) {
-                                                return sum + amount.toDouble();
-                                              }
-                                              return sum + (double.tryParse(amount?.toString() ?? '') ?? 0.0);
-                                            });
+
+                                        totalExpenses = filteredExpenses
+                                            .fold(0.0, (sum, doc) {
+                                          final amount = doc['amount'];
+                                          if (amount is num) {
+                                            return sum + amount.toDouble();
+                                          }
+                                          return sum +
+                                              (double.tryParse(
+                                                      amount?.toString() ??
+                                                          '') ??
+                                                  0.0);
+                                        });
                                       }
 
                                       if (profitsSnapshot.hasData) {
-                                        final profitsDocs = profitsSnapshot.data!.docs;
-                                        final filteredProfits = profitsDocs.where((doc) {
-                                          final dateStr = doc['date'] as String?;
+                                        final profitsDocs =
+                                            profitsSnapshot.data!.docs;
+                                        final filteredProfits =
+                                            profitsDocs.where((doc) {
+                                          final dateStr =
+                                              doc['date'] as String?;
                                           if (dateStr == null) return false;
                                           final dt = _parseSessionDate(dateStr);
                                           return _isDateInSalesPeriod(dt);
                                         }).toList();
-                                        
-                                        totalAdditionalProfits = filteredProfits.fold(
-                                            0.0,
-                                            (sum, doc) {
-                                              final amount = doc['amount'];
-                                              if (amount is num) {
-                                                return sum + amount.toDouble();
-                                              }
-                                              return sum + (double.tryParse(amount?.toString() ?? '') ?? 0.0);
-                                            });
+
+                                        totalAdditionalProfits = filteredProfits
+                                            .fold(0.0, (sum, doc) {
+                                          final amount = doc['amount'];
+                                          if (amount is num) {
+                                            return sum + amount.toDouble();
+                                          }
+                                          return sum +
+                                              (double.tryParse(
+                                                      amount?.toString() ??
+                                                          '') ??
+                                                  0.0);
+                                        });
                                       }
 
-                                      final netSales = totalRevenueSalesPeriod - totalExpenses + totalAdditionalProfits;
+                                      final netSales = totalRevenueSalesPeriod -
+                                          totalExpenses +
+                                          totalAdditionalProfits;
 
                                       return LayoutBuilder(
                                         builder: (context, constraints) {
                                           const double spacing = 12;
-                                          final double cardWidth = (constraints.maxWidth - spacing * 3) / 4;
-                                          final double cardHeight = (cardWidth / 1.4).clamp(120.0, 180.0);
+                                          final double cardWidth =
+                                              (constraints.maxWidth -
+                                                      spacing * 3) /
+                                                  4;
+                                          final double cardHeight =
+                                              (cardWidth / 1.4)
+                                                  .clamp(120.0, 180.0);
                                           return SizedBox(
                                             height: cardHeight,
                                             child: Row(
                                               children: [
                                                 Expanded(
                                                   child: Padding(
-                                                    padding: const EdgeInsets.only(right: 6),
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            right: 6),
                                                     child: _buildStatCard(
-                                                      title: 'Today\'s Sessions',
-                                                      value: todaySessions.toString(),
-                                                      subtitle: 'Sessions today',
-                                                      icon: Icons.calendar_today,
-                                                      iconBgColor: const Color(0xFFC41E3A),
+                                                      title:
+                                                          'Today\'s Sessions',
+                                                      value: todaySessions
+                                                          .toString(),
+                                                      subtitle:
+                                                          'Sessions today',
+                                                      icon:
+                                                          Icons.calendar_today,
+                                                      iconBgColor: const Color(
+                                                          0xFFC41E3A),
                                                     ),
                                                   ),
                                                 ),
                                                 Expanded(
                                                   child: Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                                                    child: _buildAdditionalProfitStatCard(totalAdditionalProfits),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 6),
+                                                    child: _buildAdditionalProfitStatCard(
+                                                        totalAdditionalProfits),
                                                   ),
                                                 ),
                                                 Expanded(
                                                   child: Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                                                    child: _buildExpensesStatCard(totalExpenses),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 6),
+                                                    child:
+                                                        _buildExpensesStatCard(
+                                                            totalExpenses),
                                                   ),
                                                 ),
                                                 Expanded(
                                                   child: Padding(
-                                                    padding: const EdgeInsets.only(left: 6),
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 6),
                                                     child: _buildSalesStatCard(
-                                                        salesCount, netSales, totalExpenses, totalAdditionalProfits),
+                                                        salesCount,
+                                                        netSales,
+                                                        totalExpenses,
+                                                        totalAdditionalProfits),
                                                   ),
                                                 ),
                                               ],
@@ -2403,9 +2537,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                         : null,
                                     filled: true,
                                     fillColor: Colors.white,
-                                    contentPadding:
-                                        const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 10),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 10),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide(
@@ -2415,8 +2548,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: const BorderSide(
-                                          color: Color(0xFFC41E3A),
-                                          width: 1.2),
+                                          color: Color(0xFFC41E3A), width: 1.2),
                                     ),
                                   ),
                                   onChanged: (_) => setState(() {}),
@@ -2478,12 +2610,14 @@ class _DashboardPageState extends State<DashboardPage> {
                                           : allSessions.where((doc) {
                                               final d = doc.data()
                                                   as Map<String, dynamic>;
-                                              final clientName = (d['clientName'] ?? '')
-                                                  .toString()
-                                                  .toLowerCase();
-                                              final personnel = (d['personnel'] ?? '')
-                                                  .toString()
-                                                  .toLowerCase();
+                                              final clientName =
+                                                  (d['clientName'] ?? '')
+                                                      .toString()
+                                                      .toLowerCase();
+                                              final personnel =
+                                                  (d['personnel'] ?? '')
+                                                      .toString()
+                                                      .toLowerCase();
                                               final date = (d['date'] ?? '')
                                                   .toString()
                                                   .toLowerCase();
@@ -2529,75 +2663,86 @@ class _DashboardPageState extends State<DashboardPage> {
                                                 child: DataTable(
                                                   columnSpacing: 8,
                                                   horizontalMargin: 12,
-                                                headingRowColor:
-                                                    MaterialStateProperty.all(
-                                                        Colors.grey[100]),
-                                                columns: [
-                                                  const DataColumn(
-                                                    columnWidth:
-                                                        FlexColumnWidth(2.0),
-                                                    label: Text('Client Name',
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold)),
-                                                  ),
-                                                  const DataColumn(
-                                                    columnWidth:
-                                                        FlexColumnWidth(1.0),
-                                                    label: Text('Date',
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold)),
-                                                  ),
-                                                  const DataColumn(
-                                                    columnWidth:
-                                                        FlexColumnWidth(0.85),
-                                                    label: Text('Session Amount',
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold)),
-                                                  ),
-                                                  const DataColumn(
-                                                    columnWidth:
-                                                        FlexColumnWidth(0.9),
-                                                    label: Text('Coaching/Rental',
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold)),
-                                                  ),
-                                                  const DataColumn(
-                                                    columnWidth:
-                                                        FlexColumnWidth(0.5),
-                                                    label: Text('Bay',
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold)),
-                                                  ),
-                                                  const DataColumn(
-                                                    columnWidth:
-                                                        FlexColumnWidth(1.0),
-                                                    label: Text('Personnel',
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold)),
-                                                  ),
-                                                  const DataColumn(
-                                                    columnWidth:
-                                                        FlexColumnWidth(0.55),
-                                                    label: Text('Duration (hrs)',
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold)),
-                                                  ),
-                                                  const DataColumn(
-                                                    columnWidth:
-                                                        FlexColumnWidth(1.0),
-                                                    label: Text('Total',
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold)),
-                                                  ),
-                                                ],
+                                                  headingRowColor:
+                                                      MaterialStateProperty.all(
+                                                          Colors.grey[100]),
+                                                  columns: [
+                                                    const DataColumn(
+                                                      columnWidth:
+                                                          FlexColumnWidth(2.0),
+                                                      label: Text('Client Name',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+                                                    ),
+                                                    const DataColumn(
+                                                      columnWidth:
+                                                          FlexColumnWidth(1.0),
+                                                      label: Text('Date',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+                                                    ),
+                                                    const DataColumn(
+                                                      columnWidth:
+                                                          FlexColumnWidth(0.85),
+                                                      label: Text(
+                                                          'Session Amount',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+                                                    ),
+                                                    const DataColumn(
+                                                      columnWidth:
+                                                          FlexColumnWidth(0.9),
+                                                      label: Text(
+                                                          'Coaching/Rental',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+                                                    ),
+                                                    const DataColumn(
+                                                      columnWidth:
+                                                          FlexColumnWidth(0.5),
+                                                      label: Text('Bay',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+                                                    ),
+                                                    const DataColumn(
+                                                      columnWidth:
+                                                          FlexColumnWidth(1.0),
+                                                      label: Text('Personnel',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+                                                    ),
+                                                    const DataColumn(
+                                                      columnWidth:
+                                                          FlexColumnWidth(0.55),
+                                                      label: Text(
+                                                          'Duration (hrs)',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+                                                    ),
+                                                    const DataColumn(
+                                                      columnWidth:
+                                                          FlexColumnWidth(1.0),
+                                                      label: Text('Total',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+                                                    ),
+                                                  ],
                                                   rows: () {
                                                     final sessionList = sessions
                                                         .map((session) =>
@@ -2605,15 +2750,15 @@ class _DashboardPageState extends State<DashboardPage> {
                                                                 as Map<String,
                                                                     dynamic>)
                                                         .toList();
-                                                    final dataRows = sessionList
-                                                        .map((data) {
+                                                    final dataRows =
+                                                        sessionList.map((data) {
                                                       final total =
                                                           _getSessionTotal(
                                                               data);
                                                       return DataRow(cells: [
-                                                        DataCell(Text(
-                                                            data['clientName'] ??
-                                                                'N/A')),
+                                                        DataCell(Text(data[
+                                                                'clientName'] ??
+                                                            'N/A')),
                                                         DataCell(Text(
                                                             data['date'] ??
                                                                 'N/A')),
@@ -2641,17 +2786,17 @@ class _DashboardPageState extends State<DashboardPage> {
                                                                       .toString())
                                                               : '—',
                                                         )),
-                                                        DataCell(Text(
-                                                            data['bayNumber']
-                                                                    ?.toString() ??
-                                                                '—')),
+                                                        DataCell(Text(data[
+                                                                    'bayNumber']
+                                                                ?.toString() ??
+                                                            '—')),
                                                         DataCell(Text(
                                                             data['personnel'] ??
                                                                 'N/A')),
-                                                        DataCell(Text(
-                                                            data['duration']
-                                                                    ?.toString() ??
-                                                                '0.0')),
+                                                        DataCell(Text(data[
+                                                                    'duration']
+                                                                ?.toString() ??
+                                                            '0.0')),
                                                         DataCell(Text(
                                                             '₱${_formatAmount(total)}')),
                                                       ]);
@@ -2736,9 +2881,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   String _formatAmount(double value) {
     return value.toStringAsFixed(2).replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]},',
-    );
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (m) => '${m[1]},',
+        );
   }
 
   DateTime? _parseSessionDate(String? dateStr) {
@@ -2763,8 +2908,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
     switch (_salesPeriod) {
       case SalesPeriod.daily:
-        final d = DateTime(
-            _selectedSalesDate.year, _selectedSalesDate.month, _selectedSalesDate.day);
+        final d = DateTime(_selectedSalesDate.year, _selectedSalesDate.month,
+            _selectedSalesDate.day);
         return sd == d;
 
       case SalesPeriod.monthly:
@@ -2781,8 +2926,18 @@ class _DashboardPageState extends State<DashboardPage> {
 
   String _getMonthName(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return months[month - 1];
   }
@@ -2800,7 +2955,8 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  String _getSalesSubtitle(int salesCount, double totalExpenses, double totalAdditionalProfits) {
+  String _getSalesSubtitle(
+      int salesCount, double totalExpenses, double totalAdditionalProfits) {
     final periodLabel = _salesPeriodLabel(_salesPeriod).toLowerCase();
     if (totalExpenses > 0 && totalAdditionalProfits > 0) {
       return 'Net revenue  · $salesCount $periodLabel sessions';
@@ -2860,7 +3016,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.trending_up, size: 64, color: Colors.grey[400]),
+                      Icon(Icons.trending_up,
+                          size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
                         'No additional profits yet',
@@ -2894,10 +3051,24 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     child: const Row(
                       children: [
-                        Expanded(flex: 2, child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold))),
-                        Expanded(flex: 2, child: Text('Description', style: TextStyle(fontWeight: FontWeight.bold))),
-                        Expanded(flex: 1, child: Text('Amount', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.right)),
-                        Expanded(flex: 1, child: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+                        Expanded(
+                            flex: 2,
+                            child: Text('Date',
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(
+                            flex: 2,
+                            child: Text('Description',
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Expanded(
+                            flex: 1,
+                            child: Text('Amount',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.right)),
+                        Expanded(
+                            flex: 1,
+                            child: Text('Actions',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center)),
                       ],
                     ),
                   ),
@@ -2908,7 +3079,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       itemBuilder: (context, index) {
                         final profit = profits[index];
                         final data = profit.data() as Map<String, dynamic>;
-                        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+                        final amount =
+                            (data['amount'] as num?)?.toDouble() ?? 0.0;
                         String description = data['description'] ?? 'N/A';
                         if (data['items'] != null && data['items'] is List) {
                           final itemsList = data['items'] as List;
@@ -2918,7 +3090,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ? (first['description'] ?? '').toString()
                                 : 'N/A';
                             if (itemsList.length > 1) {
-                              description = '$firstDesc (+${itemsList.length - 1} more)';
+                              description =
+                                  '$firstDesc (+${itemsList.length - 1} more)';
                             } else {
                               description = firstDesc;
                             }
@@ -2938,11 +3111,13 @@ class _DashboardPageState extends State<DashboardPage> {
                             children: [
                               Expanded(
                                 flex: 2,
-                                child: Text(date, style: const TextStyle(fontSize: 14)),
+                                child: Text(date,
+                                    style: const TextStyle(fontSize: 14)),
                               ),
                               Expanded(
                                 flex: 2,
-                                child: Text(description, style: const TextStyle(fontSize: 14)),
+                                child: Text(description,
+                                    style: const TextStyle(fontSize: 14)),
                               ),
                               Expanded(
                                 flex: 1,
@@ -2961,7 +3136,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
+                                      icon: const Icon(Icons.edit,
+                                          size: 20, color: Colors.blue),
                                       onPressed: () {
                                         Navigator.pop(context);
                                         _showEditProfitDialog(profit);
@@ -2969,7 +3145,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                       tooltip: 'Edit',
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                                      icon: const Icon(Icons.delete,
+                                          size: 20, color: Colors.red),
                                       onPressed: () => _deleteProfit(profit.id),
                                       tooltip: 'Delete',
                                     ),
@@ -3076,7 +3253,8 @@ class _DashboardPageState extends State<DashboardPage> {
           'amount': amt,
         });
       }
-      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
+      final firstDesc =
+          items.isNotEmpty ? (items.first['description'] ?? '') : '';
 
       final profitData = {
         'date': dateStr,
@@ -3148,7 +3326,9 @@ class _DashboardPageState extends State<DashboardPage> {
     if (data['items'] != null && data['items'] is List) {
       final list = data['items'] as List;
       initialItems = list.map<Map<String, String>>((e) {
-        final m = e is Map ? Map<String, dynamic>.from(e as Map) : <String, dynamic>{};
+        final m = e is Map
+            ? Map<String, dynamic>.from(e as Map)
+            : <String, dynamic>{};
         final amt = m['amount'];
         return {
           'description': (m['description'] ?? '').toString(),
@@ -3225,9 +3405,13 @@ class _DashboardPageState extends State<DashboardPage> {
           'amount': amt,
         });
       }
-      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
+      final firstDesc =
+          items.isNotEmpty ? (items.first['description'] ?? '') : '';
 
-      await FirebaseFirestore.instance.collection('additional-profits').doc(profitId).update({
+      await FirebaseFirestore.instance
+          .collection('additional-profits')
+          .doc(profitId)
+          .update({
         'date': dateStr,
         'amount': totalAmount,
         'description': firstDesc,
@@ -3265,7 +3449,8 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Additional Profit'),
-        content: const Text('Are you sure you want to delete this profit? This action cannot be undone.'),
+        content: const Text(
+            'Are you sure you want to delete this profit? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -3297,11 +3482,14 @@ class _DashboardPageState extends State<DashboardPage> {
     );
 
     try {
-      await FirebaseFirestore.instance.collection('additional-profits').doc(profitId).delete();
+      await FirebaseFirestore.instance
+          .collection('additional-profits')
+          .doc(profitId)
+          .delete();
 
       if (mounted) {
         Navigator.pop(context);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profit deleted successfully'),
@@ -3353,8 +3541,10 @@ class _ExpenseLineItemsFormState extends State<_ExpenseLineItemsForm> {
     _date = widget.initialDate;
     if (widget.initialItems != null && widget.initialItems!.isNotEmpty) {
       for (final item in widget.initialItems!) {
-        _descControllers.add(TextEditingController(text: item['description'] ?? ''));
-        _amountControllers.add(TextEditingController(text: item['amount'] ?? ''));
+        _descControllers
+            .add(TextEditingController(text: item['description'] ?? ''));
+        _amountControllers
+            .add(TextEditingController(text: item['amount'] ?? ''));
       }
     } else {
       _descControllers.add(TextEditingController());
@@ -3399,7 +3589,8 @@ class _ExpenseLineItemsFormState extends State<_ExpenseLineItemsForm> {
       if (desc.isEmpty || amountStr.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Fill description and price for each row, or remove empty rows'),
+            content: Text(
+                'Fill description and price for each row, or remove empty rows'),
             backgroundColor: Colors.red,
           ),
         );
@@ -3492,19 +3683,19 @@ class _ExpenseLineItemsFormState extends State<_ExpenseLineItemsForm> {
                           const SizedBox(height: 4),
                           TextField(
                             controller: _descControllers[index],
-                              decoration: const InputDecoration(
-                                hintText: 'e.g., Staff Water, Utilities',
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.description, size: 20),
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 12),
-                              ),
-                              maxLines: 1,
+                            decoration: const InputDecoration(
+                              hintText: 'e.g., Staff Water, Utilities',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.description, size: 20),
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
                             ),
-                          ],
-                        ),
+                            maxLines: 1,
+                          ),
+                        ],
                       ),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       flex: 1,
@@ -3522,22 +3713,22 @@ class _ExpenseLineItemsFormState extends State<_ExpenseLineItemsForm> {
                           ),
                           const SizedBox(height: 4),
                           TextField(
-                              controller: _amountControllers[index],
-                              keyboardType: const TextInputType.numberWithOptions(
-                                  decimal: true),
-                              decoration: const InputDecoration(
-                                hintText: '0',
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.payments, size: 20),
-                                prefixText: '₱',
-                                isDense: true,
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 12),
-                              ),
+                            controller: _amountControllers[index],
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            decoration: const InputDecoration(
+                              hintText: '0',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.payments, size: 20),
+                              prefixText: '₱',
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
+                    ),
                     if (_descControllers.length > 1)
                       IconButton(
                         icon: const Icon(Icons.remove_circle_outline,

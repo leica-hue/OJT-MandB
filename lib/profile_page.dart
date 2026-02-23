@@ -17,19 +17,21 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isSidebarCollapsed = false;
   String _currentPage = 'Profile';
   bool _isEditingProfile = false;
-  
+
   // Profile controllers
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _roleController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
-  
+
   // Password controllers
-  final TextEditingController _currentPasswordController = TextEditingController();
+  final TextEditingController _currentPasswordController =
+      TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
@@ -181,7 +183,7 @@ class _ProfilePageState extends State<ProfilePage> {
       } else if (e.code == 'weak-password') {
         message = 'Password is too weak';
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -354,57 +356,74 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const Spacer(),
                 // User Profile - Clickable
+                // User Profile - Clickable
                 InkWell(
-                  onTap: () => _navigateToPage('Profile'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (context) => const ProfilePage()),
+                    );
+                  },
                   child: Container(
                     margin: const EdgeInsets.all(16),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: _currentPage == 'Profile'
-                          ? Colors.white.withOpacity(0.2)
-                          : Colors.white.withOpacity(0.1),
+                      color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.white,
-                          child: Text(
-                            _getInitials(displayName),
-                            style: const TextStyle(
-                              color: Color(0xFFC41E3A),
-                              fontWeight: FontWeight.bold,
+                    child: _isSidebarCollapsed
+                        // ✅ When collapsed: just center the avatar, no Row
+                        ? Center(
+                            child: CircleAvatar(
+                              backgroundColor: Colors.white,
+                              child: Text(
+                                displayName[0].toUpperCase(),
+                                style: const TextStyle(
+                                  color: Color(0xFFC41E3A),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        if (!_isSidebarCollapsed) ...[
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  displayName,
+                          )
+                        // When expanded: full Row with name/role
+                        : Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: Colors.white,
+                                child: Text(
+                                  displayName[0].toUpperCase(),
                                   style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const Text(
-                                  'Administrator',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
+                                    color: Color(0xFFC41E3A),
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      displayName,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const Text(
+                                      'Administrator',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ],
-                    ),
                   ),
                 ),
               ],
@@ -508,26 +527,22 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                           // Edit Profile Button
-                          OutlinedButton(
+                          ElevatedButton(
                             onPressed: () {
                               setState(() {
                                 _isEditingProfile = !_isEditingProfile;
                               });
                             },
-                            style: OutlinedButton.styleFrom(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFC41E3A),
+                              foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
                                 vertical: 12,
                               ),
-                              side: const BorderSide(
-                                color: Color(0xFF1a1a1a),
-                              ),
                             ),
                             child: Text(
                               _isEditingProfile ? 'Cancel' : 'Edit Profile',
-                              style: const TextStyle(
-                                color: Color(0xFF1a1a1a),
-                              ),
                             ),
                           ),
                         ],
@@ -589,19 +604,22 @@ class _ProfilePageState extends State<ProfilePage> {
                                             ? Colors.white
                                             : Colors.grey[100],
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade300,
                                           ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade300,
                                           ),
                                         ),
                                         disabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade200,
                                           ),
@@ -637,13 +655,15 @@ class _ProfilePageState extends State<ProfilePage> {
                                         filled: true,
                                         fillColor: Colors.grey[100],
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade300,
                                           ),
                                         ),
                                         disabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade200,
                                           ),
@@ -685,19 +705,22 @@ class _ProfilePageState extends State<ProfilePage> {
                                             ? Colors.white
                                             : Colors.grey[100],
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade300,
                                           ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade300,
                                           ),
                                         ),
                                         disabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade200,
                                           ),
@@ -735,19 +758,22 @@ class _ProfilePageState extends State<ProfilePage> {
                                             ? Colors.white
                                             : Colors.grey[100],
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade300,
                                           ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade300,
                                           ),
                                         ),
                                         disabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade200,
                                           ),
@@ -964,13 +990,15 @@ class _ProfilePageState extends State<ProfilePage> {
                                         filled: true,
                                         fillColor: Colors.grey[50],
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade300,
                                           ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade300,
                                           ),
@@ -1021,13 +1049,15 @@ class _ProfilePageState extends State<ProfilePage> {
                                         filled: true,
                                         fillColor: Colors.grey[50],
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade300,
                                           ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           borderSide: BorderSide(
                                             color: Colors.grey.shade300,
                                           ),
@@ -1043,13 +1073,11 @@ class _ProfilePageState extends State<ProfilePage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              OutlinedButton(
+                              ElevatedButton(
                                 onPressed: _updatePassword,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFFC41E3A),
-                                  side: const BorderSide(
-                                    color: Color(0xFFC41E3A),
-                                  ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFC41E3A),
+                                  foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 32,
                                     vertical: 12,

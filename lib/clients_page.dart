@@ -280,11 +280,13 @@ class _ClientsPageState extends State<ClientsPage> {
                         .collection('sessions')
                         .snapshots(includeMetadataChanges: true),
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData) {
                         return const Center(
                           child: Padding(
                             padding: EdgeInsets.all(40),
-                            child: CircularProgressIndicator(color: Color(0xFFC41E3A)),
+                            child: CircularProgressIndicator(
+                                color: Color(0xFFC41E3A)),
                           ),
                         );
                       }
@@ -312,8 +314,10 @@ class _ClientsPageState extends State<ClientsPage> {
                       final allDocs = snapshot.data!.docs;
                       final sessions = allDocs.where((doc) {
                         final d = doc.data() as Map<String, dynamic>;
-                        final sessionClientName =
-                            (d['clientName'] ?? '').toString().trim().toLowerCase();
+                        final sessionClientName = (d['clientName'] ?? '')
+                            .toString()
+                            .trim()
+                            .toLowerCase();
                         final sessionClientId =
                             (d['clientId'] ?? '').toString().trim();
                         return sessionClientName == lowerClientName ||
@@ -324,8 +328,10 @@ class _ClientsPageState extends State<ClientsPage> {
                       sessions.sort((a, b) {
                         final da = a.data() as Map<String, dynamic>;
                         final db = b.data() as Map<String, dynamic>;
-                        final dateA = _parseSessionDateStr(da['date']?.toString());
-                        final dateB = _parseSessionDateStr(db['date']?.toString());
+                        final dateA =
+                            _parseSessionDateStr(da['date']?.toString());
+                        final dateB =
+                            _parseSessionDateStr(db['date']?.toString());
                         if (dateA == null && dateB == null) return 0;
                         if (dateA == null) return 1;
                         if (dateB == null) return -1;
@@ -339,7 +345,8 @@ class _ClientsPageState extends State<ClientsPage> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.event_busy, size: 56, color: Colors.grey[400]),
+                                Icon(Icons.event_busy,
+                                    size: 56, color: Colors.grey[400]),
                                 const SizedBox(height: 16),
                                 Text(
                                   'No sessions found for $clientName',
@@ -363,7 +370,8 @@ class _ClientsPageState extends State<ClientsPage> {
                         final d = doc.data() as Map<String, dynamic>;
                         totalDuration += _toDouble(d['duration']);
                         totalSessionAmt += _toDouble(d['sessionAmount']);
-                        totalCoachingAmt += _toDouble(d['coachingRentalAmount']);
+                        totalCoachingAmt +=
+                            _toDouble(d['coachingRentalAmount']);
                       }
                       final grandTotal = totalSessionAmt + totalCoachingAmt;
 
@@ -454,12 +462,14 @@ class _ClientsPageState extends State<ClientsPage> {
                               shrinkWrap: true,
                               itemCount: sessions.length,
                               itemBuilder: (context, index) {
-                                final s =
-                                    sessions[index].data() as Map<String, dynamic>;
+                                final s = sessions[index].data()
+                                    as Map<String, dynamic>;
 
-                                final dateDisplay = _formatSessionDateForDisplay(
-                                    s['date']?.toString() ?? '');
-                                final sessionAmt = _toDouble(s['sessionAmount']);
+                                final dateDisplay =
+                                    _formatSessionDateForDisplay(
+                                        s['date']?.toString() ?? '');
+                                final sessionAmt =
+                                    _toDouble(s['sessionAmount']);
                                 final coachingAmt =
                                     _toDouble(s['coachingRentalAmount']);
                                 final bayNumber =
@@ -629,6 +639,7 @@ class _ClientsPageState extends State<ClientsPage> {
       ),
     );
   }
+
   void _deleteClient(DocumentSnapshot client) {
     showDialog(
       context: context,
@@ -648,7 +659,8 @@ class _ClientsPageState extends State<ClientsPage> {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Client and their sessions deleted successfully'),
+                      content: Text(
+                          'Client and their sessions deleted successfully'),
                       backgroundColor: Color(0xFFC41E3A),
                     ),
                   );
@@ -750,7 +762,20 @@ class _ClientsPageState extends State<ClientsPage> {
   String _formatSessionDateForDisplay(String rawDate) {
     final dt = _parseSessionDateStr(rawDate);
     if (dt == null) return rawDate.isEmpty ? 'N/A' : rawDate;
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
   }
 
@@ -831,46 +856,57 @@ class _ClientsPageState extends State<ClientsPage> {
                     color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.white,
-                        child: Text(
-                          displayName[0].toUpperCase(),
-                          style: const TextStyle(
-                            color: Color(0xFFC41E3A),
-                            fontWeight: FontWeight.bold,
+                  child: _isSidebarCollapsed
+                      ? Center(
+                          child: CircleAvatar(
+                            backgroundColor: Colors.white,
+                            child: Text(
+                              displayName[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Color(0xFFC41E3A),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      if (!_isSidebarCollapsed) ...[
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                displayName,
+                        )
+                      : Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.white,
+                              child: Text(
+                                displayName[0].toUpperCase(),
                                 style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const Text(
-                                'Administrator',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
+                                  color: Color(0xFFC41E3A),
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    displayName,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const Text(
+                                    'Administrator',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ],
-                  ),
                 ),
               ],
             ),
@@ -956,7 +992,8 @@ class _ClientsPageState extends State<ClientsPage> {
                               });
                             },
                             decoration: InputDecoration(
-                              hintText: 'Search clients by name, email, or phone...',
+                              hintText:
+                                  'Search clients by name, email, or phone...',
                               hintStyle: TextStyle(
                                 color: Colors.grey[400],
                                 fontSize: 14,
@@ -971,8 +1008,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                       icon: const Icon(Icons.clear, size: 20),
                                       onPressed: () {
                                         _searchController.clear();
-                                        setState(() =>
-                                            _searchQuery = '');
+                                        setState(() => _searchQuery = '');
                                       },
                                     )
                                   : null,
@@ -1217,7 +1253,8 @@ class _ClientsPageState extends State<ClientsPage> {
                                                           _getInitials(
                                                               data['name'] ??
                                                                   ''),
-                                                          style: const TextStyle(
+                                                          style:
+                                                              const TextStyle(
                                                             color: Colors.white,
                                                             fontWeight:
                                                                 FontWeight.bold,
@@ -1229,7 +1266,8 @@ class _ClientsPageState extends State<ClientsPage> {
                                                       Expanded(
                                                         child: Text(
                                                           data['name'] ?? 'N/A',
-                                                          style: const TextStyle(
+                                                          style:
+                                                              const TextStyle(
                                                             fontWeight:
                                                                 FontWeight.w500,
                                                             color: Color(
@@ -1260,8 +1298,8 @@ class _ClientsPageState extends State<ClientsPage> {
                                                               'N/A',
                                                           style: TextStyle(
                                                             fontSize: 13,
-                                                            color:
-                                                                Colors.grey[700],
+                                                            color: Colors
+                                                                .grey[700],
                                                           ),
                                                           overflow: TextOverflow
                                                               .ellipsis,
@@ -1279,22 +1317,26 @@ class _ClientsPageState extends State<ClientsPage> {
                                                         MainAxisAlignment.end,
                                                     children: [
                                                       OutlinedButton(
-                                                        onPressed: () => _showClientSessionsDialog(client),
+                                                        onPressed: () =>
+                                                            _showClientSessionsDialog(
+                                                                client),
                                                         style: OutlinedButton
                                                             .styleFrom(
                                                           side: BorderSide(
-                                                              color: Colors
-                                                                  .grey.shade300),
+                                                              color: Colors.grey
+                                                                  .shade300),
                                                           padding:
                                                               const EdgeInsets
                                                                   .symmetric(
-                                                                  horizontal: 12,
+                                                                  horizontal:
+                                                                      12,
                                                                   vertical: 8),
                                                           shape:
                                                               RoundedRectangleBorder(
                                                             borderRadius:
                                                                 BorderRadius
-                                                                    .circular(6),
+                                                                    .circular(
+                                                                        6),
                                                           ),
                                                         ),
                                                         child: const Text(
@@ -1327,7 +1369,8 @@ class _ClientsPageState extends State<ClientsPage> {
                                                           color: Colors.red,
                                                         ),
                                                         onPressed: () =>
-                                                            _deleteClient(client),
+                                                            _deleteClient(
+                                                                client),
                                                         tooltip: 'Delete',
                                                         splashRadius: 20,
                                                       ),

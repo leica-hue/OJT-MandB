@@ -191,7 +191,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (nameController.text.trim().isEmpty ) {
+              if (nameController.text.trim().isEmpty) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -229,6 +229,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC41E3A),
+              foregroundColor: Colors.white,
             ),
             child: const Text('Update'),
           ),
@@ -274,7 +275,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
                 }
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red, foregroundColor: Colors.white),
             child: const Text('Delete'),
           ),
         ],
@@ -492,9 +494,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                 sessions[index].data() as Map<String, dynamic>;
                             final hours =
                                 (sd['duration'] as num?)?.toDouble() ?? 0;
-                            final hoursLabel = hours % 1 == 0
-                                ? '${hours.toInt()}'
-                                : '$hours';
+                            final hoursLabel =
+                                hours % 1 == 0 ? '${hours.toInt()}' : '$hours';
 
                             return Container(
                               padding: const EdgeInsets.symmetric(
@@ -720,40 +721,57 @@ class _PersonnelPageState extends State<PersonnelPage> {
                     color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.white,
-                        child: Text(
-                          displayName[0].toUpperCase(),
-                          style: const TextStyle(
-                              color: Color(0xFFC41E3A),
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      if (!_isSidebarCollapsed) ...[
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                displayName,
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14),
-                                overflow: TextOverflow.ellipsis,
+                  child: _isSidebarCollapsed
+                      ? Center(
+                          child: CircleAvatar(
+                            backgroundColor: Colors.white,
+                            child: Text(
+                              displayName[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Color(0xFFC41E3A),
+                                fontWeight: FontWeight.bold,
                               ),
-                              const Text('Administrator',
-                                  style: TextStyle(
-                                      color: Colors.white70, fontSize: 12)),
-                            ],
+                            ),
                           ),
+                        )
+                      : Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.white,
+                              child: Text(
+                                displayName[0].toUpperCase(),
+                                style: const TextStyle(
+                                  color: Color(0xFFC41E3A),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    displayName,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const Text(
+                                    'Administrator',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ],
-                  ),
                 ),
               ],
             ),
@@ -825,11 +843,10 @@ class _PersonnelPageState extends State<PersonnelPage> {
                           // Search Bar
                           TextField(
                             controller: _searchController,
-                            onChanged: (v) => setState(
-                                () => _searchQuery = v.toLowerCase()),
+                            onChanged: (v) =>
+                                setState(() => _searchQuery = v.toLowerCase()),
                             decoration: InputDecoration(
-                              hintText:
-                                  'Search personnel by name or role...',
+                              hintText: 'Search personnel by name or role...',
                               hintStyle: TextStyle(
                                 color: Colors.grey[400],
                                 fontSize: 14,
@@ -841,8 +858,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                       icon: const Icon(Icons.clear, size: 20),
                                       onPressed: () {
                                         _searchController.clear();
-                                        setState(() =>
-                                            _searchQuery = '');
+                                        setState(() => _searchQuery = '');
                                       },
                                     )
                                   : null,
@@ -853,14 +869,12 @@ class _PersonnelPageState extends State<PersonnelPage> {
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
-                                    width: 1),
+                                    color: Colors.grey.shade300, width: 1),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
-                                    color: Color(0xFFC41E3A),
-                                    width: 1.2),
+                                    color: Color(0xFFC41E3A), width: 1.2),
                               ),
                             ),
                           ),
@@ -1105,19 +1119,32 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                                     children: [
                                                       OutlinedButton(
                                                         onPressed: () =>
-                                                            _showViewDetailsDialog(staff),
-                                                        style: OutlinedButton.styleFrom(
-                                                          side: BorderSide(color: Colors.grey.shade300),
-                                                          padding: const EdgeInsets.symmetric(
-                                                              horizontal: 12, vertical: 8),
-                                                          shape: RoundedRectangleBorder(
-                                                            borderRadius: BorderRadius.circular(6),
+                                                            _showViewDetailsDialog(
+                                                                staff),
+                                                        style: OutlinedButton
+                                                            .styleFrom(
+                                                          side: BorderSide(
+                                                              color: Colors.grey
+                                                                  .shade300),
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal:
+                                                                      12,
+                                                                  vertical: 8),
+                                                          shape:
+                                                              RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        6),
                                                           ),
                                                         ),
                                                         child: const Text(
                                                           'View Details',
                                                           style: TextStyle(
-                                                              color: Color(0xFF1a1a1a),
+                                                              color: Color(
+                                                                  0xFF1a1a1a),
                                                               fontSize: 13),
                                                         ),
                                                       ),
