@@ -678,11 +678,17 @@ class _PersonnelPageState extends State<PersonnelPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       if (!_isSidebarCollapsed)
-                        const Text('Dashboard',
-                            style: TextStyle(
+                        Flexible(
+                          child: Text(
+                            'Dashboard',
+                            style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 20,
-                                fontWeight: FontWeight.bold)),
+                                fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
                       IconButton(
                         icon: Icon(
                           _isSidebarCollapsed ? Icons.menu : Icons.menu_open,
