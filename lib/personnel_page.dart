@@ -1103,15 +1103,22 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                                         MainAxisAlignment
                                                             .center,
                                                     children: [
-                                                      TextButton(
+                                                      OutlinedButton(
                                                         onPressed: () =>
-                                                            _showViewDetailsDialog(
-                                                                staff),
+                                                            _showViewDetailsDialog(staff),
+                                                        style: OutlinedButton.styleFrom(
+                                                          side: BorderSide(color: Colors.grey.shade300),
+                                                          padding: const EdgeInsets.symmetric(
+                                                              horizontal: 12, vertical: 8),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius: BorderRadius.circular(6),
+                                                          ),
+                                                        ),
                                                         child: const Text(
                                                           'View Details',
                                                           style: TextStyle(
-                                                              color: Color(
-                                                                  0xFF1a1a1a)),
+                                                              color: Color(0xFF1a1a1a),
+                                                              fontSize: 13),
                                                         ),
                                                       ),
                                                       IconButton(
