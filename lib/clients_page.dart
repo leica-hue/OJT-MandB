@@ -956,7 +956,7 @@ class _ClientsPageState extends State<ClientsPage> {
                               });
                             },
                             decoration: InputDecoration(
-                              hintText: 'Search by client, date, personnel, bay...',
+                              hintText: 'Search clients by name, email, or phone...',
                               hintStyle: TextStyle(
                                 color: Colors.grey[400],
                                 fontSize: 14,
@@ -966,21 +966,31 @@ class _ClientsPageState extends State<ClientsPage> {
                                 color: Color(0xFFC41E3A),
                                 size: 20,
                               ),
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear, size: 20),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() =>
+                                            _searchQuery = '');
+                                      },
+                                    )
+                                  : null,
                               filled: true,
                               fillColor: Colors.white,
                               contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 16,
+                                horizontal: 16,
+                                vertical: 12,
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(50),
+                                borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
                                   color: Colors.grey.shade300,
                                   width: 1,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(50),
+                                borderRadius: BorderRadius.circular(12),
                                 borderSide: const BorderSide(
                                   color: Color(0xFFC41E3A),
                                   width: 1.2,

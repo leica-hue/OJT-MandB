@@ -417,10 +417,30 @@ class _DashboardPageState extends State<DashboardPage> {
                     controller: _clientSearchController,
                     decoration: InputDecoration(
                       hintText: 'Search or enter client name...',
-                      border: const OutlineInputBorder(),
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                      ),
+                      prefixIcon: const Icon(Icons.search,
+                          color: Color(0xFFC41E3A), size: 20),
                       suffixIcon: _selectedClientId != null
-                          ? const Icon(Icons.check_circle, color: Color(0xFFC41E3A))
-                          : const Icon(Icons.search),
+                          ? const Icon(Icons.check_circle,
+                              color: Color(0xFFC41E3A))
+                          : null,
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: Colors.grey.shade300, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: Color(0xFFC41E3A), width: 1.2),
+                      ),
                     ),
                     onChanged: (value) {
                       setDialogState(() {
@@ -628,11 +648,30 @@ class _DashboardPageState extends State<DashboardPage> {
                     controller: _personnelController,
                     decoration: InputDecoration(
                       hintText: 'Search personnel...',
-                      border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.person_outline),
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                      ),
+                      prefixIcon: const Icon(Icons.search,
+                          color: Color(0xFFC41E3A), size: 20),
                       suffixIcon: _selectedPersonnelName != null
-                          ? const Icon(Icons.check_circle, color: Color(0xFFC41E3A))
-                          : const Icon(Icons.search),
+                          ? const Icon(Icons.check_circle,
+                              color: Color(0xFFC41E3A))
+                          : null,
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: Colors.grey.shade300, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                            color: Color(0xFFC41E3A), width: 1.2),
+                      ),
                     ),
                     onChanged: (value) {
                       setDialogState(() {
@@ -2109,8 +2148,12 @@ class _DashboardPageState extends State<DashboardPage> {
                                   decoration: InputDecoration(
                                     hintText:
                                         'Search by client, date, personnel, bay...',
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey[400],
+                                      fontSize: 14,
+                                    ),
                                     prefixIcon: const Icon(Icons.search,
-                                        color: Color(0xFFC41E3A)),
+                                        color: Color(0xFFC41E3A), size: 20),
                                     suffixIcon: _sessionSearchController
                                             .text.isNotEmpty
                                         ? IconButton(
@@ -2122,12 +2165,23 @@ class _DashboardPageState extends State<DashboardPage> {
                                             },
                                           )
                                         : null,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
                                     contentPadding:
                                         const EdgeInsets.symmetric(
                                             horizontal: 16, vertical: 12),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                          color: Colors.grey.shade300,
+                                          width: 1),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                          color: Color(0xFFC41E3A),
+                                          width: 1.2),
+                                    ),
                                   ),
                                   onChanged: (_) => setState(() {}),
                                 ),
@@ -2522,11 +2576,11 @@ class _DashboardPageState extends State<DashboardPage> {
   String _getSalesSubtitle(int salesCount, double totalExpenses, double totalAdditionalProfits) {
     final periodLabel = _salesPeriodLabel(_salesPeriod).toLowerCase();
     if (totalExpenses > 0 && totalAdditionalProfits > 0) {
-      return 'Net revenue (after expenses + profits) · $salesCount $periodLabel sessions';
+      return 'Net revenue  · $salesCount $periodLabel sessions';
     } else if (totalExpenses > 0) {
-      return 'Net revenue (after expenses) · $salesCount $periodLabel sessions';
+      return 'Net revenue · $salesCount $periodLabel sessions';
     } else if (totalAdditionalProfits > 0) {
-      return 'Total revenue (with profits) · $salesCount $periodLabel sessions';
+      return 'Total revenue · $salesCount $periodLabel sessions';
     } else {
       return 'Total revenue · $salesCount $periodLabel sessions';
     }

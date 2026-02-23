@@ -823,31 +823,44 @@ class _PersonnelPageState extends State<PersonnelPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Search Bar
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: TextField(
-                              controller: _searchController,
-                              onChanged: (v) => setState(
-                                  () => _searchQuery = v.toLowerCase()),
-                              decoration: InputDecoration(
-                                hintText:
-                                    'Search personnel by name or role...',
-                                hintStyle: TextStyle(color: Colors.grey[400]),
-                                border: InputBorder.none,
-                                icon:
-                                    Icon(Icons.search, color: Colors.grey[400]),
+                          TextField(
+                            controller: _searchController,
+                            onChanged: (v) => setState(
+                                () => _searchQuery = v.toLowerCase()),
+                            decoration: InputDecoration(
+                              hintText:
+                                  'Search personnel by name or role...',
+                              hintStyle: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 14,
+                              ),
+                              prefixIcon: const Icon(Icons.search,
+                                  color: Color(0xFFC41E3A), size: 20),
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear, size: 20),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() =>
+                                            _searchQuery = '');
+                                      },
+                                    )
+                                  : null,
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                    width: 1),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: Color(0xFFC41E3A),
+                                    width: 1.2),
                               ),
                             ),
                           ),
