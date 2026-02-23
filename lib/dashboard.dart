@@ -36,6 +36,10 @@ class _DashboardPageState extends State<DashboardPage> {
   final TextEditingController _bayNumberController = TextEditingController();
   final TextEditingController _personnelController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
+  final TextEditingController _paymentOtherController = TextEditingController();
+
+  // Mode of payment for add session: 'cash', 'gcash', or 'other'
+  String _sessionModeOfPayment = 'cash';
 
   // Controllers for add expense dialog
   final TextEditingController _expenseAmountController = TextEditingController();
@@ -76,6 +80,7 @@ class _DashboardPageState extends State<DashboardPage> {
     _bayNumberController.dispose();
     _personnelController.dispose();
     _durationController.dispose();
+    _paymentOtherController.dispose();
     _sessionSearchController.dispose();
     _expenseAmountController.dispose();
     _expenseDescriptionController.dispose();
@@ -218,7 +223,9 @@ class _DashboardPageState extends State<DashboardPage> {
     _bayNumberController.clear();
     _personnelController.clear();
     _durationController.clear();
+    _paymentOtherController.clear();
     setState(() {
+      _sessionModeOfPayment = 'cash';
       _selectedClientId = null;
       _selectedClientName = null;
       _showNewClientFields = false;
@@ -252,6 +259,16 @@ class _DashboardPageState extends State<DashboardPage> {
       );
       return;
     }
+    if (_sessionModeOfPayment == 'other' &&
+        _paymentOtherController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please specify the mode of payment when selecting "Other"'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     try {
       final String clientId = _selectedClientId!;
@@ -265,8 +282,8 @@ class _DashboardPageState extends State<DashboardPage> {
       final coachingRentalAmount =
           double.tryParse(_coachingRentalAmountController.text) ?? 0.0;
 
-      // Add session
-      await FirebaseFirestore.instance.collection('sessions').add({
+      final String modeOfPayment = _sessionModeOfPayment;
+      final Map<String, dynamic> sessionData = {
         'clientId': clientId,
         'clientName': clientName,
         'date': dateStr,
@@ -275,8 +292,13 @@ class _DashboardPageState extends State<DashboardPage> {
         'bayNumber': _bayNumberController.text.trim(),
         'personnel': _personnelController.text,
         'duration': double.parse(_durationController.text),
+        'modeOfPayment': modeOfPayment,
         'createdAt': FieldValue.serverTimestamp(),
-      });
+      };
+      if (modeOfPayment == 'other') {
+        sessionData['modeOfPaymentOther'] = _paymentOtherController.text.trim();
+      }
+      await FirebaseFirestore.instance.collection('sessions').add(sessionData);
 
       if (mounted) {
         Navigator.pop(context);
@@ -766,6 +788,62 @@ class _DashboardPageState extends State<DashboardPage> {
                       suffixText: 'hrs',
                     ),
                   ),
+                  const SizedBox(height: 16),
+
+                  // ── Mode of Payment ───────────────────────────────────────
+                  const Text(
+                    'Mode of Payment *',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Cash'),
+                        selected: _sessionModeOfPayment == 'cash',
+                        onSelected: (selected) {
+                          if (selected) {
+                            setDialogState(() => _sessionModeOfPayment = 'cash');
+                          }
+                        },
+                        selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('GCash'),
+                        selected: _sessionModeOfPayment == 'gcash',
+                        onSelected: (selected) {
+                          if (selected) {
+                            setDialogState(() => _sessionModeOfPayment = 'gcash');
+                          }
+                        },
+                        selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('Other'),
+                        selected: _sessionModeOfPayment == 'other',
+                        onSelected: (selected) {
+                          if (selected) {
+                            setDialogState(() => _sessionModeOfPayment = 'other');
+                          }
+                        },
+                        selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
+                      ),
+                    ],
+                  ),
+                  if (_sessionModeOfPayment == 'other') ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _paymentOtherController,
+                      decoration: const InputDecoration(
+                        hintText: 'Specify mode of payment (e.g., Bank Transfer, Check)',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.edit),
+                      ),
+                      onChanged: (_) => setDialogState(() {}),
+                    ),
+                  ],
                 ],
               ),
             ),
