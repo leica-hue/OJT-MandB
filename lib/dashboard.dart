@@ -2116,36 +2116,34 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Column(
               children: [
                 // Header
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (!_isSidebarCollapsed)
-                        Flexible(
-                          child: Text(
-                            'Dashboard',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                ClipRect(
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (!_isSidebarCollapsed)
+                          Flexible(
+                            child: Text(
+                              'Dashboard',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
                           ),
+                        IconButton(
+                          icon: Icon(
+                            _isSidebarCollapsed ? Icons.menu : Icons.menu_open,
+                            color: Colors.white,
+                          ),
+                          onPressed: () => setState(
+                              () => _isSidebarCollapsed = !_isSidebarCollapsed),
                         ),
-                      IconButton(
-                        icon: Icon(
-                          _isSidebarCollapsed ? Icons.menu : Icons.menu_open,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isSidebarCollapsed = !_isSidebarCollapsed;
-                          });
-                        },
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -2683,59 +2681,92 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     const DataColumn(
                                                       columnWidth:
                                                           FlexColumnWidth(1.0),
-                                                      label: Text('Date',
+                                                      label:Expanded(
+                                                        child: Text(
+                                                          'Date',
+                                                          textAlign:
+                                                              TextAlign.center,
                                                           style: TextStyle(
                                                               fontWeight:
                                                                   FontWeight
-                                                                      .bold)),
+                                                                      .bold),
+                                                        ),
+                                                      ),
                                                     ),
                                                     const DataColumn(
                                                       columnWidth:
                                                           FlexColumnWidth(0.85),
-                                                      label: Text(
+                                                      label: Expanded(
+                                                        child: Text(
                                                           'Session Amount',
+                                                          textAlign:
+                                                              TextAlign.center,
                                                           style: TextStyle(
                                                               fontWeight:
                                                                   FontWeight
-                                                                      .bold)),
+                                                                      .bold),
+                                                        ),
+                                                      ),
                                                     ),
                                                     const DataColumn(
                                                       columnWidth:
                                                           FlexColumnWidth(0.9),
-                                                      label: Text(
+                                                      label: Expanded(
+                                                        child: Text(
                                                           'Coaching/Rental',
+                                                          textAlign:
+                                                              TextAlign.center,
                                                           style: TextStyle(
                                                               fontWeight:
                                                                   FontWeight
-                                                                      .bold)),
+                                                                      .bold),
+                                                        ),
+                                                      ),
                                                     ),
                                                     const DataColumn(
                                                       columnWidth:
                                                           FlexColumnWidth(0.5),
-                                                      label: Text('Bay',
+                                                      label:Expanded(
+                                                        child: Text(
+                                                          'Bay',
+                                                          textAlign:
+                                                              TextAlign.center,
                                                           style: TextStyle(
                                                               fontWeight:
                                                                   FontWeight
-                                                                      .bold)),
+                                                                      .bold),
+                                                        ),
+                                                      ),
                                                     ),
                                                     const DataColumn(
                                                       columnWidth:
                                                           FlexColumnWidth(1.0),
-                                                      label: Text('Personnel',
+                                                      label: Expanded(
+                                                        child: Text(
+                                                          'Personnel',
+                                                          textAlign:
+                                                              TextAlign.center,
                                                           style: TextStyle(
                                                               fontWeight:
                                                                   FontWeight
-                                                                      .bold)),
+                                                                      .bold),
+                                                        ),
+                                                      ),
                                                     ),
                                                     const DataColumn(
                                                       columnWidth:
                                                           FlexColumnWidth(0.55),
-                                                      label: Text(
+                                                      label: Expanded(
+                                                        child: Text(
                                                           'Duration (hrs)',
+                                                          textAlign:
+                                                              TextAlign.center,
                                                           style: TextStyle(
                                                               fontWeight:
                                                                   FontWeight
-                                                                      .bold)),
+                                                                      .bold),
+                                                        ),
+                                                      ),
                                                     ),
                                                     const DataColumn(
                                                       columnWidth:
@@ -2768,49 +2799,81 @@ class _DashboardPageState extends State<DashboardPage> {
                                                           _getSessionTotal(
                                                               data);
                                                       return DataRow(cells: [
-                                                        DataCell(Text(data[
-                                                                'clientName'] ??
-                                                            'N/A')),
-                                                        DataCell(Text(
-                                                            data['date'] ??
-                                                                'N/A')),
-                                                        DataCell(Text(
-                                                          data['sessionAmount'] !=
-                                                                  null
-                                                              ? (data['sessionAmount']
-                                                                      is num
-                                                                  ? (data['sessionAmount']
-                                                                          as num)
-                                                                      .toString()
-                                                                  : data['sessionAmount']
-                                                                      .toString())
-                                                              : '—',
+                                                        DataCell(Align(
+                                                          alignment: Alignment
+                                                              .centerLeft,
+                                                          child: Text(data[
+                                                                  'clientName'] ??
+                                                              'N/A'),
                                                         )),
-                                                        DataCell(Text(
-                                                          data['coachingRentalAmount'] !=
-                                                                  null
-                                                              ? (data['coachingRentalAmount']
-                                                                      is num
-                                                                  ? (data['coachingRentalAmount']
-                                                                          as num)
-                                                                      .toString()
-                                                                  : data['coachingRentalAmount']
-                                                                      .toString())
-                                                              : '—',
+                                                        DataCell(Align(
+                                                          alignment: Alignment
+                                                              .center,
+                                                          child: Text(
+                                                              data['date'] ??
+                                                                  'N/A'),
                                                         )),
-                                                        DataCell(Text(data[
-                                                                    'bayNumber']
-                                                                ?.toString() ??
-                                                            '—')),
-                                                        DataCell(Text(
-                                                            data['personnel'] ??
-                                                                'N/A')),
-                                                        DataCell(Text(data[
-                                                                    'duration']
-                                                                ?.toString() ??
-                                                            '0.0')),
-                                                        DataCell(Text(
-                                                            '₱${_formatAmount(total)}')),
+                                                        DataCell(Align(
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: Text(
+                                                            data['sessionAmount'] !=
+                                                                    null
+                                                                ? (data['sessionAmount']
+                                                                        is num
+                                                                    ? (data['sessionAmount']
+                                                                            as num)
+                                                                        .toString()
+                                                                    : data['sessionAmount']
+                                                                        .toString())
+                                                                : '—',
+                                                          ),
+                                                        )),
+                                                        DataCell(Align(
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: Text(
+                                                            data['coachingRentalAmount'] !=
+                                                                    null
+                                                                ? (data['coachingRentalAmount']
+                                                                        is num
+                                                                    ? (data['coachingRentalAmount']
+                                                                            as num)
+                                                                        .toString()
+                                                                    : data['coachingRentalAmount']
+                                                                        .toString())
+                                                                : '—',
+                                                          ),
+                                                        )),
+                                                        DataCell(Align(
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: Text(data[
+                                                                      'bayNumber']
+                                                                  ?.toString() ??
+                                                              '—'),
+                                                        )),
+                                                        DataCell(Align(
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: Text(data[
+                                                                  'personnel'] ??
+                                                              'N/A'),
+                                                        )),
+                                                        DataCell(Align(
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: Text(data[
+                                                                      'duration']
+                                                                  ?.toString() ??
+                                                              '0.0'),
+                                                        )),
+                                                        DataCell(Align(
+                                                          alignment: Alignment
+                                                              .centerRight,
+                                                          child: Text(
+                                                              '₱${_formatAmount(total)}'),
+                                                        )),
                                                       ]);
                                                     }).toList();
                                                     return dataRows;

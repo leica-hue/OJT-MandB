@@ -306,32 +306,34 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               children: [
                 // Header
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (!_isSidebarCollapsed)
-                        const Text(
-                          'Dashboard',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                ClipRect(
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (!_isSidebarCollapsed)
+                          Flexible(
+                            child: Text(
+                              'Dashboard',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
+                        IconButton(
+                          icon: Icon(
+                            _isSidebarCollapsed ? Icons.menu : Icons.menu_open,
+                            color: Colors.white,
+                          ),
+                          onPressed: () => setState(
+                              () => _isSidebarCollapsed = !_isSidebarCollapsed),
                         ),
-                      IconButton(
-                        icon: Icon(
-                          _isSidebarCollapsed ? Icons.menu : Icons.menu_open,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isSidebarCollapsed = !_isSidebarCollapsed;
-                          });
-                        },
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),

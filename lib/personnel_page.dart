@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'login_page.dart';
 import 'clients_page.dart';
 import 'dashboard.dart';
+import 'profile_page.dart';
 
 class PersonnelPage extends StatefulWidget {
   const PersonnelPage({super.key});
@@ -672,32 +673,34 @@ class _PersonnelPageState extends State<PersonnelPage> {
             ),
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (!_isSidebarCollapsed)
-                        Flexible(
-                          child: Text(
-                            'Dashboard',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
+                ClipRect(
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (!_isSidebarCollapsed)
+                          Flexible(
+                            child: Text(
+                              'Dashboard',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
+                        IconButton(
+                          icon: Icon(
+                            _isSidebarCollapsed ? Icons.menu : Icons.menu_open,
+                            color: Colors.white,
+                          ),
+                          onPressed: () => setState(
+                              () => _isSidebarCollapsed = !_isSidebarCollapsed),
                         ),
-                      IconButton(
-                        icon: Icon(
-                          _isSidebarCollapsed ? Icons.menu : Icons.menu_open,
-                          color: Colors.white,
-                        ),
-                        onPressed: () => setState(
-                            () => _isSidebarCollapsed = !_isSidebarCollapsed),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -720,29 +723,23 @@ class _PersonnelPageState extends State<PersonnelPage> {
                   onTap: () => _navigateToPage('Personnel'),
                 ),
                 const Spacer(),
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: _isSidebarCollapsed
-                      ? Center(
-                          child: CircleAvatar(
-                            backgroundColor: Colors.white,
-                            child: Text(
-                              displayName[0].toUpperCase(),
-                              style: const TextStyle(
-                                color: Color(0xFFC41E3A),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        )
-                      : Row(
-                          children: [
-                            CircleAvatar(
+                InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (context) => const ProfilePage()),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: _isSidebarCollapsed
+                        ? Center(
+                            child: CircleAvatar(
                               backgroundColor: Colors.white,
                               child: Text(
                                 displayName[0].toUpperCase(),
@@ -752,32 +749,46 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    displayName,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                          )
+                        : Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: Colors.white,
+                                child: Text(
+                                  displayName[0].toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Color(0xFFC41E3A),
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  const Text(
-                                    'Administrator',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      displayName,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const Text(
+                                      'Administrator',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
                 ),
               ],
             ),
