@@ -383,7 +383,7 @@ class _ClientsPageState extends State<ClientsPage> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: const Color(0xFCE8E8),
                               borderRadius: const BorderRadius.only(
                                 topLeft: Radius.circular(8),
                                 topRight: Radius.circular(8),
@@ -563,7 +563,7 @@ class _ClientsPageState extends State<ClientsPage> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 13),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFCE8E8),
+                              color: const Color(0xFCE8E8),
                               border: Border(
                                 top: BorderSide(
                                     color: Colors.grey.shade300, width: 1.5),
