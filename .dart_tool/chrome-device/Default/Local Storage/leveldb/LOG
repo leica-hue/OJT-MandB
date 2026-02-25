@@ -1,3 +1,18 @@
-2026/02/23-11:35:09.506 3be0 Reusing MANIFEST C:\Users\uctgp\AppData\Local\Temp\flutter_tools.c5920dcb\flutter_tools_chrome_device.d6b62940\Default\Local Storage\leveldb/MANIFEST-000001
-2026/02/23-11:35:09.511 3be0 Recovering log #3
-2026/02/23-11:35:09.516 3be0 Reusing old log C:\Users\uctgp\AppData\Local\Temp\flutter_tools.c5920dcb\flutter_tools_chrome_device.d6b62940\Default\Local Storage\leveldb/000003.log 
+2026/02/24-08:03:33.673 3ec Reusing MANIFEST C:\Users\uctgp\AppData\Local\Temp\flutter_tools.dc7a2206\flutter_tools_chrome_device.cab0f5b6\Default\Local Storage\leveldb/MANIFEST-000001
+2026/02/24-08:03:33.677 3ec Recovering log #3
+2026/02/24-08:03:33.680 3ec Reusing old log C:\Users\uctgp\AppData\Local\Temp\flutter_tools.dc7a2206\flutter_tools_chrome_device.cab0f5b6\Default\Local Storage\leveldb/000003.log 
+2026/02/24-10:22:33.673 2a98 Level-0 table #5: started
+2026/02/24-10:22:33.684 2a98 Level-0 table #5: 343206 bytes OK
+2026/02/24-10:22:33.693 2a98 Delete type=0 #3
+2026/02/24-10:24:25.737 2a98 Level-0 table #7: started
+2026/02/24-10:24:25.745 2a98 Level-0 table #7: 57193 bytes OK
+2026/02/24-10:24:25.750 2a98 Delete type=0 #4
+2026/02/24-10:58:09.359 3ec Level-0 table #9: started
+2026/02/24-10:58:09.368 3ec Level-0 table #9: 21443 bytes OK
+2026/02/24-10:58:09.377 3ec Delete type=0 #6
+2026/02/24-11:12:49.639 2a98 Level-0 table #11: started
+2026/02/24-11:12:49.653 2a98 Level-0 table #11: 77403 bytes OK
+2026/02/24-11:12:49.663 2a98 Delete type=0 #8
+2026/02/24-11:38:49.646 2a98 Level-0 table #13: started
+2026/02/24-11:38:49.656 2a98 Level-0 table #13: 17231 bytes OK
+2026/02/24-11:38:49.661 2a98 Delete type=0 #10
