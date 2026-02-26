@@ -2465,7 +2465,7 @@ class _DashboardPageState extends State<DashboardPage> {
             setCell(5, row, rr['desc'] as String, pinkStyle());
             setCell(7, row, rr['amt'] as double, pinkStyle(right: true));
           } else if (rr['type'] == 'totalSales') {
-            setCell(4, row, 'Total Sales:', pinkBoldStyle());
+            setCell(4, row, 'Total Profit:', pinkBoldStyle());
             setCell(7, row, rr['amt'] as double, pinkBoldStyle(right: true));
           }
           // 'blank' rows: nothing to render
