@@ -833,18 +833,33 @@ class _PersonnelPageState extends State<PersonnelPage> {
                             ),
                           ],
                         ),
-                        ElevatedButton.icon(
-                          onPressed: _showAddStaffDialog,
-                          icon: const Icon(Icons.person_add, size: 18),
-                          label: const Text('Add Staff'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC41E3A),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
+                        Row(
+                          children: [
+                          ElevatedButton.icon(
+                            onPressed: _showAddStaffDialog,
+                            icon: const Icon(Icons.person_add, size: 18),
+                            label: const Text('Add Staff'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFC41E3A),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                           ),
+                          const SizedBox(
+                            width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.logout,
+                              color: Color(0xFFC41E3A)),
+                            onPressed: () => _signOut(context),
+                              tooltip: 'Sign Out',
+                            ),
+                        ],
                         ),
                       ],
                     ),
