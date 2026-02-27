@@ -2098,20 +2098,449 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  xl.CellStyle _titleStyle() => xl.CellStyle(
+        bold: true,
+        fontSize: 14,
+        fontFamily: xl.getFontFamily(xl.FontFamily.Arial),
+        horizontalAlign: xl.HorizontalAlign.Center,
+        fontColorHex: xl.ExcelColor.fromHexString('#C41E3A'),
+      );
+
+  xl.CellStyle _headerStyle() => xl.CellStyle(
+        bold: true,
+        fontSize: 11,
+        fontFamily: xl.getFontFamily(xl.FontFamily.Arial),
+        horizontalAlign: xl.HorizontalAlign.Center,
+        backgroundColorHex: xl.ExcelColor.fromHexString('#C41E3A'),
+        fontColorHex: xl.ExcelColor.fromHexString('#FFFFFF'),
+      );
+
+  xl.CellStyle _dataStyle({bool center = false}) => xl.CellStyle(
+        fontSize: 10,
+        fontFamily: xl.getFontFamily(xl.FontFamily.Arial),
+        horizontalAlign:
+            center ? xl.HorizontalAlign.Center : xl.HorizontalAlign.Left,
+      );
+
+  xl.CellStyle _boldStyle({bool right = false}) => xl.CellStyle(
+        bold: true,
+        fontSize: 10,
+        fontFamily: xl.getFontFamily(xl.FontFamily.Arial),
+        horizontalAlign:
+            right ? xl.HorizontalAlign.Right : xl.HorizontalAlign.Left,
+      );
+
+  xl.CellStyle _pinkBoldStyle({bool right = false}) => xl.CellStyle(
+        bold: true,
+        fontSize: 10,
+        fontFamily: xl.getFontFamily(xl.FontFamily.Arial),
+        backgroundColorHex: xl.ExcelColor.fromHexString('#FFE4E4'),
+        horizontalAlign:
+            right ? xl.HorizontalAlign.Right : xl.HorizontalAlign.Left,
+      );
+
+  xl.CellStyle _pinkStyle({bool right = false}) => xl.CellStyle(
+        fontSize: 10,
+        fontFamily: xl.getFontFamily(xl.FontFamily.Arial),
+        backgroundColorHex: xl.ExcelColor.fromHexString('#FFF3F3'),
+        horizontalAlign:
+            right ? xl.HorizontalAlign.Right : xl.HorizontalAlign.Left,
+      );
+
+  void _setCell(
+      xl.Sheet sheet, int col, int row, dynamic value, xl.CellStyle style) {
+    final cell = sheet
+        .cell(xl.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row));
+    if (value is double) {
+      cell.value = xl.DoubleCellValue(value);
+    } else {
+      cell.value = xl.TextCellValue(value?.toString() ?? '');
+    }
+    cell.cellStyle = style;
+  }
+
+//Populate Daily sheets
+  void _populateDaySheet(
+    xl.Sheet sheet,
+    DateTime filterDate,
+    List<QueryDocumentSnapshot> sessionDocs,
+    List<QueryDocumentSnapshot> expenseDocs,
+    List<QueryDocumentSnapshot> profitDocs,
+  ) {
+    final filterDesc =
+        '${filterDate.month.toString().padLeft(2, '0')}/${filterDate.day.toString().padLeft(2, '0')}/${filterDate.year}';
+
+    const colWidths = [28.0, 20.0, 10.0, 14.0, 22.0, 20.0, 14.0, 14.0];
+    for (var i = 0; i < colWidths.length; i++) {
+      sheet.setColumnWidth(i, colWidths[i]);
+    }
+
+    // ── Build expense line items ─────────────────────────────────────────
+    final List<Map<String, dynamic>> expenseLineItems = [];
+    for (final doc in expenseDocs) {
+      final data = doc.data() as Map<String, dynamic>;
+      if (data['items'] != null && data['items'] is List) {
+        for (final item in (data['items'] as List)) {
+          if (item is Map) {
+            expenseLineItems.add({
+              'description': item['description']?.toString() ?? '',
+              'amount': (item['amount'] is num)
+                  ? (item['amount'] as num).toDouble()
+                  : (double.tryParse(item['amount']?.toString() ?? '') ?? 0.0),
+            });
+          }
+        }
+      } else {
+        expenseLineItems.add({
+          'description': data['description']?.toString() ?? '',
+          'amount': (data['amount'] is num)
+              ? (data['amount'] as num).toDouble()
+              : (double.tryParse(data['amount']?.toString() ?? '') ?? 0.0),
+        });
+      }
+    }
+
+    // ── Build profit line items ──────────────────────────────────────────
+    final List<Map<String, dynamic>> profitLineItems = [];
+    for (final doc in profitDocs) {
+      final data = doc.data() as Map<String, dynamic>;
+      if (data['items'] != null && data['items'] is List) {
+        for (final item in (data['items'] as List)) {
+          if (item is Map) {
+            profitLineItems.add({
+              'description': item['description']?.toString() ?? '',
+              'amount': (item['amount'] is num)
+                  ? (item['amount'] as num).toDouble()
+                  : (double.tryParse(item['amount']?.toString() ?? '') ?? 0.0),
+            });
+          }
+        }
+      } else {
+        profitLineItems.add({
+          'description': data['description']?.toString() ?? '',
+          'amount': (data['amount'] is num)
+              ? (data['amount'] as num).toDouble()
+              : (double.tryParse(data['amount']?.toString() ?? '') ?? 0.0),
+        });
+      }
+    }
+
+    // ── Totals ────────────────────────────────────────────────────────────
+    double totalDuration = 0.0;
+    double totalSessionAmt = 0.0;
+    double totalCoachingAmt = 0.0;
+    final Map<String, double> personnelHours = {};
+
+    for (final doc in sessionDocs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final duration = (data['duration'] is num)
+          ? (data['duration'] as num).toDouble()
+          : (double.tryParse(data['duration']?.toString() ?? '') ?? 0.0);
+      final sAmt = (data['sessionAmount'] is num)
+          ? (data['sessionAmount'] as num).toDouble()
+          : (double.tryParse(data['sessionAmount']?.toString() ?? '') ?? 0.0);
+      final cAmt = (data['coachingRentalAmount'] is num)
+          ? (data['coachingRentalAmount'] as num).toDouble()
+          : (double.tryParse(data['coachingRentalAmount']?.toString() ?? '') ??
+              0.0);
+      totalDuration += duration;
+      totalSessionAmt += sAmt;
+      totalCoachingAmt += cAmt;
+      final personnel = data['personnel']?.toString() ?? '';
+      if (personnel.isNotEmpty) {
+        personnelHours[personnel] = (personnelHours[personnel] ?? 0) + duration;
+      }
+    }
+
+    final totalAmount = totalSessionAmt + totalCoachingAmt;
+    final totalExpenses =
+        expenseLineItems.fold(0.0, (s, e) => s + (e['amount'] as double));
+    final totalProfits =
+        profitLineItems.fold(0.0, (s, e) => s + (e['amount'] as double));
+    final totalSales = totalAmount - totalExpenses + totalProfits;
+
+    int row = 0;
+
+    // Title
+    sheet.merge(
+      xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+      xl.CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: row),
+    );
+    _setCell(sheet, 0, row, 'Daily Report — $filterDesc', _titleStyle());
+    sheet.setRowHeight(row, 28);
+    row++;
+
+    // Column headers
+    const headers = [
+      "Client's Name",
+      'Tee Girl',
+      'Bay',
+      'Duration',
+      'Amount',
+      'Coaching/Rental',
+      '',
+      '',
+    ];
+    for (var c = 0; c < headers.length; c++) {
+      _setCell(sheet, c, row, headers[c], _headerStyle());
+    }
+    sheet.setRowHeight(row, 22);
+    row++;
+
+    // Session rows
+    for (final doc in sessionDocs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final duration = (data['duration'] is num)
+          ? (data['duration'] as num).toDouble()
+          : (double.tryParse(data['duration']?.toString() ?? '') ?? 0.0);
+      final sAmt = (data['sessionAmount'] is num)
+          ? (data['sessionAmount'] as num).toDouble()
+          : (double.tryParse(data['sessionAmount']?.toString() ?? '') ?? 0.0);
+      final cAmt = (data['coachingRentalAmount'] is num)
+          ? (data['coachingRentalAmount'] as num).toDouble()
+          : (double.tryParse(data['coachingRentalAmount']?.toString() ?? '') ??
+              0.0);
+
+      _setCell(
+          sheet, 0, row, data['clientName']?.toString() ?? '', _dataStyle());
+      _setCell(sheet, 1, row, data['personnel']?.toString() ?? '',
+          _dataStyle(center: true));
+      _setCell(sheet, 2, row, data['bayNumber']?.toString() ?? '',
+          _dataStyle(center: true));
+      _setCell(sheet, 3, row, duration, _dataStyle(center: true));
+      _setCell(sheet, 4, row, sAmt > 0 ? sAmt : '', _dataStyle(center: true));
+      _setCell(sheet, 5, row, cAmt > 0 ? cAmt : '', _dataStyle(center: true));
+      row++;
+    }
+
+    row++; // spacer
+
+    // Totals row
+    _setCell(sheet, 3, row, totalDuration, _boldStyle());
+    _setCell(sheet, 4, row, totalSessionAmt > 0 ? totalSessionAmt : '',
+        _boldStyle(right: true));
+    _setCell(sheet, 5, row, totalCoachingAmt > 0 ? totalCoachingAmt : '',
+        _boldStyle(right: true));
+    _setCell(sheet, 6, row, 'Total Amount', _pinkBoldStyle());
+    _setCell(sheet, 7, row, totalAmount, _pinkBoldStyle(right: true));
+    row++;
+
+    row++; // spacer
+
+    // Personnel + expenses/profits side-by-side
+    _setCell(sheet, 0, row, 'Total hrs per personnel', _boldStyle());
+    row++;
+
+    final personnelEntries = personnelHours.entries.toList();
+
+    final List<Map<String, dynamic>> rightRows = [];
+    rightRows.add({'type': 'expHeader'});
+    for (final item in expenseLineItems) {
+      rightRows.add({
+        'type': 'expItem',
+        'desc': item['description'],
+        'amt': item['amount']
+      });
+    }
+    rightRows.add({'type': 'expTotal', 'amt': totalExpenses});
+    rightRows.add({'type': 'blank'});
+    rightRows.add({'type': 'profHeader'});
+    for (final item in profitLineItems) {
+      rightRows.add({
+        'type': 'profItem',
+        'desc': item['description'],
+        'amt': item['amount']
+      });
+    }
+    rightRows.add({'type': 'blank'});
+    rightRows.add({'type': 'totalSales', 'amt': totalSales});
+
+    final List<Map<String, dynamic>> leftRows = [];
+    for (final e in personnelEntries) {
+      leftRows.add({'type': 'personnel', 'name': e.key, 'hrs': e.value});
+    }
+    leftRows.add({'type': 'totalHrsLabel'});
+    leftRows.add({'type': 'totalHrsValue', 'hrs': totalDuration});
+
+    final maxRows =
+        leftRows.length > rightRows.length ? leftRows.length : rightRows.length;
+
+    for (var i = 0; i < maxRows; i++) {
+      if (i < leftRows.length) {
+        final lr = leftRows[i];
+        if (lr['type'] == 'personnel') {
+          _setCell(sheet, 1, row, lr['name'] as String, _dataStyle());
+          _setCell(
+              sheet, 3, row, lr['hrs'] as double, _dataStyle(center: true));
+        } else if (lr['type'] == 'totalHrsLabel') {
+          _setCell(sheet, 3, row, 'Total hrs', _boldStyle());
+        } else if (lr['type'] == 'totalHrsValue') {
+          _setCell(sheet, 3, row, lr['hrs'] as double, _boldStyle());
+        }
+      }
+      if (i < rightRows.length) {
+        final rr = rightRows[i];
+        if (rr['type'] == 'expHeader') {
+          _setCell(sheet, 4, row, 'Daily Expenses:', _pinkBoldStyle());
+        } else if (rr['type'] == 'expItem') {
+          _setCell(sheet, 5, row, rr['desc'] as String, _pinkStyle());
+          _setCell(sheet, 7, row, rr['amt'] as double, _pinkStyle(right: true));
+        } else if (rr['type'] == 'expTotal') {
+          _setCell(sheet, 4, row, 'Total Expenses:', _pinkBoldStyle());
+          _setCell(
+              sheet, 7, row, rr['amt'] as double, _pinkBoldStyle(right: true));
+        } else if (rr['type'] == 'profHeader') {
+          _setCell(sheet, 4, row, 'Additional Profit:', _pinkBoldStyle());
+        } else if (rr['type'] == 'profItem') {
+          _setCell(sheet, 5, row, rr['desc'] as String, _pinkStyle());
+          _setCell(sheet, 7, row, rr['amt'] as double, _pinkStyle(right: true));
+        } else if (rr['type'] == 'totalSales') {
+          _setCell(sheet, 4, row, 'Total Profit:', _pinkBoldStyle());
+          _setCell(
+              sheet, 7, row, rr['amt'] as double, _pinkBoldStyle(right: true));
+        }
+      }
+      row++;
+    }
+  }
+
+//Export Monthly
+  Future<void> _exportMonthlyReport() async {
+    final month = _selectedSalesMonth;
+    final monthLabel = '${_getMonthName(month.month)}_${month.year}';
+    final monthDisplay = '${_getMonthName(month.month)} ${month.year}';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
+    );
+
+    try {
+      // Fetch all data once
+      final sessionsSnap =
+          await FirebaseFirestore.instance.collection('sessions').get();
+      final expensesSnap =
+          await FirebaseFirestore.instance.collection('expenses').get();
+      final profitsSnap = await FirebaseFirestore.instance
+          .collection('additional-profits')
+          .get();
+
+      // Group by day-of-month
+      final Map<int, List<QueryDocumentSnapshot>> sessionsByDay = {};
+      final Map<int, List<QueryDocumentSnapshot>> expensesByDay = {};
+      final Map<int, List<QueryDocumentSnapshot>> profitsByDay = {};
+      final Set<int> activeDays = {};
+
+      for (final doc in sessionsSnap.docs) {
+        final dt = _parseSessionDate(doc['date'] as String?);
+        if (dt == null || dt.year != month.year || dt.month != month.month)
+          continue;
+        sessionsByDay.putIfAbsent(dt.day, () => []).add(doc);
+        activeDays.add(dt.day);
+      }
+      for (final doc in expensesSnap.docs) {
+        final dt = _parseSessionDate(doc['date'] as String?);
+        if (dt == null || dt.year != month.year || dt.month != month.month)
+          continue;
+        expensesByDay.putIfAbsent(dt.day, () => []).add(doc);
+        activeDays.add(dt.day);
+      }
+      for (final doc in profitsSnap.docs) {
+        final dt = _parseSessionDate(doc['date'] as String?);
+        if (dt == null || dt.year != month.year || dt.month != month.month)
+          continue;
+        profitsByDay.putIfAbsent(dt.day, () => []).add(doc);
+        activeDays.add(dt.day);
+      }
+
+      if (activeDays.isEmpty) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('No data found for $monthDisplay'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Build workbook — one sheet per active day, sorted chronologically
+      final excel = xl.Excel.createExcel();
+      if (excel.sheets.containsKey('Sheet1')) excel.delete('Sheet1');
+
+      final sortedDays = activeDays.toList()..sort();
+
+      for (final day in sortedDays) {
+        final dayDate = DateTime(month.year, month.month, day);
+        // Sheet name: MM-DD-YYYY  (10 chars, well within Excel's 31-char limit)
+        final sheetName =
+            '${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}-${dayDate.year}';
+
+        final sheet = excel[sheetName];
+
+        _populateDaySheet(
+          sheet,
+          dayDate,
+          sessionsByDay[day] ?? [],
+          expensesByDay[day] ?? [],
+          profitsByDay[day] ?? [],
+        );
+      }
+
+      // Save & share
+      final fileName = 'Monthly_Report_$monthLabel.xlsx';
+
+      if (kIsWeb) {
+        excel.save(fileName: fileName);
+        if (mounted) Navigator.pop(context);
+        return;
+      }
+
+      final bytes = excel.save();
+      if (bytes == null) throw Exception('Failed to generate Excel file');
+
+      final dir = await getTemporaryDirectory();
+      final filePath = '${dir.path}/$fileName';
+      await File(filePath).writeAsBytes(bytes);
+
+      if (mounted) Navigator.pop(context);
+
+      await Share.shareXFiles(
+        [XFile(filePath, name: fileName)],
+        subject: 'Monthly Report — $monthDisplay',
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Monthly export failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
 // _exportDailyReport()
   Future<void> _exportDailyReport() async {
-    String dateLabel;
-    String filterDesc;
-    DateTime filterDate;
-
-    if (_salesPeriod == SalesPeriod.daily) {
-      filterDate = _selectedSalesDate;
-    } else {
-      filterDate = DateTime.now();
+    // Branch: monthly period → multi-sheet workbook
+    if (_salesPeriod == SalesPeriod.monthly) {
+      await _exportMonthlyReport();
+      return;
     }
-    dateLabel =
+
+    final DateTime filterDate = _salesPeriod == SalesPeriod.daily
+        ? _selectedSalesDate
+        : DateTime.now();
+
+    final dateLabel =
         '${filterDate.month.toString().padLeft(2, '0')}-${filterDate.day.toString().padLeft(2, '0')}-${filterDate.year}';
-    filterDesc =
+    final filterDesc =
         '${filterDate.month.toString().padLeft(2, '0')}/${filterDate.day.toString().padLeft(2, '0')}/${filterDate.year}';
 
     showDialog(
@@ -2122,7 +2551,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
 
     try {
-      // ── Fetch data ────────────────────────────────────────────────────────
       final sessionsSnap =
           await FirebaseFirestore.instance.collection('sessions').get();
       final sessions = sessionsSnap.docs.where((doc) {
@@ -2154,331 +2582,15 @@ class _DashboardPageState extends State<DashboardPage> {
             dt.day == filterDate.day;
       }).toList();
 
-      // ── Build expense line items ──────────────────────────────────────────
-      // Each expense doc may have an 'items' array or a single amount+description
-      List<Map<String, dynamic>> expenseLineItems = [];
-      for (final doc in expenses) {
-        final data = doc.data() as Map<String, dynamic>;
-        if (data['items'] != null && data['items'] is List) {
-          for (final item in (data['items'] as List)) {
-            if (item is Map) {
-              expenseLineItems.add({
-                'description': item['description']?.toString() ?? '',
-                'amount': (item['amount'] is num)
-                    ? (item['amount'] as num).toDouble()
-                    : (double.tryParse(item['amount']?.toString() ?? '') ??
-                        0.0),
-              });
-            }
-          }
-        } else {
-          expenseLineItems.add({
-            'description': data['description']?.toString() ?? '',
-            'amount': (data['amount'] is num)
-                ? (data['amount'] as num).toDouble()
-                : (double.tryParse(data['amount']?.toString() ?? '') ?? 0.0),
-          });
-        }
-      }
-
-      // ── Build profit line items ───────────────────────────────────────────
-      List<Map<String, dynamic>> profitLineItems = [];
-      for (final doc in profits) {
-        final data = doc.data() as Map<String, dynamic>;
-        if (data['items'] != null && data['items'] is List) {
-          for (final item in (data['items'] as List)) {
-            if (item is Map) {
-              profitLineItems.add({
-                'description': item['description']?.toString() ?? '',
-                'amount': (item['amount'] is num)
-                    ? (item['amount'] as num).toDouble()
-                    : (double.tryParse(item['amount']?.toString() ?? '') ??
-                        0.0),
-              });
-            }
-          }
-        } else {
-          profitLineItems.add({
-            'description': data['description']?.toString() ?? '',
-            'amount': (data['amount'] is num)
-                ? (data['amount'] as num).toDouble()
-                : (double.tryParse(data['amount']?.toString() ?? '') ?? 0.0),
-          });
-        }
-      }
-
-      // ── Totals ────────────────────────────────────────────────────────────
-      double totalDuration = 0.0;
-      double totalSessionAmt = 0.0;
-      double totalCoachingAmt = 0.0;
-      final Map<String, double> personnelHours = {};
-
-      for (final doc in sessions) {
-        final data = doc.data() as Map<String, dynamic>;
-        final duration = (data['duration'] is num)
-            ? (data['duration'] as num).toDouble()
-            : (double.tryParse(data['duration']?.toString() ?? '') ?? 0.0);
-        final sAmt = (data['sessionAmount'] is num)
-            ? (data['sessionAmount'] as num).toDouble()
-            : (double.tryParse(data['sessionAmount']?.toString() ?? '') ?? 0.0);
-        final cAmt = (data['coachingRentalAmount'] is num)
-            ? (data['coachingRentalAmount'] as num).toDouble()
-            : (double.tryParse(
-                    data['coachingRentalAmount']?.toString() ?? '') ??
-                0.0);
-        totalDuration += duration;
-        totalSessionAmt += sAmt;
-        totalCoachingAmt += cAmt;
-        final personnel = data['personnel']?.toString() ?? '';
-        if (personnel.isNotEmpty) {
-          personnelHours[personnel] =
-              (personnelHours[personnel] ?? 0) + duration;
-        }
-      }
-
-      final totalAmount = totalSessionAmt + totalCoachingAmt;
-      final totalExpenses =
-          expenseLineItems.fold(0.0, (s, e) => s + (e['amount'] as double));
-      final totalProfits =
-          profitLineItems.fold(0.0, (s, e) => s + (e['amount'] as double));
-      final totalSales = totalAmount - totalExpenses + totalProfits;
-
-      // ── Create workbook ───────────────────────────────────────────────────
       final excel = xl.Excel.createExcel();
       final sheet = excel['Daily Report'];
-      excel.delete('Sheet1');
+      if (excel.sheets.containsKey('Sheet1')) excel.delete('Sheet1');
 
-      // Column widths:  A=28  B=20  C=10  D=14  E=22  F=20  G=14  H=14
-      const colWidths = [28.0, 20.0, 10.0, 14.0, 22.0, 20.0, 14.0, 14.0];
-      for (var i = 0; i < colWidths.length; i++) {
-        sheet.setColumnWidth(i, colWidths[i]);
-      }
+      _populateDaySheet(sheet, filterDate, sessions, expenses, profits);
 
-      // ── Style helpers ─────────────────────────────────────────────────────
-      xl.CellStyle titleStyle() => xl.CellStyle(
-            bold: true,
-            fontSize: 14,
-            fontFamily: xl.getFontFamily(xl.FontFamily.Arial),
-            horizontalAlign: xl.HorizontalAlign.Center,
-            fontColorHex: xl.ExcelColor.fromHexString('#C41E3A'),
-          );
-
-      xl.CellStyle headerStyle() => xl.CellStyle(
-            bold: true,
-            fontSize: 11,
-            fontFamily: xl.getFontFamily(xl.FontFamily.Arial),
-            horizontalAlign: xl.HorizontalAlign.Center,
-            backgroundColorHex: xl.ExcelColor.fromHexString('#C41E3A'),
-            fontColorHex: xl.ExcelColor.fromHexString('#FFFFFF'),
-          );
-
-      xl.CellStyle dataStyle({bool center = false}) => xl.CellStyle(
-            fontSize: 10,
-            fontFamily: xl.getFontFamily(xl.FontFamily.Arial),
-            horizontalAlign:
-                center ? xl.HorizontalAlign.Center : xl.HorizontalAlign.Left,
-          );
-
-      xl.CellStyle boldStyle({bool right = false}) => xl.CellStyle(
-            bold: true,
-            fontSize: 10,
-            fontFamily: xl.getFontFamily(xl.FontFamily.Arial),
-            horizontalAlign:
-                right ? xl.HorizontalAlign.Right : xl.HorizontalAlign.Left,
-          );
-
-      xl.CellStyle pinkBoldStyle({bool right = false}) => xl.CellStyle(
-            bold: true,
-            fontSize: 10,
-            fontFamily: xl.getFontFamily(xl.FontFamily.Arial),
-            backgroundColorHex: xl.ExcelColor.fromHexString('#FFE4E4'),
-            horizontalAlign:
-                right ? xl.HorizontalAlign.Right : xl.HorizontalAlign.Left,
-          );
-
-      xl.CellStyle pinkStyle({bool right = false}) => xl.CellStyle(
-            fontSize: 10,
-            fontFamily: xl.getFontFamily(xl.FontFamily.Arial),
-            backgroundColorHex: xl.ExcelColor.fromHexString('#FFF3F3'),
-            horizontalAlign:
-                right ? xl.HorizontalAlign.Right : xl.HorizontalAlign.Left,
-          );
-
-      // Helper: set cell value + style
-      void setCell(int col, int row, dynamic value, xl.CellStyle style) {
-        final cell = sheet.cell(
-            xl.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row));
-        if (value is double) {
-          cell.value = xl.DoubleCellValue(value);
-        } else {
-          cell.value = xl.TextCellValue(value?.toString() ?? '');
-        }
-        cell.cellStyle = style;
-      }
-
-      int row = 0;
-
-      // ── Row 0: Title (merged A–H) ─────────────────────────────────────────
-      sheet.merge(
-        xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
-        xl.CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: row),
-      );
-      setCell(0, row, 'Daily Report — $filterDesc', titleStyle());
-      sheet.setRowHeight(row, 28);
-      row++;
-
-      // ── Row 1: Column headers ─────────────────────────────────────────────
-      const headers = [
-        "Client's Name",
-        'Tee Girl',
-        'Bay',
-        'Duration',
-        'Amount',
-        'Coaching/Rental',
-        '',
-        '',
-      ];
-      for (var c = 0; c < headers.length; c++) {
-        setCell(c, row, headers[c], headerStyle());
-      }
-      sheet.setRowHeight(row, 22);
-      row++;
-
-      // ── Session data rows ─────────────────────────────────────────────────
-      for (final doc in sessions) {
-        final data = doc.data() as Map<String, dynamic>;
-        final duration = (data['duration'] is num)
-            ? (data['duration'] as num).toDouble()
-            : (double.tryParse(data['duration']?.toString() ?? '') ?? 0.0);
-        final sAmt = (data['sessionAmount'] is num)
-            ? (data['sessionAmount'] as num).toDouble()
-            : (double.tryParse(data['sessionAmount']?.toString() ?? '') ?? 0.0);
-        final cAmt = (data['coachingRentalAmount'] is num)
-            ? (data['coachingRentalAmount'] as num).toDouble()
-            : (double.tryParse(
-                    data['coachingRentalAmount']?.toString() ?? '') ??
-                0.0);
-
-        setCell(0, row, data['clientName']?.toString() ?? '', dataStyle());
-        setCell(1, row, data['personnel']?.toString() ?? '',
-            dataStyle(center: true));
-        setCell(2, row, data['bayNumber']?.toString() ?? '',
-            dataStyle(center: true));
-        setCell(3, row, duration, dataStyle(center: true));
-        setCell(4, row, sAmt > 0 ? sAmt : '', dataStyle(center: true));
-        setCell(5, row, cAmt > 0 ? cAmt : '', dataStyle(center: true));
-        row++;
-      }
-
-      row++; // blank spacer
-
-      // ── Totals row: Duration | Amount | Coaching | Total Amount label+value ─
-      setCell(3, row, totalDuration, boldStyle());
-      setCell(4, row, totalSessionAmt > 0 ? totalSessionAmt : '',
-          boldStyle(right: true));
-      setCell(5, row, totalCoachingAmt > 0 ? totalCoachingAmt : '',
-          boldStyle(right: true));
-      setCell(6, row, 'Total Amount', pinkBoldStyle());
-      setCell(7, row, totalAmount, pinkBoldStyle(right: true));
-      row++;
-
-      row++; // blank spacer
-
-      // ── Total hrs per personnel block ─────────────────────────────────────
-      setCell(0, row, 'Total hrs per personnel', boldStyle());
-      row++;
-
-      // Personnel rows — align with expenses/profits on same rows
-      final personnelEntries = personnelHours.entries.toList();
-
-      // We'll build the right-side (expenses + profits) as a flat list of rows
-      // so we can align them alongside personnel rows
-      List<Map<String, dynamic>> rightRows = [];
-
-      // Daily Expenses header
-      rightRows.add({'type': 'expHeader'});
-      for (final item in expenseLineItems) {
-        rightRows.add({
-          'type': 'expItem',
-          'desc': item['description'],
-          'amt': item['amount']
-        });
-      }
-      rightRows.add({'type': 'expTotal', 'amt': totalExpenses});
-      rightRows.add({'type': 'blank'});
-
-      // Additional Profit header
-      rightRows.add({'type': 'profHeader'});
-      for (final item in profitLineItems) {
-        rightRows.add({
-          'type': 'profItem',
-          'desc': item['description'],
-          'amt': item['amount']
-        });
-      }
-      rightRows.add({'type': 'blank'});
-
-      // Total Sales
-      rightRows.add({'type': 'totalSales', 'amt': totalSales});
-
-      // Left side: personnel rows, then total hrs
-      List<Map<String, dynamic>> leftRows = [];
-      for (final e in personnelEntries) {
-        leftRows.add({'type': 'personnel', 'name': e.key, 'hrs': e.value});
-      }
-      leftRows.add({'type': 'totalHrsLabel'});
-      leftRows.add({'type': 'totalHrsValue', 'hrs': totalDuration});
-
-      // Render both sides in parallel
-      final maxRows = leftRows.length > rightRows.length
-          ? leftRows.length
-          : rightRows.length;
-
-      for (var i = 0; i < maxRows; i++) {
-        // Left side
-        if (i < leftRows.length) {
-          final lr = leftRows[i];
-          if (lr['type'] == 'personnel') {
-            setCell(1, row, lr['name'] as String, dataStyle());
-            setCell(3, row, lr['hrs'] as double, dataStyle(center: true));
-          } else if (lr['type'] == 'totalHrsLabel') {
-            setCell(3, row, 'Total hrs', boldStyle());
-          } else if (lr['type'] == 'totalHrsValue') {
-            setCell(3, row, lr['hrs'] as double, boldStyle());
-          }
-        }
-
-        // Right side (columns E=4, F=5, G=6, H=7)
-        if (i < rightRows.length) {
-          final rr = rightRows[i];
-          if (rr['type'] == 'expHeader') {
-            setCell(4, row, 'Daily Expenses:', pinkBoldStyle());
-          } else if (rr['type'] == 'expItem') {
-            setCell(5, row, rr['desc'] as String, pinkStyle());
-            setCell(7, row, rr['amt'] as double, pinkStyle(right: true));
-          } else if (rr['type'] == 'expTotal') {
-            setCell(4, row, 'Total Expenses:', pinkBoldStyle());
-            setCell(7, row, rr['amt'] as double, pinkBoldStyle(right: true));
-          } else if (rr['type'] == 'profHeader') {
-            setCell(4, row, 'Additional Profit:', pinkBoldStyle());
-          } else if (rr['type'] == 'profItem') {
-            setCell(5, row, rr['desc'] as String, pinkStyle());
-            setCell(7, row, rr['amt'] as double, pinkStyle(right: true));
-          } else if (rr['type'] == 'totalSales') {
-            setCell(4, row, 'Total Profit:', pinkBoldStyle());
-            setCell(7, row, rr['amt'] as double, pinkBoldStyle(right: true));
-          }
-          // 'blank' rows: nothing to render
-        }
-
-        row++;
-      }
-
-      // ── Save & share ──────────────────────────────────────────────────────
       if (kIsWeb) {
         excel.save(fileName: 'Daily_Report_$dateLabel.xlsx');
-
-        if (mounted) Navigator.pop(context); // stop loader manually
+        if (mounted) Navigator.pop(context);
         return;
       }
 
@@ -2488,7 +2600,6 @@ class _DashboardPageState extends State<DashboardPage> {
       final dir = await getTemporaryDirectory();
       final fileName = 'Daily_Report_$dateLabel.xlsx';
       final filePath = '${dir.path}/$fileName';
-
       await File(filePath).writeAsBytes(bytes);
 
       if (mounted) Navigator.pop(context);
@@ -2686,7 +2797,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Overview',
+                              'M3 Golf Driving Range',
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
@@ -2695,7 +2806,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Client sessions and today\'s summary',
+                              'Recent client sessions and Sales performance',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -2710,7 +2821,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               icon: const Icon(Icons.download,
                                   color: Color(0xFFC41E3A)),
                               onPressed: _exportDailyReport,
-                              tooltip: 'Export Daily Report',
+                              tooltip: 'Export Excel Report',
                             ),
                             const SizedBox(width: 4),
                             IconButton(
@@ -3332,6 +3443,7 @@ class _DashboardPageState extends State<DashboardPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddSessionDialog,
         backgroundColor: const Color(0xFFC41E3A),
+        tooltip: 'Add Session',
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

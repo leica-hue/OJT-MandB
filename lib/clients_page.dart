@@ -968,21 +968,35 @@ class _ClientsPageState extends State<ClientsPage> {
                             ),
                           ],
                         ),
-                        ElevatedButton.icon(
-                          onPressed: _showAddClientDialog,
-                          icon: const Icon(Icons.person_add, size: 18),
-                          label: const Text('Add Client'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC41E3A),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
+                        // Wrap buttons in a Row to group them together
+                        Row(
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: _showAddClientDialog,
+                              icon: const Icon(Icons.person_add, size: 18),
+                              label: const Text('Add Client'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFC41E3A),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                            const SizedBox(
+                                width:
+                                    8), // Optional: Add a little gap between them
+                            IconButton(
+                              icon: const Icon(Icons.logout,
+                                  color: Color(0xFFC41E3A)),
+                              onPressed: () => _signOut(context),
+                              tooltip: 'Sign out',
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
