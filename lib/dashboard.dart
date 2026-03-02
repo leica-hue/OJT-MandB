@@ -21,6 +21,8 @@ class DashboardPage extends StatefulWidget {
 enum SalesPeriod { daily, monthly, yearly, overall }
 
 class _DashboardPageState extends State<DashboardPage> {
+  int _currentSessionPage = 0;
+  static const int _sessionsPerPage = 8;
   bool _isSidebarCollapsed = false;
   String _currentPage = 'Overview';
   SalesPeriod _salesPeriod = SalesPeriod.daily;
@@ -47,7 +49,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final TextEditingController _paymentOtherController = TextEditingController();
 
   // Mode of payment for add session: 'cash', 'gcash', or 'other'
-  String _sessionModeOfPayment = 'cash';
+  String _sessionModeOfPayment = 'Cash';
 
   // Controllers for add expense dialog
   final TextEditingController _expenseAmountController =
@@ -824,11 +826,11 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       ChoiceChip(
                         label: const Text('Cash'),
-                        selected: _sessionModeOfPayment == 'cash',
+                        selected: _sessionModeOfPayment == 'Cash',
                         onSelected: (selected) {
                           if (selected) {
                             setDialogState(
-                                () => _sessionModeOfPayment = 'cash');
+                                () => _sessionModeOfPayment = 'Cash');
                           }
                         },
                         selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
@@ -836,11 +838,11 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(width: 8),
                       ChoiceChip(
                         label: const Text('GCash'),
-                        selected: _sessionModeOfPayment == 'gcash',
+                        selected: _sessionModeOfPayment == 'Gcash',
                         onSelected: (selected) {
                           if (selected) {
                             setDialogState(
-                                () => _sessionModeOfPayment = 'gcash');
+                                () => _sessionModeOfPayment = 'Gcash');
                           }
                         },
                         selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
@@ -848,24 +850,24 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(width: 8),
                       ChoiceChip(
                         label: const Text('Other'),
-                        selected: _sessionModeOfPayment == 'other',
+                        selected: _sessionModeOfPayment == 'Other',
                         onSelected: (selected) {
                           if (selected) {
                             setDialogState(
-                                () => _sessionModeOfPayment = 'other');
+                                () => _sessionModeOfPayment = 'Other');
                           }
                         },
                         selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
                       ),
                     ],
                   ),
-                  if (_sessionModeOfPayment == 'other') ...[
+                  if (_sessionModeOfPayment == 'Other') ...[
                     const SizedBox(height: 12),
                     TextField(
                       controller: _paymentOtherController,
                       decoration: const InputDecoration(
                         hintText:
-                            'Specify mode of payment (e.g., Bank Transfer, Check)',
+                            'Specify mode of payment (e.g., Bank Transfer)',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.edit),
                       ),
@@ -1590,7 +1592,7 @@ class _DashboardPageState extends State<DashboardPage> {
       onTap: () => _showAdditionalProfitHistoryDialog(),
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -1612,7 +1614,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Text(
                   'Additional Profit',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
                   ),
@@ -3373,7 +3375,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       children: [
                         // Stats Cards
                         SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                          padding: const EdgeInsets.fromLTRB(14, 2, 14, 2),
                           child: StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection('sessions')
@@ -3559,7 +3561,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         // Recent Client Sessions
                         Expanded(
                           child: Container(
-                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -3623,7 +3625,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                           color: Color(0xFFC41E3A), width: 1.2),
                                     ),
                                   ),
-                                  onChanged: (_) => setState(() {}),
+                                  onChanged: (_) => setState(() {
+                                    _currentSessionPage =
+                                        0; // reset to first page on new search
+                                  }),
                                 ),
                                 const SizedBox(height: 10),
                                 Expanded(
@@ -3631,7 +3636,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                     stream: FirebaseFirestore.instance
                                         .collection('sessions')
                                         .orderBy('date', descending: true)
-                                        .limit(100)
                                         .snapshots(
                                             includeMetadataChanges: true),
                                     builder: (context, snapshot) {
@@ -3645,17 +3649,16 @@ class _DashboardPageState extends State<DashboardPage> {
                                                 const Text(
                                                   'Error loading sessions',
                                                   style: TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Color(0xFF1a1a1a),
-                                                  ),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: Color(0xFF1a1a1a)),
                                                 ),
                                                 const SizedBox(height: 8),
                                                 Text(
                                                   '${snapshot.error}',
                                                   style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.grey[600],
-                                                  ),
+                                                      fontSize: 13,
+                                                      color: Colors.grey[600]),
                                                   textAlign: TextAlign.center,
                                                 ),
                                               ],
@@ -3666,10 +3669,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
                                       if (!snapshot.hasData) {
                                         return const Center(
-                                          child: CircularProgressIndicator(
-                                            color: Color(0xFFC41E3A),
-                                          ),
-                                        );
+                                            child: CircularProgressIndicator(
+                                                color: Color(0xFFC41E3A)));
                                       }
 
                                       final allSessions = snapshot.data!.docs;
@@ -3677,7 +3678,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                           .text
                                           .trim()
                                           .toLowerCase();
-                                      final sessions = query.isEmpty
+
+                                      final filteredSessions = query.isEmpty
                                           ? allSessions
                                           : allSessions.where((doc) {
                                               final d = doc.data()
@@ -3704,7 +3706,35 @@ class _DashboardPageState extends State<DashboardPage> {
                                                   bayNumber.contains(query);
                                             }).toList();
 
-                                      if (sessions.isEmpty) {
+                                      final int totalItems =
+                                          filteredSessions.length;
+                                      final int totalPages = totalItems == 0
+                                          ? 1
+                                          : (totalItems / _sessionsPerPage)
+                                              .ceil();
+                                      final int safePage = _currentSessionPage
+                                          .clamp(0, totalPages - 1);
+
+                                      if (_currentSessionPage != safePage) {
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                          if (mounted)
+                                            setState(() =>
+                                                _currentSessionPage = safePage);
+                                        });
+                                      }
+
+                                      final int startIndex =
+                                          safePage * _sessionsPerPage;
+                                      final int endIndex =
+                                          (startIndex + _sessionsPerPage)
+                                              .clamp(0, totalItems);
+                                      final sessions = totalItems == 0
+                                          ? <QueryDocumentSnapshot>[]
+                                          : filteredSessions.sublist(
+                                              startIndex, endIndex);
+
+                                      if (filteredSessions.isEmpty) {
                                         return Center(
                                           child: Padding(
                                             padding: const EdgeInsets.all(32.0),
@@ -3713,246 +3743,357 @@ class _DashboardPageState extends State<DashboardPage> {
                                                   ? 'No sessions yet'
                                                   : 'No sessions match "$query"',
                                               style: TextStyle(
-                                                color: Colors.grey[600],
-                                                fontSize: 16,
-                                              ),
+                                                  color: Colors.grey[600],
+                                                  fontSize: 16),
                                               textAlign: TextAlign.center,
                                             ),
                                           ),
                                         );
                                       }
 
-                                      return LayoutBuilder(
-                                        builder: (context, constraints) {
-                                          final tableWidth =
-                                              constraints.maxWidth;
-                                          return SingleChildScrollView(
-                                            scrollDirection: Axis.vertical,
-                                            child: SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: SizedBox(
-                                                width: tableWidth,
-                                                child: DataTable(
-                                                  columnSpacing: 8,
-                                                  horizontalMargin: 12,
-                                                  headingRowColor:
-                                                      MaterialStateProperty.all(
-                                                          Colors.grey[100]),
-                                                  columns: [
-                                                    const DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(2.0),
-                                                      label: Text('Client Name',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
+                                      return Column(
+                                        children: [
+                                          Expanded(
+                                            child: LayoutBuilder(
+                                              builder: (context, constraints) {
+                                                return SingleChildScrollView(
+                                                  scrollDirection:
+                                                      Axis.vertical,
+                                                  child: SingleChildScrollView(
+                                                    scrollDirection:
+                                                        Axis.horizontal,
+                                                    child: SizedBox(
+                                                      width:
+                                                          constraints.maxWidth,
+                                                      child: DataTable(
+                                                        columnSpacing: 8,
+                                                        horizontalMargin: 12,
+                                                        headingRowColor:
+                                                            MaterialStateProperty
+                                                                .all(Colors
+                                                                    .grey[100]),
+                                                        columns: const [
+                                                          DataColumn(
+                                                            label: Text(
+                                                                'Client Name',
+                                                                style: TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold)),
+                                                          ),
+                                                          DataColumn(
+                                                            label: Expanded(
+                                                              child: Text(
+                                                                  'Date',
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                  style: TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                            ),
+                                                          ),
+                                                          DataColumn(
+                                                            label: Expanded(
+                                                              child: Text(
+                                                                  'Session Amount',
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                  style: TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                            ),
+                                                          ),
+                                                          DataColumn(
+                                                            label: Expanded(
+                                                              child: Text(
+                                                                  'Coaching/Rental',
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                  style: TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                            ),
+                                                          ),
+                                                          DataColumn(
+                                                            label: Expanded(
+                                                              child: Text('Bay',
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                  style: TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                            ),
+                                                          ),
+                                                          DataColumn(
+                                                            label: Expanded(
+                                                              child: Text(
+                                                                  'Personnel',
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                  style: TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                            ),
+                                                          ),
+                                                          DataColumn(
+                                                            label: Expanded(
+                                                              child: Text(
+                                                                  'Duration (hrs)',
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .center,
+                                                                  style: TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                            ),
+                                                          ),
+                                                          DataColumn(
+                                                            numeric: true,
+                                                            label: Expanded(
+                                                              child: Text(
+                                                                  'MOP',
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .right,
+                                                                  style: TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                            ),
+                                                          ),
+                                                          DataColumn(
+                                                            numeric: true,
+                                                            label: Expanded(
+                                                              child: Text(
+                                                                  'Total',
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .right,
+                                                                  style: TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold)),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                        rows: sessions
+                                                            .map((session) {
+                                                          final data =
+                                                              session.data()
+                                                                  as Map<String,
+                                                                      dynamic>;
+                                                          final total =
+                                                              _getSessionTotal(
+                                                                  data);
+                                                          return DataRow(
+                                                              cells: [
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .centerLeft,
+                                                                    child: Text(
+                                                                        data['clientName'] ??
+                                                                            'N/A'))),
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .center,
+                                                                    child: Text(
+                                                                        data['date'] ??
+                                                                            'N/A'))),
+                                                                DataCell(Align(
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .center,
+                                                                  child: Text(data[
+                                                                              'sessionAmount'] !=
+                                                                          null
+                                                                      ? (data['sessionAmount']
+                                                                              is num
+                                                                          ? (data['sessionAmount'] as num)
+                                                                              .toString()
+                                                                          : data['sessionAmount']
+                                                                              .toString())
+                                                                      : '—'),
+                                                                )),
+                                                                DataCell(Align(
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .center,
+                                                                  child: Text(data[
+                                                                              'coachingRentalAmount'] !=
+                                                                          null
+                                                                      ? (data['coachingRentalAmount']
+                                                                              is num
+                                                                          ? (data['coachingRentalAmount'] as num)
+                                                                              .toString()
+                                                                          : data['coachingRentalAmount']
+                                                                              .toString())
+                                                                      : '—'),
+                                                                )),
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .center,
+                                                                    child: Text(
+                                                                        data['bayNumber']?.toString() ??
+                                                                            '—'))),
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .center,
+                                                                    child: Text(
+                                                                        data['personnel'] ??
+                                                                            'N/A'))),
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .center,
+                                                                    child: Text(
+                                                                        data['duration']?.toString() ??
+                                                                            '0.0'))),
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .centerRight,
+                                                                    child: Text(
+                                                                        data['modeOfPayment']?.toString() ??
+                                                                            'N/A'))),
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .centerRight,
+                                                                    child: Text(
+                                                                        '₱${_formatAmount(total)}'))),
+                                                              ]);
+                                                        }).toList(),
+                                                      ),
                                                     ),
-                                                    const DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(1.0),
-                                                      label: Expanded(
-                                                        child: Text(
-                                                          'Date',
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+
+                                          // ── Pagination Controls ──────────────────────────────────────
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 8),
+                                            decoration: BoxDecoration(
+                                              border: Border(
+                                                  top: BorderSide(
+                                                      color: Colors
+                                                          .grey.shade200)),
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  'Showing ${totalItems == 0 ? 0 : startIndex + 1}–$endIndex of $totalItems sessions',
+                                                  style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.grey[600]),
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    IconButton(
+                                                      icon: const Icon(
+                                                          Icons.first_page),
+                                                      onPressed: _currentSessionPage >
+                                                              0
+                                                          ? () => setState(() =>
+                                                              _currentSessionPage =
+                                                                  0)
+                                                          : null,
+                                                      iconSize: 20,
+                                                      tooltip: 'First page',
+                                                      color: const Color(
+                                                          0xFFC41E3A),
+                                                    ),
+                                                    IconButton(
+                                                      icon: const Icon(
+                                                          Icons.chevron_left),
+                                                      onPressed: _currentSessionPage >
+                                                              0
+                                                          ? () => setState(() =>
+                                                              _currentSessionPage--)
+                                                          : null,
+                                                      iconSize: 20,
+                                                      tooltip: 'Previous page',
+                                                      color: const Color(
+                                                          0xFFC41E3A),
+                                                    ),
+                                                    Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 4),
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(
+                                                                0xFFC41E3A)
+                                                            .withOpacity(0.1),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                      ),
+                                                      child: Text(
+                                                        'Page ${safePage + 1} of $totalPages',
+                                                        style: const TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color:
+                                                              Color(0xFFC41E3A),
                                                         ),
                                                       ),
                                                     ),
-                                                    const DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(0.85),
-                                                      label: Expanded(
-                                                        child: Text(
-                                                          'Session Amount',
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
-                                                        ),
-                                                      ),
+                                                    IconButton(
+                                                      icon: const Icon(
+                                                          Icons.chevron_right),
+                                                      onPressed: _currentSessionPage <
+                                                              totalPages - 1
+                                                          ? () => setState(() =>
+                                                              _currentSessionPage++)
+                                                          : null,
+                                                      iconSize: 20,
+                                                      tooltip: 'Next page',
+                                                      color: const Color(
+                                                          0xFFC41E3A),
                                                     ),
-                                                    const DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(0.9),
-                                                      label: Expanded(
-                                                        child: Text(
-                                                          'Coaching/Rental',
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(0.5),
-                                                      label: Expanded(
-                                                        child: Text(
-                                                          'Bay',
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(1.0),
-                                                      label: Expanded(
-                                                        child: Text(
-                                                          'Personnel',
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(0.55),
-                                                      label: Expanded(
-                                                        child: Text(
-                                                          'Duration (hrs)',
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const DataColumn(
-                                                      columnWidth:
-                                                          FlexColumnWidth(1.0),
-                                                      numeric:
-                                                          true, // this right-aligns the header
-                                                      label: Expanded(
-                                                        child: Text(
-                                                          'Total',
-                                                          textAlign:
-                                                              TextAlign.right,
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
-                                                        ),
-                                                      ),
+                                                    IconButton(
+                                                      icon: const Icon(
+                                                          Icons.last_page),
+                                                      onPressed: _currentSessionPage <
+                                                              totalPages - 1
+                                                          ? () => setState(() =>
+                                                              _currentSessionPage =
+                                                                  totalPages -
+                                                                      1)
+                                                          : null,
+                                                      iconSize: 20,
+                                                      tooltip: 'Last page',
+                                                      color: const Color(
+                                                          0xFFC41E3A),
                                                     ),
                                                   ],
-                                                  rows: () {
-                                                    final sessionList = sessions
-                                                        .map((session) =>
-                                                            session.data()
-                                                                as Map<String,
-                                                                    dynamic>)
-                                                        .toList();
-                                                    final dataRows =
-                                                        sessionList.map((data) {
-                                                      final total =
-                                                          _getSessionTotal(
-                                                              data);
-                                                      return DataRow(cells: [
-                                                        DataCell(Align(
-                                                          alignment: Alignment
-                                                              .centerLeft,
-                                                          child: Text(data[
-                                                                  'clientName'] ??
-                                                              'N/A'),
-                                                        )),
-                                                        DataCell(Align(
-                                                          alignment:
-                                                              Alignment.center,
-                                                          child: Text(
-                                                              data['date'] ??
-                                                                  'N/A'),
-                                                        )),
-                                                        DataCell(Align(
-                                                          alignment:
-                                                              Alignment.center,
-                                                          child: Text(
-                                                            data['sessionAmount'] !=
-                                                                    null
-                                                                ? (data['sessionAmount']
-                                                                        is num
-                                                                    ? (data['sessionAmount']
-                                                                            as num)
-                                                                        .toString()
-                                                                    : data['sessionAmount']
-                                                                        .toString())
-                                                                : '—',
-                                                          ),
-                                                        )),
-                                                        DataCell(Align(
-                                                          alignment:
-                                                              Alignment.center,
-                                                          child: Text(
-                                                            data['coachingRentalAmount'] !=
-                                                                    null
-                                                                ? (data['coachingRentalAmount']
-                                                                        is num
-                                                                    ? (data['coachingRentalAmount']
-                                                                            as num)
-                                                                        .toString()
-                                                                    : data['coachingRentalAmount']
-                                                                        .toString())
-                                                                : '—',
-                                                          ),
-                                                        )),
-                                                        DataCell(Align(
-                                                          alignment:
-                                                              Alignment.center,
-                                                          child: Text(data[
-                                                                      'bayNumber']
-                                                                  ?.toString() ??
-                                                              '—'),
-                                                        )),
-                                                        DataCell(Align(
-                                                          alignment:
-                                                              Alignment.center,
-                                                          child: Text(data[
-                                                                  'personnel'] ??
-                                                              'N/A'),
-                                                        )),
-                                                        DataCell(Align(
-                                                          alignment:
-                                                              Alignment.center,
-                                                          child: Text(data[
-                                                                      'duration']
-                                                                  ?.toString() ??
-                                                              '0.0'),
-                                                        )),
-                                                        DataCell(Align(
-                                                          alignment: Alignment
-                                                              .centerRight,
-                                                          child: Text(
-                                                              '₱${_formatAmount(total)}'),
-                                                        )),
-                                                      ]);
-                                                    }).toList();
-                                                    return dataRows;
-                                                  }(),
                                                 ),
-                                              ),
+                                              ],
                                             ),
-                                          );
-                                        },
+                                          ),
+                                        ],
                                       );
                                     },
                                   ),

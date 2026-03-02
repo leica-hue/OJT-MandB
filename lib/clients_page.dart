@@ -15,6 +15,8 @@ class ClientsPage extends StatefulWidget {
 }
 
 class _ClientsPageState extends State<ClientsPage> {
+  int _currentClientsPage = 0;
+  static const int _clientsPerPage = 6;
   bool _isSidebarCollapsed = false;
   String _currentPage = 'Clients';
   final TextEditingController _searchController = TextEditingController();
@@ -1014,6 +1016,7 @@ class _ClientsPageState extends State<ClientsPage> {
                             onChanged: (value) {
                               setState(() {
                                 _searchQuery = value.toLowerCase();
+                                _currentClientsPage = 0; // add this line
                               });
                             },
                             decoration: InputDecoration(
@@ -1159,12 +1162,9 @@ class _ClientsPageState extends State<ClientsPage> {
                                         final name =
                                             (data['name'] ?? '').toLowerCase();
                                         final email =
-                                            (data['email'] ?? '').toLowerCase();
-                                        final phone =
                                             (data['phone'] ?? '').toLowerCase();
                                         return name.contains(_searchQuery) ||
-                                            email.contains(_searchQuery) ||
-                                            phone.contains(_searchQuery);
+                                            email.contains(_searchQuery);
                                       }).toList();
                                     }
 
@@ -1195,6 +1195,34 @@ class _ClientsPageState extends State<ClientsPage> {
                                       );
                                     }
 
+                                    final int totalItems = clients.length;
+                                    final int totalPages = totalItems == 0
+                                        ? 1
+                                        : (totalItems / _clientsPerPage).ceil();
+                                    final int safePage = totalPages == 0
+                                        ? 0
+                                        : _currentClientsPage.clamp(
+                                            0, totalPages - 1);
+
+                                    if (_currentClientsPage != safePage) {
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        if (mounted)
+                                          setState(() =>
+                                              _currentClientsPage = safePage);
+                                      });
+                                    }
+
+                                    final int startIndex =
+                                        safePage * _clientsPerPage;
+                                    final int endIndex = totalItems == 0
+                                        ? 0
+                                        : (startIndex + _clientsPerPage)
+                                            .clamp(0, totalItems);
+                                    final pageClients = totalItems == 0
+                                        ? <QueryDocumentSnapshot>[]
+                                        : clients.sublist(startIndex, endIndex);
+
                                     return Column(
                                       children: [
                                         // Table Header
@@ -1213,40 +1241,41 @@ class _ClientsPageState extends State<ClientsPage> {
                                             children: [
                                               Expanded(
                                                 flex: 3,
-                                                child: Text(
-                                                  'Name',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF1a1a1a),
-                                                  ),
-                                                ),
+                                                child: Text('Name',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Color(0xFF1a1a1a))),
                                               ),
                                               Expanded(
                                                 flex: 4,
-                                                child: Text(
-                                                  'Address',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF1a1a1a),
-                                                  ),
-                                                ),
+                                                child: Text('Address',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Color(0xFF1a1a1a))),
                                               ),
                                               Expanded(
                                                 flex: 2,
-                                                child: Text(
-                                                  'Actions',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF1a1a1a),
-                                                  ),
-                                                  textAlign: TextAlign.right,
-                                                ),
+                                                child: Text('Actions',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Color(0xFF1a1a1a)),
+                                                    textAlign: TextAlign.right),
                                               ),
                                             ],
                                           ),
                                         ),
-                                        // Table Rows
-                                        ...clients.asMap().entries.map((entry) {
+
+                                        // Table Rows — use pageClients instead of clients
+                                        ...pageClients
+                                            .asMap()
+                                            .entries
+                                            .map((entry) {
                                           final index = entry.key;
                                           final client = entry.value;
                                           final data = client.data()
@@ -1258,13 +1287,12 @@ class _ClientsPageState extends State<ClientsPage> {
                                             decoration: BoxDecoration(
                                               border: Border(
                                                 bottom: BorderSide(
-                                                  color: Colors.grey.shade200,
-                                                ),
+                                                    color:
+                                                        Colors.grey.shade200),
                                               ),
                                             ),
                                             child: Row(
                                               children: [
-                                                // Name with Avatar
                                                 Expanded(
                                                   flex: 3,
                                                   child: Row(
@@ -1273,7 +1301,8 @@ class _ClientsPageState extends State<ClientsPage> {
                                                         radius: 22,
                                                         backgroundColor:
                                                             _getAvatarColor(
-                                                                index),
+                                                                startIndex +
+                                                                    index),
                                                         child: Text(
                                                           _getInitials(
                                                               data['name'] ??
@@ -1305,27 +1334,25 @@ class _ClientsPageState extends State<ClientsPage> {
                                                     ],
                                                   ),
                                                 ),
-                                                // Address
                                                 Expanded(
                                                   flex: 4,
                                                   child: Row(
                                                     children: [
                                                       Icon(
-                                                        Icons
-                                                            .location_on_outlined,
-                                                        size: 15,
-                                                        color: Colors.grey[500],
-                                                      ),
+                                                          Icons
+                                                              .location_on_outlined,
+                                                          size: 15,
+                                                          color:
+                                                              Colors.grey[500]),
                                                       const SizedBox(width: 6),
                                                       Expanded(
                                                         child: Text(
                                                           data['address'] ??
                                                               'N/A',
                                                           style: TextStyle(
-                                                            fontSize: 13,
-                                                            color: Colors
-                                                                .grey[700],
-                                                          ),
+                                                              fontSize: 13,
+                                                              color: Colors
+                                                                  .grey[700]),
                                                           overflow: TextOverflow
                                                               .ellipsis,
                                                           maxLines: 2,
@@ -1334,7 +1361,6 @@ class _ClientsPageState extends State<ClientsPage> {
                                                     ],
                                                   ),
                                                 ),
-                                                // Actions
                                                 Expanded(
                                                   flex: 2,
                                                   child: Row(
@@ -1356,31 +1382,26 @@ class _ClientsPageState extends State<ClientsPage> {
                                                                   horizontal:
                                                                       12,
                                                                   vertical: 8),
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        6),
-                                                          ),
+                                                          shape: RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          6)),
                                                         ),
                                                         child: const Text(
-                                                          'View Details',
-                                                          style: TextStyle(
-                                                            color: Color(
-                                                                0xFF1a1a1a),
-                                                            fontSize: 13,
-                                                          ),
-                                                        ),
+                                                            'View Details',
+                                                            style: TextStyle(
+                                                                color: Color(
+                                                                    0xFF1a1a1a),
+                                                                fontSize: 13)),
                                                       ),
                                                       const SizedBox(width: 4),
                                                       IconButton(
                                                         icon: const Icon(
-                                                          Icons.edit_outlined,
-                                                          size: 18,
-                                                          color:
-                                                              Color(0xFF1a1a1a),
-                                                        ),
+                                                            Icons.edit_outlined,
+                                                            size: 18,
+                                                            color: Color(
+                                                                0xFF1a1a1a)),
                                                         onPressed: () =>
                                                             _showEditClientDialog(
                                                                 client),
@@ -1389,10 +1410,10 @@ class _ClientsPageState extends State<ClientsPage> {
                                                       ),
                                                       IconButton(
                                                         icon: const Icon(
-                                                          Icons.delete_outline,
-                                                          size: 18,
-                                                          color: Colors.red,
-                                                        ),
+                                                            Icons
+                                                                .delete_outline,
+                                                            size: 18,
+                                                            color: Colors.red),
                                                         onPressed: () =>
                                                             _deleteClient(
                                                                 client),
@@ -1406,6 +1427,108 @@ class _ClientsPageState extends State<ClientsPage> {
                                             ),
                                           );
                                         }).toList(),
+
+                                        // ── Pagination Controls ──────────────────────────────────────────
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            border: Border(
+                                                top: BorderSide(
+                                                    color:
+                                                        Colors.grey.shade200)),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                'Showing ${startIndex + 1}–$endIndex of $totalItems clients',
+                                                style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.grey[600]),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                        Icons.first_page),
+                                                    onPressed: safePage > 0
+                                                        ? () => setState(() =>
+                                                            _currentClientsPage =
+                                                                0)
+                                                        : null,
+                                                    iconSize: 20,
+                                                    color:
+                                                        const Color(0xFFC41E3A),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                        Icons.chevron_left),
+                                                    onPressed: safePage > 0
+                                                        ? () => setState(() =>
+                                                            _currentClientsPage =
+                                                                safePage - 1)
+                                                        : null,
+                                                    iconSize: 20,
+                                                    color:
+                                                        const Color(0xFFC41E3A),
+                                                  ),
+                                                  Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                              0xFFC41E3A)
+                                                          .withOpacity(0.1),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                    child: Text(
+                                                      'Page ${safePage + 1} of $totalPages',
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color:
+                                                            Color(0xFFC41E3A),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                        Icons.chevron_right),
+                                                    onPressed: safePage <
+                                                            totalPages - 1
+                                                        ? () => setState(() =>
+                                                            _currentClientsPage =
+                                                                safePage + 1)
+                                                        : null,
+                                                    iconSize: 20,
+                                                    color:
+                                                        const Color(0xFFC41E3A),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                        Icons.last_page),
+                                                    onPressed: safePage <
+                                                            totalPages - 1
+                                                        ? () => setState(() =>
+                                                            _currentClientsPage =
+                                                                totalPages - 1)
+                                                        : null,
+                                                    iconSize: 20,
+                                                    color:
+                                                        const Color(0xFFC41E3A),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ],
                                     );
                                   },
