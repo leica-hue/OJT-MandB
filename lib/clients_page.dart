@@ -1006,7 +1006,7 @@ class _ClientsPageState extends State<ClientsPage> {
                   // Main Content
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(32),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1043,8 +1043,8 @@ class _ClientsPageState extends State<ClientsPage> {
                               filled: true,
                               fillColor: Colors.white,
                               contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
+                                horizontal: 14,
+                                vertical: 10,
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -1062,7 +1062,7 @@ class _ClientsPageState extends State<ClientsPage> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 24),
                           // Statistics Cards (real-time: updates when clients or sessions change)
                           StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
@@ -1094,7 +1094,8 @@ class _ClientsPageState extends State<ClientsPage> {
                                           totalClients.toString(),
                                         ),
                                       ),
-                                      const SizedBox(width: 20),
+                                      const SizedBox(
+                                          width: 8), // reduced from 20
                                       Expanded(
                                         child: _buildStatCard(
                                           'Total Sessions',
@@ -1107,10 +1108,10 @@ class _ClientsPageState extends State<ClientsPage> {
                               );
                             },
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 28),
                           // Client Information Table
                           Container(
-                            padding: const EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
@@ -1551,7 +1552,7 @@ class _ClientsPageState extends State<ClientsPage> {
 
   Widget _buildStatCard(String label, String value) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -1569,16 +1570,16 @@ class _ClientsPageState extends State<ClientsPage> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 36,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1a1a1a),
             ),
