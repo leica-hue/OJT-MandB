@@ -992,9 +992,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       if (mounted) {
         Navigator.pop(context);
-        if (closeDialog) {
-          Navigator.pop(context);
-        }
+        if (closeDialog) {}
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -1356,7 +1354,6 @@ class _DashboardPageState extends State<DashboardPage> {
       });
 
       if (mounted) {
-        Navigator.pop(context);
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -3861,8 +3858,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                                           DataColumn(
                                                             numeric: true,
                                                             label: Expanded(
-                                                              child: Text(
-                                                                  'MOP',
+                                                              child: Text('MOP',
                                                                   textAlign:
                                                                       TextAlign
                                                                           .right,
@@ -4501,9 +4497,9 @@ class _DashboardPageState extends State<DashboardPage> {
         content: _ExpenseLineItemsForm(
           key: formKey,
           initialDate: _profitDate,
-          onSave: (items, date) async {
-            Navigator.pop(context);
-            await _addProfitWithItems(items, date);
+          onSave: (items, date) {
+            // Don't pop here — let _addProfitWithItems handle everything
+            _addProfitWithItems(items, date);
           },
         ),
         actions: [
@@ -4529,21 +4525,22 @@ class _DashboardPageState extends State<DashboardPage> {
     DateTime date,
   ) async {
     if (!mounted) return;
+
+    // Close the form dialog first, cleanly
+    Navigator.of(context, rootNavigator: true).pop();
+
+    // Show loading indicator
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFFC41E3A),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFFC41E3A)),
       ),
     );
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        throw Exception('User must be signed in to add profits');
-      }
+      if (user == null) throw Exception('User must be signed in');
 
       final dateStr =
           '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
@@ -4561,7 +4558,7 @@ class _DashboardPageState extends State<DashboardPage> {
       final firstDesc =
           items.isNotEmpty ? (items.first['description'] ?? '') : '';
 
-      final profitData = {
+      await FirebaseFirestore.instance.collection('additional-profits').add({
         'date': dateStr,
         'amount': totalAmount,
         'description': firstDesc,
@@ -4569,20 +4566,10 @@ class _DashboardPageState extends State<DashboardPage> {
         'userId': user.uid,
         'userEmail': user.email ?? '',
         'createdAt': FieldValue.serverTimestamp(),
-      };
-
-      final docRef = await FirebaseFirestore.instance
-          .collection('additional-profits')
-          .add(profitData);
-
-      final savedDoc = await docRef.get();
-      if (!savedDoc.exists) {
-        throw Exception('Failed to save profit to Firebase');
-      }
+      });
 
       if (mounted) {
-        Navigator.pop(context);
-        Navigator.pop(context);
+        Navigator.of(context, rootNavigator: true).pop(); // dismiss loader
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -4591,14 +4578,13 @@ class _DashboardPageState extends State<DashboardPage> {
             duration: const Duration(seconds: 2),
           ),
         );
-        _profitDate = date;
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.of(context, rootNavigator: true).pop(); // dismiss loader
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving profit to Firebase: $e'),
+            content: Text('Error saving profit: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),
