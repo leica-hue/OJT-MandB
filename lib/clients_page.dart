@@ -243,11 +243,12 @@ class _ClientsPageState extends State<ClientsPage> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: const Color(0xFFFBEEEE),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         insetPadding: const EdgeInsets.symmetric(horizontal: 38, vertical: 38),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.88,
+            maxWidth: MediaQuery.of(context).size.width * 0.7,
             maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
           child: Padding(
@@ -256,14 +257,14 @@ class _ClientsPageState extends State<ClientsPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
+                // ── Header ──────────────────────────────────────────────
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       '$clientName - Previous Sessions',
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF1a1a1a),
                       ),
@@ -275,16 +276,17 @@ class _ClientsPageState extends State<ClientsPage> {
                     ),
                   ],
                 ),
-                const Divider(height: 24),
+                const SizedBox(height: 16),
 
-                // Sessions content — StreamBuilder so list updates immediately when sessions are added/deleted
+                // ── Sessions list ────────────────────────────────────────
                 Flexible(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('sessions')
                         .snapshots(includeMetadataChanges: true),
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting &&
+                      if (snapshot.connectionState ==
+                              ConnectionState.waiting &&
                           !snapshot.hasData) {
                         return const Center(
                           child: Padding(
@@ -312,8 +314,6 @@ class _ClientsPageState extends State<ClientsPage> {
                         return const Center(child: Text('No data'));
                       }
 
-                      // Match sessions by clientName (case-insensitive trim)
-                      // OR by clientId matching this client's Firestore document ID
                       final lowerClientName = clientName.toLowerCase();
                       final allDocs = snapshot.data!.docs;
                       final sessions = allDocs.where((doc) {
@@ -328,7 +328,7 @@ class _ClientsPageState extends State<ClientsPage> {
                             sessionClientId == clientId;
                       }).toList();
 
-                      // Sort newest first — date stored as MM/DD/YYYY
+                      // Sort newest first
                       sessions.sort((a, b) {
                         final da = a.data() as Map<String, dynamic>;
                         final db = b.data() as Map<String, dynamic>;
@@ -366,105 +366,90 @@ class _ClientsPageState extends State<ClientsPage> {
                       }
 
                       // Compute totals
-                      double totalDuration = 0;
                       double totalSessionAmt = 0;
                       double totalCoachingAmt = 0;
-
+                      double totalDuration = 0;
                       for (final doc in sessions) {
                         final d = doc.data() as Map<String, dynamic>;
-                        totalDuration += _toDouble(d['duration']);
                         totalSessionAmt += _toDouble(d['sessionAmount']);
                         totalCoachingAmt +=
                             _toDouble(d['coachingRentalAmount']);
+                        totalDuration += _toDouble(d['duration']);
                       }
                       final grandTotal = totalSessionAmt + totalCoachingAmt;
 
                       return Column(
                         children: [
-                          // Table Header
+                          // ── Column header row ────────────────────────
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 12),
+                                horizontal: 16, vertical: 10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFCE8E8),
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(8),
-                                topRight: Radius.circular(8),
-                              ),
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Row(
                               children: [
                                 Expanded(
-                                  flex: 2,
-                                  child: Text('Date',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFF1a1a1a))),
-                                ),
+                                    flex: 2,
+                                    child: Text('Date',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13))),
                                 Expanded(
-                                  flex: 2,
-                                  child: Text('Session Amount',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFF1a1a1a))),
-                                ),
+                                    flex: 2,
+                                    child: Text('Session Amount',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13))),
                                 Expanded(
-                                  flex: 2,
-                                  child: Text('Coaching/Rental',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFF1a1a1a))),
-                                ),
+                                    flex: 2,
+                                    child: Text('Coaching/Rental',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13))),
                                 Expanded(
-                                  flex: 1,
-                                  child: Text('Bay No.',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFF1a1a1a))),
-                                ),
+                                    flex: 1,
+                                    child: Text('Bay',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13))),
                                 Expanded(
-                                  flex: 2,
-                                  child: Text('Personnel',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFF1a1a1a))),
-                                ),
+                                    flex: 2,
+                                    child: Text('Personnel',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13))),
                                 Expanded(
-                                  flex: 2,
-                                  child: Text('Duration (hrs)',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFF1a1a1a))),
-                                ),
+                                    flex: 2,
+                                    child: Text('Duration (hrs)',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13))),
                                 Expanded(
-                                  flex: 2,
-                                  child: Text('Total Amount',
-                                      textAlign: TextAlign.right,
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFF1a1a1a))),
-                                ),
+                                    flex: 2,
+                                    child: Text('Total Amount',
+                                        textAlign: TextAlign.right,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13))),
                               ],
                             ),
                           ),
+                          const SizedBox(height: 8),
 
-                          // Rows
+                          // ── Session cards ────────────────────────────
                           Flexible(
-                            child: ListView.builder(
+                            child: ListView.separated(
                               shrinkWrap: true,
                               itemCount: sessions.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 8),
                               itemBuilder: (context, index) {
                                 final s = sessions[index].data()
                                     as Map<String, dynamic>;
@@ -485,74 +470,67 @@ class _ClientsPageState extends State<ClientsPage> {
 
                                 return Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 14, vertical: 12),
+                                      horizontal: 16, vertical: 14),
                                   decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                          color: Colors.grey.shade200),
-                                    ),
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                        color: Colors.grey.shade200),
                                   ),
                                   child: Row(
                                     children: [
                                       Expanded(
                                         flex: 2,
                                         child: Text(dateDisplay,
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey[800])),
+                                            style: const TextStyle(
+                                                fontSize: 13)),
                                       ),
                                       Expanded(
                                         flex: 2,
                                         child: Text(
                                             '₱${sessionAmt.toStringAsFixed(2)}',
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey[800])),
+                                            style: const TextStyle(
+                                                fontSize: 13)),
                                       ),
                                       Expanded(
                                         flex: 2,
                                         child: Text(
                                             '₱${coachingAmt.toStringAsFixed(2)}',
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey[800])),
+                                            style: const TextStyle(
+                                                fontSize: 13)),
                                       ),
                                       Expanded(
                                         flex: 1,
                                         child: Text(bayNumber,
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey[800])),
+                                            style: const TextStyle(
+                                                fontSize: 13)),
                                       ),
                                       Expanded(
                                         flex: 2,
                                         child: Text(personnel,
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey[800])),
+                                            style: const TextStyle(
+                                                fontSize: 13)),
                                       ),
                                       Expanded(
                                         flex: 2,
                                         child: Text(
                                             '${duration % 1 == 0 ? duration.toInt() : duration}',
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey[800])),
+                                            style: const TextStyle(
+                                                fontSize: 13)),
                                       ),
                                       Expanded(
                                         flex: 2,
                                         child: Text(
                                             '₱${rowTotal.toStringAsFixed(2)}',
                                             textAlign: TextAlign.right,
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                                 fontSize: 13,
-                                                color: Colors.grey[800],
-                                                fontWeight: FontWeight.w500)),
+                                                fontWeight: FontWeight.w600)),
                                       ),
                                     ],
                                   ),
@@ -561,20 +539,18 @@ class _ClientsPageState extends State<ClientsPage> {
                             ),
                           ),
 
-                          // Totals row
+                          const SizedBox(height: 12),
+
+                          // ── Totals card ──────────────────────────────
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 12),
+                                horizontal: 16, vertical: 14),
                             decoration: BoxDecoration(
-                              color: const Color(0xFCE8E8),
-                              border: Border(
-                                top: BorderSide(
-                                    color: Colors.grey.shade300, width: 1.5),
-                              ),
-                              borderRadius: const BorderRadius.only(
-                                bottomLeft: Radius.circular(8),
-                                bottomRight: Radius.circular(8),
-                              ),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: const Color(0xFFC41E3A)
+                                      .withOpacity(0.25)),
                             ),
                             child: Row(
                               children: [
@@ -593,8 +569,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFF1a1a1a))),
+                                          fontSize: 13)),
                                 ),
                                 Expanded(
                                   flex: 2,
@@ -603,8 +578,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFF1a1a1a))),
+                                          fontSize: 13)),
                                 ),
                                 const Expanded(flex: 1, child: SizedBox()),
                                 const Expanded(flex: 2, child: SizedBox()),
@@ -615,8 +589,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Color(0xFF1a1a1a))),
+                                          fontSize: 13)),
                                 ),
                                 Expanded(
                                   flex: 2,
@@ -626,7 +599,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                       style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
-                                          color: Color(0xFF1a1a1a))),
+                                          color: Color(0xFFC41E3A))),
                                 ),
                               ],
                             ),
@@ -634,6 +607,17 @@ class _ClientsPageState extends State<ClientsPage> {
                         ],
                       );
                     },
+                  ),
+                ),
+
+                // ── Footer button ────────────────────────────────────────
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Close',
+                        style: TextStyle(color: Color(0xFFC41E3A))),
                   ),
                 ),
               ],
@@ -739,14 +723,12 @@ class _ClientsPageState extends State<ClientsPage> {
     return colors[index % colors.length];
   }
 
-  /// Safely converts a dynamic value to double.
   double _toDouble(dynamic value) {
     if (value == null) return 0.0;
     if (value is num) return value.toDouble();
     return double.tryParse(value.toString()) ?? 0.0;
   }
 
-  /// Parses a date string stored as MM/DD/YYYY into a DateTime.
   DateTime? _parseSessionDateStr(String? dateStr) {
     if (dateStr == null || dateStr.isEmpty) return null;
     final parts = dateStr.split('/');
@@ -762,23 +744,12 @@ class _ClientsPageState extends State<ClientsPage> {
     }
   }
 
-  /// Formats a MM/DD/YYYY date string into a human-readable label like "Feb 16, 2026".
   String _formatSessionDateForDisplay(String rawDate) {
     final dt = _parseSessionDateStr(rawDate);
     if (dt == null) return rawDate.isEmpty ? 'N/A' : rawDate;
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
   }
@@ -971,7 +942,6 @@ class _ClientsPageState extends State<ClientsPage> {
                             ),
                           ],
                         ),
-                        // Wrap buttons in a Row to group them together
                         Row(
                           children: [
                             ElevatedButton.icon(
@@ -990,9 +960,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(
-                                width:
-                                    8), // Optional: Add a little gap between them
+                            const SizedBox(width: 8),
                             IconButton(
                               icon: const Icon(Icons.logout,
                                   color: Color(0xFFC41E3A)),
@@ -1017,7 +985,7 @@ class _ClientsPageState extends State<ClientsPage> {
                             onChanged: (value) {
                               setState(() {
                                 _searchQuery = value.toLowerCase();
-                                _currentClientsPage = 0; // add this line
+                                _currentClientsPage = 0;
                               });
                             },
                             decoration: InputDecoration(
@@ -1064,7 +1032,7 @@ class _ClientsPageState extends State<ClientsPage> {
                             ),
                           ),
                           const SizedBox(height: 24),
-                          // Statistics Cards (real-time: updates when clients or sessions change)
+                          // Statistics Cards
                           StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection('clients')
@@ -1095,8 +1063,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                           totalClients.toString(),
                                         ),
                                       ),
-                                      const SizedBox(
-                                          width: 8), // reduced from 20
+                                      const SizedBox(width: 8),
                                       Expanded(
                                         child: _buildStatCard(
                                           'Total Sessions',
@@ -1267,13 +1234,14 @@ class _ClientsPageState extends State<ClientsPage> {
                                                             FontWeight.bold,
                                                         color:
                                                             Color(0xFF1a1a1a)),
-                                                    textAlign: TextAlign.right),
+                                                    textAlign:
+                                                        TextAlign.right),
                                               ),
                                             ],
                                           ),
                                         ),
 
-                                        // Table Rows — use pageClients instead of clients
+                                        // Table Rows
                                         ...pageClients
                                             .asMap()
                                             .entries
@@ -1430,7 +1398,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                           );
                                         }).toList(),
 
-                                        // ── Pagination Controls ──────────────────────────────────────────
+                                        // Pagination Controls
                                         Container(
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 10, vertical: 8),
