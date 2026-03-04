@@ -14,6 +14,8 @@ class PersonnelPage extends StatefulWidget {
 }
 
 class _PersonnelPageState extends State<PersonnelPage> {
+  int _currentPersonnelPage = 0;
+  static const int _personnelPerPage = 7;
   bool _isSidebarCollapsed = false;
   String _currentPage = 'Personnel';
   final TextEditingController _searchController = TextEditingController();
@@ -351,7 +353,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
           width: 600,
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,7 +408,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                   if (!snapshot.hasData) {
                     return const Center(
                       child: Padding(
-                        padding: EdgeInsets.all(32),
+                        padding: EdgeInsets.all(28),
                         child:
                             CircularProgressIndicator(color: Color(0xFFC41E3A)),
                       ),
@@ -428,7 +430,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
 
                   if (sessions.isEmpty) {
                     return const Padding(
-                      padding: EdgeInsets.all(32),
+                      padding: EdgeInsets.all(28),
                       child: Center(
                         child: Text(
                           'No client assignments found.',
@@ -803,7 +805,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                   // Top Bar
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 20),
+                        horizontal: 28, vertical: 20),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       boxShadow: [
@@ -835,31 +837,30 @@ class _PersonnelPageState extends State<PersonnelPage> {
                         ),
                         Row(
                           children: [
-                          ElevatedButton.icon(
-                            onPressed: _showAddStaffDialog,
-                            icon: const Icon(Icons.person_add, size: 18),
-                            label: const Text('Add Staff'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFC41E3A),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                            ElevatedButton.icon(
+                              onPressed: _showAddStaffDialog,
+                              icon: const Icon(Icons.person_add, size: 18),
+                              label: const Text('Add Staff'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFC41E3A),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(
-                            width: 8),
-                          IconButton(
-                            icon: const Icon(Icons.logout,
-                              color: Color(0xFFC41E3A)),
-                            onPressed: () => _signOut(context),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(Icons.logout,
+                                  color: Color(0xFFC41E3A)),
+                              onPressed: () => _signOut(context),
                               tooltip: 'Sign Out',
                             ),
-                        ],
+                          ],
                         ),
                       ],
                     ),
@@ -868,15 +869,17 @@ class _PersonnelPageState extends State<PersonnelPage> {
                   // Page body
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(32),
+                      padding: const EdgeInsets.all(18),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Search Bar
                           TextField(
                             controller: _searchController,
-                            onChanged: (v) =>
-                                setState(() => _searchQuery = v.toLowerCase()),
+                            onChanged: (v) => setState(() {
+                              _searchQuery = v.toLowerCase();
+                              _currentPersonnelPage = 0;
+                            }),
                             decoration: InputDecoration(
                               hintText: 'Search personnel by name or role...',
                               hintStyle: TextStyle(
@@ -897,7 +900,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                               filled: true,
                               fillColor: Colors.white,
                               contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
+                                  horizontal: 14, vertical: 10),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
@@ -915,7 +918,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
 
                           // Staff Table Card
                           Container(
-                            padding: const EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
@@ -991,7 +994,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                     if (personnel.isEmpty) {
                                       return Center(
                                         child: Padding(
-                                          padding: const EdgeInsets.all(32.0),
+                                          padding: const EdgeInsets.all(24.0),
                                           child: Column(
                                             children: [
                                               Icon(Icons.person_outline,
@@ -1012,11 +1015,41 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                       );
                                     }
 
+                                    final int totalItems = personnel.length;
+                                    final int totalPages = totalItems == 0
+                                        ? 1
+                                        : (totalItems / _personnelPerPage)
+                                            .ceil();
+                                    final int safePage = totalPages == 0
+                                        ? 0
+                                        : _currentPersonnelPage.clamp(
+                                            0, totalPages - 1);
+
+                                    if (_currentPersonnelPage != safePage) {
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        if (mounted)
+                                          setState(() =>
+                                              _currentPersonnelPage = safePage);
+                                      });
+                                    }
+
+                                    final int startIndex =
+                                        safePage * _personnelPerPage;
+                                    final int endIndex = totalItems == 0
+                                        ? 0
+                                        : (startIndex + _personnelPerPage)
+                                            .clamp(0, totalItems);
+                                    final pagePersonnel = totalItems == 0
+                                        ? <QueryDocumentSnapshot>[]
+                                        : personnel.sublist(
+                                            startIndex, endIndex);
+
                                     return Column(
                                       children: [
                                         // Header row
                                         Container(
-                                          padding: const EdgeInsets.all(16),
+                                          padding: const EdgeInsets.all(12),
                                           decoration: BoxDecoration(
                                             color: Colors.grey[100],
                                             borderRadius:
@@ -1059,8 +1092,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                           ),
                                         ),
 
-                                        // Data rows
-                                        ...personnel
+                                        // Data rows — use pagePersonnel instead of personnel
+                                        ...pagePersonnel
                                             .asMap()
                                             .entries
                                             .map((entry) {
@@ -1080,7 +1113,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                             ),
                                             child: Row(
                                               children: [
-                                                // Name + Avatar
                                                 Expanded(
                                                   flex: 4,
                                                   child: Row(
@@ -1088,7 +1120,8 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                                       CircleAvatar(
                                                         backgroundColor:
                                                             _getAvatarColor(
-                                                                index),
+                                                                startIndex +
+                                                                    index),
                                                         child: Text(
                                                           _getInitials(
                                                               d['name'] ?? ''),
@@ -1117,7 +1150,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                                     ],
                                                   ),
                                                 ),
-                                                // Role
                                                 Expanded(
                                                   flex: 3,
                                                   child: Row(
@@ -1141,7 +1173,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                                     ],
                                                   ),
                                                 ),
-                                                // Actions
                                                 Expanded(
                                                   flex: 2,
                                                   child: Row(
@@ -1164,21 +1195,18 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                                                   horizontal:
                                                                       12,
                                                                   vertical: 8),
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        6),
-                                                          ),
+                                                          shape: RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          6)),
                                                         ),
                                                         child: const Text(
-                                                          'View Details',
-                                                          style: TextStyle(
-                                                              color: Color(
-                                                                  0xFF1a1a1a),
-                                                              fontSize: 13),
-                                                        ),
+                                                            'View Details',
+                                                            style: TextStyle(
+                                                                color: Color(
+                                                                    0xFF1a1a1a),
+                                                                fontSize: 13)),
                                                       ),
                                                       IconButton(
                                                         icon: const Icon(
@@ -1191,10 +1219,10 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                                       ),
                                                       IconButton(
                                                         icon: const Icon(
-                                                          Icons.delete_outline,
-                                                          size: 18,
-                                                          color: Colors.red,
-                                                        ),
+                                                            Icons
+                                                                .delete_outline,
+                                                            size: 18,
+                                                            color: Colors.red),
                                                         onPressed: () =>
                                                             _deleteStaff(staff),
                                                         tooltip: 'Delete',
@@ -1206,6 +1234,108 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                             ),
                                           );
                                         }).toList(),
+
+                                        // ── Pagination Controls ──────────────────────────────────────────
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            border: Border(
+                                                top: BorderSide(
+                                                    color:
+                                                        Colors.grey.shade200)),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                'Showing ${totalItems == 0 ? 0 : startIndex + 1}–$endIndex of $totalItems staff',
+                                                style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.grey[600]),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                        Icons.first_page),
+                                                    onPressed: safePage > 0
+                                                        ? () => setState(() =>
+                                                            _currentPersonnelPage =
+                                                                0)
+                                                        : null,
+                                                    iconSize: 20,
+                                                    color:
+                                                        const Color(0xFFC41E3A),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                        Icons.chevron_left),
+                                                    onPressed: safePage > 0
+                                                        ? () => setState(() =>
+                                                            _currentPersonnelPage =
+                                                                safePage - 1)
+                                                        : null,
+                                                    iconSize: 20,
+                                                    color:
+                                                        const Color(0xFFC41E3A),
+                                                  ),
+                                                  Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                              0xFFC41E3A)
+                                                          .withOpacity(0.1),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                    child: Text(
+                                                      'Page ${safePage + 1} of $totalPages',
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color:
+                                                            Color(0xFFC41E3A),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                        Icons.chevron_right),
+                                                    onPressed: safePage <
+                                                            totalPages - 1
+                                                        ? () => setState(() =>
+                                                            _currentPersonnelPage =
+                                                                safePage + 1)
+                                                        : null,
+                                                    iconSize: 20,
+                                                    color:
+                                                        const Color(0xFFC41E3A),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                        Icons.last_page),
+                                                    onPressed: safePage <
+                                                            totalPages - 1
+                                                        ? () => setState(() =>
+                                                            _currentPersonnelPage =
+                                                                totalPages - 1)
+                                                        : null,
+                                                    iconSize: 20,
+                                                    color:
+                                                        const Color(0xFFC41E3A),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ],
                                     );
                                   },

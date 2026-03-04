@@ -243,7 +243,7 @@ class _ClientsPageState extends State<ClientsPage> {
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 38, vertical: 38),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width * 0.88,
@@ -287,7 +287,7 @@ class _ClientsPageState extends State<ClientsPage> {
                           !snapshot.hasData) {
                         return const Center(
                           child: Padding(
-                            padding: EdgeInsets.all(40),
+                            padding: EdgeInsets.all(30),
                             child: CircularProgressIndicator(
                                 color: Color(0xFFC41E3A)),
                           ),
@@ -344,7 +344,7 @@ class _ClientsPageState extends State<ClientsPage> {
                       if (sessions.isEmpty) {
                         return Center(
                           child: Padding(
-                            padding: const EdgeInsets.all(40),
+                            padding: const EdgeInsets.all(30),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -383,7 +383,7 @@ class _ClientsPageState extends State<ClientsPage> {
                           // Table Header
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
+                                horizontal: 14, vertical: 12),
                             decoration: BoxDecoration(
                               color: const Color(0xFCE8E8),
                               borderRadius: const BorderRadius.only(
@@ -484,7 +484,7 @@ class _ClientsPageState extends State<ClientsPage> {
 
                                 return Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 13),
+                                      horizontal: 14, vertical: 12),
                                   decoration: BoxDecoration(
                                     border: Border(
                                       bottom: BorderSide(
@@ -563,7 +563,7 @@ class _ClientsPageState extends State<ClientsPage> {
                           // Totals row
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 13),
+                                horizontal: 14, vertical: 12),
                             decoration: BoxDecoration(
                               color: const Color(0xFCE8E8),
                               border: Border(
@@ -933,7 +933,7 @@ class _ClientsPageState extends State<ClientsPage> {
                   // Top Bar
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
+                      horizontal: 28,
                       vertical: 20,
                     ),
                     decoration: BoxDecoration(
@@ -981,7 +981,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                 backgroundColor: const Color(0xFFC41E3A),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
+                                  horizontal: 22,
                                   vertical: 12,
                                 ),
                                 shape: RoundedRectangleBorder(
@@ -1172,7 +1172,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                     if (clients.isEmpty) {
                                       return Center(
                                         child: Padding(
-                                          padding: const EdgeInsets.all(32.0),
+                                          padding: const EdgeInsets.all(26.0),
                                           child: Column(
                                             children: [
                                               Icon(
@@ -1229,7 +1229,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                         // Table Header
                                         Container(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 16, vertical: 14),
+                                              horizontal: 14, vertical: 12),
                                           decoration: BoxDecoration(
                                             color: Colors.grey[100],
                                             borderRadius:
@@ -1284,7 +1284,7 @@ class _ClientsPageState extends State<ClientsPage> {
 
                                           return Container(
                                             padding: const EdgeInsets.symmetric(
-                                                horizontal: 16, vertical: 12),
+                                                horizontal: 14, vertical: 12),
                                             decoration: BoxDecoration(
                                               border: Border(
                                                 bottom: BorderSide(
@@ -1432,7 +1432,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                         // ── Pagination Controls ──────────────────────────────────────────
                                         Container(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 12, vertical: 8),
+                                              horizontal: 10, vertical: 8),
                                           decoration: BoxDecoration(
                                             border: Border(
                                                 top: BorderSide(
@@ -1478,7 +1478,7 @@ class _ClientsPageState extends State<ClientsPage> {
                                                   Container(
                                                     padding: const EdgeInsets
                                                         .symmetric(
-                                                        horizontal: 12,
+                                                        horizontal: 10,
                                                         vertical: 4),
                                                     decoration: BoxDecoration(
                                                       color: const Color(
@@ -1552,7 +1552,7 @@ class _ClientsPageState extends State<ClientsPage> {
 
   Widget _buildStatCard(String label, String value) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
