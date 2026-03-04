@@ -1103,7 +1103,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                               as Map<String, dynamic>;
 
                                           return Container(
-                                            padding: const EdgeInsets.all(16),
+                                            padding: const EdgeInsets.all(15),
                                             decoration: BoxDecoration(
                                               border: Border(
                                                 bottom: BorderSide(
