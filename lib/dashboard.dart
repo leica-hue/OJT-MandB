@@ -1042,7 +1042,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('expenses')
-                .snapshots(includeMetadataChanges: true),
+                .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
@@ -3382,18 +3382,18 @@ class _DashboardPageState extends State<DashboardPage> {
                           child: StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection('sessions')
-                                .snapshots(includeMetadataChanges: true),
+                                .snapshots(),
                             builder: (context, snapshot) {
                               return StreamBuilder<QuerySnapshot>(
                                 stream: FirebaseFirestore.instance
                                     .collection('expenses')
-                                    .snapshots(includeMetadataChanges: true),
+                                    .snapshots(),
                                 builder: (context, expensesSnapshot) {
                                   return StreamBuilder<QuerySnapshot>(
                                     stream: FirebaseFirestore.instance
                                         .collection('additional-profits')
                                         .snapshots(
-                                            includeMetadataChanges: true),
+                                            ),
                                     builder: (context, profitsSnapshot) {
                                       int todaySessions = 0;
                                       double totalAdditionalProfits = 0.0;
@@ -3639,7 +3639,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                     stream: FirebaseFirestore.instance
                                         .collection('sessions')
                                         .snapshots(
-                                            includeMetadataChanges: true),
+                                            ),
                                     builder: (context, snapshot) {
                                       if (snapshot.hasError) {
                                         return Center(
@@ -4323,7 +4323,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('additional-profits')
-                .snapshots(includeMetadataChanges: true),
+                .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
