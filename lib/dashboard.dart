@@ -1058,7 +1058,13 @@ class _DashboardPageState extends State<DashboardPage> {
                 );
               }
 
-              final expenses = snapshot.data!.docs;
+              final allExpenses = snapshot.data!.docs;
+              final expenses = _salesPeriod == SalesPeriod.overall
+                  ? allExpenses
+                  : allExpenses.where((doc) {
+                      final dt = _parseSessionDate(doc['date'] as String?);
+                      return _isDateInSalesPeriod(dt);
+                    }).toList();
 
               if (expenses.isEmpty) {
                 return Center(
@@ -4333,7 +4339,13 @@ class _DashboardPageState extends State<DashboardPage> {
                 );
               }
 
-              final profits = snapshot.data!.docs;
+              final allProfits = snapshot.data!.docs;
+              final profits = _salesPeriod == SalesPeriod.overall
+                  ? allProfits
+                  : allProfits.where((doc) {
+                      final dt = _parseSessionDate(doc['date'] as String?);
+                      return _isDateInSalesPeriod(dt);
+                    }).toList();
 
               if (profits.isEmpty) {
                 return Center(

@@ -291,15 +291,12 @@ class _PersonnelPageState extends State<PersonnelPage> {
   // Helpers for date parsing & formatting
   // ---------------------------------------------------------------------------
 
-  /// Parses a Firestore date value (Timestamp or String "MM/dd/yyyy") into DateTime.
   DateTime? _parseDate(dynamic value) {
     if (value is Timestamp) return value.toDate();
     if (value is String) {
-      // Try ISO format first
       try {
         return DateTime.parse(value);
       } catch (_) {}
-      // Try MM/dd/yyyy
       final parts = value.split('/');
       if (parts.length == 3) {
         try {
@@ -318,30 +315,14 @@ class _PersonnelPageState extends State<PersonnelPage> {
     final dt = _parseDate(value);
     if (dt == null) return value?.toString() ?? 'N/A';
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
   }
 
   // ---------------------------------------------------------------------------
-  // View Details dialog
-  //
-  // Queries `sessions` where the `personnel` field (first name stored in
-  // sessions) matches the personnel document's `name`.
-  //
-  // We intentionally skip `.orderBy()` to avoid requiring a composite
-  // Firestore index — instead we sort the results client-side by date.
+  // View Details dialog — styled like Expenses History modal
   // ---------------------------------------------------------------------------
   void _showViewDetailsDialog(DocumentSnapshot staff) {
     final data = staff.data() as Map<String, dynamic>;
@@ -350,252 +331,268 @@ class _PersonnelPageState extends State<PersonnelPage> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: const Color(0xFFFBEEEE),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          width: 600,
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 38, vertical: 38),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.6,
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Header ──────────────────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
                       '$staffName - Client Assignments',
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF1a1a1a),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                    style: IconButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFC41E3A)),
-                      foregroundColor: const Color(0xFFC41E3A),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                      splashRadius: 20,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                  ],
+                ),
+                const SizedBox(height: 16),
 
-              // Sessions stream
-              // Field mapping (from Firestore screenshot):
-              //   personnel  → staff name  (e.g. "Loren")
-              //   clientName → client name (e.g. "Bon Yu")
-              //   date       → session date (String "MM/dd/yyyy")
-              //   duration   → hours worked (num)
-              StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('sessions')
-                    .where('personnel', isEqualTo: staffName)
-                    .snapshots(includeMetadataChanges: true),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        'Error loading sessions: ${snapshot.error}',
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    );
-                  }
-                  if (!snapshot.hasData) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(28),
-                        child:
-                            CircularProgressIndicator(color: Color(0xFFC41E3A)),
-                      ),
-                    );
-                  }
-
-                  // Sort by date descending — client-side
-                  final sessions = snapshot.data!.docs.toList()
-                    ..sort((a, b) {
-                      final ad = _parseDate(
-                          (a.data() as Map<String, dynamic>)['date']);
-                      final bd = _parseDate(
-                          (b.data() as Map<String, dynamic>)['date']);
-                      if (ad == null && bd == null) return 0;
-                      if (ad == null) return 1;
-                      if (bd == null) return -1;
-                      return bd.compareTo(ad);
-                    });
-
-                  if (sessions.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(28),
-                      child: Center(
-                        child: Text(
-                          'No client assignments found.',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-                    );
-                  }
-
-                  // Sum total hours using the `duration` field
-                  double totalHours = 0;
-                  for (final s in sessions) {
-                    final sd = s.data() as Map<String, dynamic>;
-                    totalHours += (sd['duration'] as num?)?.toDouble() ?? 0;
-                  }
-
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Table header
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          border: Border(
-                              bottom: BorderSide(color: Colors.grey.shade300)),
-                        ),
-                        child: const Row(
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: Text('Date',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFFC41E3A))),
-                            ),
-                            Expanded(
-                              flex: 4,
-                              child: Text('Client',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFFC41E3A))),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: Text('Hours Worked',
-                                  textAlign: TextAlign.right,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFFC41E3A))),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Rows
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 320),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: sessions.length,
-                          itemBuilder: (context, index) {
-                            final sd =
-                                sessions[index].data() as Map<String, dynamic>;
-                            final hours =
-                                (sd['duration'] as num?)?.toDouble() ?? 0;
-                            final hoursLabel =
-                                hours % 1 == 0 ? '${hours.toInt()}' : '$hours';
-
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: index % 2 == 0
-                                    ? Colors.transparent
-                                    : Colors.grey.shade50,
-                                border: Border(
-                                  bottom:
-                                      BorderSide(color: Colors.grey.shade200),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    flex: 3,
-                                    child: Text(
-                                      _formatDate(sd['date']),
-                                      style: const TextStyle(
-                                          color: Color(0xFF1a1a1a),
-                                          fontSize: 14),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    flex: 4,
-                                    child: Text(
-                                      sd['clientName'] ?? 'N/A',
-                                      style: const TextStyle(
-                                          color: Color(0xFF1a1a1a),
-                                          fontSize: 14),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    flex: 2,
-                                    child: Text(
-                                      hoursLabel,
-                                      textAlign: TextAlign.right,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF1a1a1a),
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-
-                      // Total
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            top: BorderSide(
-                                color: Colors.grey.shade300, width: 1.5),
+                // ── Sessions stream ──────────────────────────────────────
+                Flexible(
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('sessions')
+                        .where('personnel', isEqualTo: staffName)
+                        .snapshots(includeMetadataChanges: true),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            'Error loading sessions: ${snapshot.error}',
+                            style: const TextStyle(color: Colors.red),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Expanded(
-                              flex: 7,
-                              child: Text(
-                                'Total Hours',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: Color(0xFF1a1a1a),
+                        );
+                      }
+                      if (!snapshot.hasData) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(28),
+                            child: CircularProgressIndicator(
+                                color: Color(0xFFC41E3A)),
+                          ),
+                        );
+                      }
+
+                      // Sort by date descending — client-side
+                      final sessions = snapshot.data!.docs.toList()
+                        ..sort((a, b) {
+                          final ad = _parseDate(
+                              (a.data() as Map<String, dynamic>)['date']);
+                          final bd = _parseDate(
+                              (b.data() as Map<String, dynamic>)['date']);
+                          if (ad == null && bd == null) return 0;
+                          if (ad == null) return 1;
+                          if (bd == null) return -1;
+                          return bd.compareTo(ad);
+                        });
+
+                      if (sessions.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(30),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.event_busy,
+                                    size: 56, color: Colors.grey[400]),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No client assignments found for $staffName',
+                                  style: TextStyle(
+                                      color: Colors.grey[600], fontSize: 15),
                                 ),
-                              ),
+                              ],
                             ),
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                totalHours % 1 == 0
-                                    ? '${totalHours.toInt()} hrs'
-                                    : '$totalHours hrs',
-                                textAlign: TextAlign.right,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: Color(0xFF1a1a1a),
+                          ),
+                        );
+                      }
+
+                      double totalHours = 0;
+                      for (final s in sessions) {
+                        final sd = s.data() as Map<String, dynamic>;
+                        totalHours +=
+                            (sd['duration'] as num?)?.toDouble() ?? 0;
+                      }
+
+                      return Column(
+                        children: [
+                          // ── Column header row ────────────────────────
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: Text('Date',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13)),
                                 ),
-                              ),
+                                Expanded(
+                                  flex: 4,
+                                  child: Text('Client',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13)),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text('Hours Worked',
+                                      textAlign: TextAlign.right,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13)),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
+                          ),
+                          const SizedBox(height: 8),
+
+                          // ── Assignment cards ─────────────────────────
+                          Flexible(
+                            child: ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: sessions.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final sd = sessions[index].data()
+                                    as Map<String, dynamic>;
+                                final hours =
+                                    (sd['duration'] as num?)?.toDouble() ?? 0;
+                                final hoursLabel = hours % 1 == 0
+                                    ? '${hours.toInt()}'
+                                    : '$hours';
+
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                        color: Colors.grey.shade200),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: Text(
+                                          _formatDate(sd['date']),
+                                          style: const TextStyle(fontSize: 13),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 4,
+                                        child: Text(
+                                          sd['clientName'] ?? 'N/A',
+                                          style: const TextStyle(fontSize: 13),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          hoursLabel,
+                                          textAlign: TextAlign.right,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // ── Total hours card ─────────────────────────
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: const Color(0xFFC41E3A)
+                                      .withOpacity(0.25)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Expanded(
+                                  flex: 7,
+                                  child: Text(
+                                    'Total Hours',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: Color(0xFF1a1a1a),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    totalHours % 1 == 0
+                                        ? '${totalHours.toInt()} hrs'
+                                        : '$totalHours hrs',
+                                    textAlign: TextAlign.right,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: Color(0xFFC41E3A),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+
+                // ── Footer ───────────────────────────────────────────────
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Close',
+                        style: TextStyle(color: Color(0xFFC41E3A))),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -939,7 +936,6 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                         fontWeight: FontWeight.bold,
                                         color: Color(0xFF1a1a1a))),
 
-                                // Total count
                                 StreamBuilder<QuerySnapshot>(
                                   stream: FirebaseFirestore.instance
                                       .collection('personnel')
@@ -1092,7 +1088,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                           ),
                                         ),
 
-                                        // Data rows — use pagePersonnel instead of personnel
+                                        // Data rows
                                         ...pagePersonnel
                                             .asMap()
                                             .entries
@@ -1235,7 +1231,7 @@ class _PersonnelPageState extends State<PersonnelPage> {
                                           );
                                         }).toList(),
 
-                                        // ── Pagination Controls ──────────────────────────────────────────
+                                        // Pagination Controls
                                         Container(
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 12, vertical: 8),
