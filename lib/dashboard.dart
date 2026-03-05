@@ -25,7 +25,7 @@ class _DashboardPageState extends State<DashboardPage> {
   static const int _sessionsPerPage = 8;
   bool _isSidebarCollapsed = false;
   String _currentPage = 'Overview';
-  SalesPeriod _salesPeriod = SalesPeriod.daily;
+  SalesPeriod _salesPeriod = SalesPeriod.overall;
 
   // Daily: specific date filter
   DateTime _selectedSalesDate = DateTime.now();
@@ -3632,7 +3632,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                   child: StreamBuilder<QuerySnapshot>(
                                     stream: FirebaseFirestore.instance
                                         .collection('sessions')
-                                        .orderBy('date', descending: true)
                                         .snapshots(
                                             includeMetadataChanges: true),
                                     builder: (context, snapshot) {
@@ -3671,14 +3670,38 @@ class _DashboardPageState extends State<DashboardPage> {
                                       }
 
                                       final allSessions = snapshot.data!.docs;
+
+// Sort by parsed date descending (latest first)
+                                      final sortedSessions = [...allSessions]
+                                        ..sort((a, b) {
+                                          final da = _parseSessionDate(
+                                                  a['date'] as String?) ??
+                                              DateTime(2000);
+                                          final db = _parseSessionDate(
+                                                  b['date'] as String?) ??
+                                              DateTime(2000);
+                                          return db.compareTo(da);
+                                        });
+
+// Apply sales period filter (Overall = show all)
+                                      final periodFilteredSessions =
+                                          _salesPeriod == SalesPeriod.overall
+                                              ? sortedSessions
+                                              : sortedSessions.where((doc) {
+                                                  final dt = _parseSessionDate(
+                                                      doc['date'] as String?);
+                                                  return _isDateInSalesPeriod(
+                                                      dt);
+                                                }).toList();
+
                                       final query = _sessionSearchController
                                           .text
                                           .trim()
                                           .toLowerCase();
 
                                       final filteredSessions = query.isEmpty
-                                          ? allSessions
-                                          : allSessions.where((doc) {
+                                          ? periodFilteredSessions
+                                          : periodFilteredSessions.where((doc) {
                                               final d = doc.data()
                                                   as Map<String, dynamic>;
                                               final clientName =
