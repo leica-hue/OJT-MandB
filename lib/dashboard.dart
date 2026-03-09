@@ -4534,7 +4534,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ? coaching.toDouble()
         : (double.tryParse(coaching?.toString() ?? '') ?? 0.0);
     return sessionAmt + coachingAmt;
-  } 
+  }
 
   String _formatAmount(double value) {
     return value.toStringAsFixed(2).replaceAllMapped(
