@@ -41,7 +41,9 @@ class _DashboardPageState extends State<DashboardPage> {
   final TextEditingController _clientSearchController = TextEditingController();
   final TextEditingController _sessionAmountController =
       TextEditingController();
-  final TextEditingController _coachingRentalAmountController =
+  final TextEditingController _coachingAmountController =
+      TextEditingController();
+  final TextEditingController _rentalAmountController =
       TextEditingController();
   final TextEditingController _bayNumberController = TextEditingController();
   final TextEditingController _personnelController = TextEditingController();
@@ -50,6 +52,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // Mode of payment for add session: 'cash', 'gcash', or 'other'
   String _sessionModeOfPayment = 'Cash';
+  String? _rentalType; 
+  String? _rentalTypeFilter;
 
   // Controllers for add expense dialog
   final TextEditingController _expenseAmountController =
@@ -89,7 +93,8 @@ class _DashboardPageState extends State<DashboardPage> {
   void dispose() {
     _clientSearchController.dispose();
     _sessionAmountController.dispose();
-    _coachingRentalAmountController.dispose();
+    _coachingAmountController.dispose();
+    _rentalAmountController.dispose();
     _bayNumberController.dispose();
     _personnelController.dispose();
     _durationController.dispose();
@@ -235,7 +240,8 @@ class _DashboardPageState extends State<DashboardPage> {
   void _clearSessionForm() {
     _clientSearchController.clear();
     _sessionAmountController.clear();
-    _coachingRentalAmountController.clear();
+    _coachingAmountController.clear();
+    _rentalAmountController.clear();
     _bayNumberController.clear();
     _personnelController.clear();
     _durationController.clear();
@@ -249,6 +255,7 @@ class _DashboardPageState extends State<DashboardPage> {
       _selectedDate = DateTime.now();
       _selectedPersonnelName = null;
       _personnelSearchResults = [];
+       _rentalType = null;
     });
   }
 
@@ -275,7 +282,7 @@ class _DashboardPageState extends State<DashboardPage> {
       );
       return;
     }
-    if (_sessionModeOfPayment == 'other' &&
+    if (_sessionModeOfPayment == 'Other' &&
         _paymentOtherController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -295,25 +302,30 @@ class _DashboardPageState extends State<DashboardPage> {
       final dateStr =
           '${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.year}';
 
-      final sessionAmount =
-          double.tryParse(_sessionAmountController.text) ?? 0.0;
-      final coachingRentalAmount =
-          double.tryParse(_coachingRentalAmountController.text) ?? 0.0;
+    final sessionAmount =
+        double.tryParse(_sessionAmountController.text) ?? 0.0;
+    final coachingAmount =
+        double.tryParse(_coachingAmountController.text) ?? 0.0;
+    final rentalAmount =
+        double.tryParse(_rentalAmountController.text) ?? 0.0;
+      // ... rest of your existing fields
 
       final String modeOfPayment = _sessionModeOfPayment;
       final Map<String, dynamic> sessionData = {
         'clientId': clientId,
         'clientName': clientName,
+        'coachingAmount': coachingAmount,
+        'rentalAmount': rentalAmount,
+        'rentalType': _rentalType,
         'date': dateStr,
         'sessionAmount': sessionAmount,
-        'coachingRentalAmount': coachingRentalAmount,
         'bayNumber': _bayNumberController.text.trim(),
         'personnel': _personnelController.text,
-        'duration': double.parse(_durationController.text),
+        'duration': double.tryParse(_durationController.text) ?? 0.0,
         'modeOfPayment': modeOfPayment,
         'createdAt': FieldValue.serverTimestamp(),
       };
-      if (modeOfPayment == 'other') {
+      if (modeOfPayment == 'Other') {
         sessionData['modeOfPaymentOther'] = _paymentOtherController.text.trim();
       }
       await FirebaseFirestore.instance.collection('sessions').add(sessionData);
@@ -651,23 +663,60 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 16),
 
                   // ── Coaching/Rental Amount ───────────────────────────────
-                  const Text(
-                    'Coaching/Rental Amount',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
+                  const Text('Coaching Amount', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 8),
                   TextField(
-                    controller: _coachingRentalAmountController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    controller: _coachingAmountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       hintText: 'e.g., 200',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.sports_golf),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Rental Amount', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _rentalAmountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      hintText: 'e.g., 150',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.account_balance_wallet),
                     ),
                   ),
-                  const SizedBox(height: 16),
-
+                  const SizedBox(height: 12),
+                                    const Text('Rental Type', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        ChoiceChip(
+                                          label: const Text('Gloves'),
+                                          selected: _rentalType == 'Gloves',
+                                          onSelected: (selected) {
+                                            setDialogState(() {
+                                              _rentalType = selected ? 'Gloves' : null;
+                                            });
+                                          },
+                                          selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
+                                          avatar: const Icon(Icons.back_hand, size: 16),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        ChoiceChip(
+                                          label: const Text('Golf Set'),
+                                          selected: _rentalType == 'Golf Set',
+                                          onSelected: (selected) {
+                                            setDialogState(() {
+                                              _rentalType = selected ? 'Golf Set' : null;
+                                            });
+                                          },
+                                          selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
+                                          avatar: const Icon(Icons.sports_golf, size: 16),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
                   // ── Bay Number ───────────────────────────────────────────
                   const Text(
                     'Bay Number *',
@@ -1590,9 +1639,9 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildAdditionalProfitStatCard(double totalProfits) {
+ Widget _buildRentalStatCard(double totalRental) {
     return GestureDetector(
-      onTap: () => _showAdditionalProfitHistoryDialog(),
+      onTap: () => _showRentalSalesDialog(),
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -1615,7 +1664,7 @@ class _DashboardPageState extends State<DashboardPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Additional Profit',
+                  'Rental Sales',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[600],
@@ -1628,7 +1677,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     color: const Color(0xFFC41E3A).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.trending_up,
+                  child: const Icon(Icons.backpack,
                       color: Color(0xFFC41E3A), size: 16),
                 ),
               ],
@@ -1638,7 +1687,7 @@ class _DashboardPageState extends State<DashboardPage> {
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(
-                '₱${_formatAmount(totalProfits)}',
+                '₱${_formatAmount(totalRental)}',
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -1648,13 +1697,276 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(height: 2),
             Text(
-              'Tap to view/edit profits',
+              'Tap to view by type',
               style: TextStyle(fontSize: 11, color: Colors.grey[600]),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showRentalSalesDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Rental Sales'),
+            content: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.6,
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Filter chips
+                  Row(
+                    children: [
+                      const Text('Filter: ',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('All'),
+                        selected: _rentalTypeFilter == null,
+                        onSelected: (_) =>
+                            setDialogState(() => _rentalTypeFilter = null),
+                        selectedColor:
+                            const Color(0xFFC41E3A).withOpacity(0.3),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('Gloves'),
+                        selected: _rentalTypeFilter == 'Gloves',
+                        onSelected: (_) => setDialogState(
+                            () => _rentalTypeFilter = 'Gloves'),
+                        selectedColor:
+                            const Color(0xFFC41E3A).withOpacity(0.3),
+                        avatar: const Icon(Icons.back_hand, size: 16),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: const Text('Golf Set'),
+                        selected: _rentalTypeFilter == 'Golf Set',
+                        onSelected: (_) => setDialogState(
+                            () => _rentalTypeFilter = 'Golf Set'),
+                        selectedColor:
+                            const Color(0xFFC41E3A).withOpacity(0.3),
+                        avatar: const Icon(Icons.sports_golf, size: 16),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('sessions')
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Center(
+                              child: CircularProgressIndicator(
+                                  color: Color(0xFFC41E3A)));
+                        }
+                        final allDocs = snapshot.data!.docs;
+                        final String? activeFilter = _rentalTypeFilter;
+                        final rentalDocs = allDocs.where((doc) {
+                          final d = doc.data() as Map<String, dynamic>;
+                          final amt = (d['rentalAmount'] is num)
+                              ? (d['rentalAmount'] as num).toDouble()
+                              : 0.0;
+                          if (amt <= 0) return false;
+                          final dt =
+                              _parseSessionDate(d['date'] as String?);
+                          if (!_isDateInSalesPeriod(dt)) return false;
+                          if (activeFilter != null) {
+                            final type = d['rentalType']?.toString() ?? '';
+                            return type == activeFilter;
+                          }
+                          return true;
+                        }).toList()
+                          ..sort((a, b) {
+                            final da =
+                                _parseSessionDate(a['date'] as String?) ??
+                                    DateTime(2000);
+                            final db =
+                                _parseSessionDate(b['date'] as String?) ??
+                                    DateTime(2000);
+                            return db.compareTo(da);
+                          });
+
+                        if (rentalDocs.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.backpack,
+                                    size: 64, color: Colors.grey[400]),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No rental sales${_rentalTypeFilter != null ? ' for $_rentalTypeFilter' : ''} yet',
+                                  style: TextStyle(
+                                      color: Colors.grey[600], fontSize: 16),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        final totalRental = rentalDocs.fold(0.0, (sum, doc) {
+                          final d = doc.data() as Map<String, dynamic>;
+                          return sum +
+                              ((d['rentalAmount'] is num)
+                                  ? (d['rentalAmount'] as num).toDouble()
+                                  : 0.0);
+                        });
+
+                        return Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFC41E3A).withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '${rentalDocs.length} rental${rentalDocs.length == 1 ? '' : 's'}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                  Text(
+                                    'Total: ₱${_formatAmount(totalRental)}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFC41E3A)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Expanded(
+                                      flex: 2,
+                                      child: Text('Client',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold))),
+                                  Expanded(
+                                      flex: 1,
+                                      child: Text('Date',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold))),
+                                  Expanded(
+                                      flex: 1,
+                                      child: Text('Type',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold))),
+                                  Expanded(
+                                      flex: 1,
+                                      child: Text('Amount',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold),
+                                          textAlign: TextAlign.right)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Expanded(
+                              child: ListView.builder(
+                                itemCount: rentalDocs.length,
+                                itemBuilder: (context, index) {
+                                  final d = rentalDocs[index].data()
+                                      as Map<String, dynamic>;
+                                  final amt = (d['rentalAmount'] is num)
+                                      ? (d['rentalAmount'] as num).toDouble()
+                                      : 0.0;
+                                  final type =
+                                      d['rentalType']?.toString() ?? '—';
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      border: Border.all(
+                                          color: Colors.grey.shade200),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                            flex: 2,
+                                            child: Text(
+                                                d['clientName'] ?? '—')),
+                                        Expanded(
+                                          flex: 1,
+                                          child: Text(
+                                            d['date'] ?? '—',
+                                            style: const TextStyle(
+                                                fontSize: 13),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 1,
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                type == 'Gloves'
+                                                    ? Icons.back_hand
+                                                    : Icons.sports_golf,
+                                                size: 14,
+                                                color: const Color(0xFFC41E3A),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(type,
+                                                  style: const TextStyle(
+                                                      fontSize: 13)),
+                                            ],
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 1,
+                                          child: Text(
+                                            '₱${_formatAmount(amt)}',
+                                            textAlign: TextAlign.right,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -2262,9 +2574,9 @@ class _DashboardPageState extends State<DashboardPage> {
       final sAmt = (data['sessionAmount'] is num)
           ? (data['sessionAmount'] as num).toDouble()
           : (double.tryParse(data['sessionAmount']?.toString() ?? '') ?? 0.0);
-      final cAmt = (data['coachingRentalAmount'] is num)
-          ? (data['coachingRentalAmount'] as num).toDouble()
-          : (double.tryParse(data['coachingRentalAmount']?.toString() ?? '') ??
+      final cAmt = (data['coachingAmount'] is num)
+          ? (data['coachingAmount'] as num).toDouble()
+          : (double.tryParse(data['coachingAmount']?.toString() ?? '') ??
               0.0);
       totalDuration += duration;
       totalSessionAmt += sAmt;
@@ -2316,9 +2628,9 @@ class _DashboardPageState extends State<DashboardPage> {
       final sAmt = (data['sessionAmount'] is num)
           ? (data['sessionAmount'] as num).toDouble()
           : (double.tryParse(data['sessionAmount']?.toString() ?? '') ?? 0.0);
-      final cAmt = (data['coachingRentalAmount'] is num)
-          ? (data['coachingRentalAmount'] as num).toDouble()
-          : (double.tryParse(data['coachingRentalAmount']?.toString() ?? '') ??
+      final cAmt = (data['coachingAmount'] is num)
+          ? (data['coachingAmount'] as num).toDouble()
+          : (double.tryParse(data['coachingAmount']?.toString() ?? '') ??
               0.0);
       _setCell(
           sheet, 0, row, data['clientName']?.toString() ?? '', _dataStyle());
@@ -2535,9 +2847,9 @@ class _DashboardPageState extends State<DashboardPage> {
       final sAmt = (data['sessionAmount'] is num)
           ? (data['sessionAmount'] as num).toDouble()
           : (double.tryParse(data['sessionAmount']?.toString() ?? '') ?? 0.0);
-      final cAmt = (data['coachingRentalAmount'] is num)
-          ? (data['coachingRentalAmount'] as num).toDouble()
-          : (double.tryParse(data['coachingRentalAmount']?.toString() ?? '') ??
+      final cAmt = (data['coachingAmount'] is num)
+          ? (data['coachingAmount'] as num).toDouble()
+          : (double.tryParse(data['coachingAmount']?.toString() ?? '') ??
               0.0);
       totalDuration += duration;
       totalSessionAmt += sAmt;
@@ -2592,9 +2904,9 @@ class _DashboardPageState extends State<DashboardPage> {
       final sAmt = (data['sessionAmount'] is num)
           ? (data['sessionAmount'] as num).toDouble()
           : (double.tryParse(data['sessionAmount']?.toString() ?? '') ?? 0.0);
-      final cAmt = (data['coachingRentalAmount'] is num)
-          ? (data['coachingRentalAmount'] as num).toDouble()
-          : (double.tryParse(data['coachingRentalAmount']?.toString() ?? '') ??
+      final cAmt = (data['coachingAmount'] is num)
+          ? (data['coachingAmount'] as num).toDouble()
+          : (double.tryParse(data['coachingAmount']?.toString() ?? '') ??
               0.0);
 
       _setCell(
@@ -2814,10 +3126,10 @@ class _DashboardPageState extends State<DashboardPage> {
                 ? (d['sessionAmount'] as num).toDouble()
                 : (double.tryParse(d['sessionAmount']?.toString() ?? '') ??
                     0.0);
-            final c = (d['coachingRentalAmount'] is num)
-                ? (d['coachingRentalAmount'] as num).toDouble()
+            final c = (d['coachingAmount'] is num)
+                ? (d['coachingAmount'] as num).toDouble()
                 : (double.tryParse(
-                        d['coachingRentalAmount']?.toString() ?? '') ??
+                        d['coachingAmount']?.toString() ?? '') ??
                     0.0);
             mSessionAmt += s;
             mCoachingAmt += c;
@@ -3400,6 +3712,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                       double totalExpenses = 0.0;
                                       int salesCount = 0;
                                       double totalRevenueSalesPeriod = 0.0;
+                                      double totalRentalSalesPeriod = 0.0;
 
                                       if (snapshot.hasData) {
                                         final allDocs = snapshot.data!.docs;
@@ -3417,7 +3730,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                           return _isDateInSalesPeriod(dt);
                                         }).toList();
                                         salesCount = salesDocs.length;
-                                        totalRevenueSalesPeriod =
+                                       totalRevenueSalesPeriod =
                                             salesDocs.fold(
                                                 0.0,
                                                 (sum, doc) =>
@@ -3425,6 +3738,25 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     _getSessionTotal(doc.data()
                                                         as Map<String,
                                                             dynamic>));
+                                        totalRentalSalesPeriod =
+                                            salesDocs.fold(0.0, (sum, doc) {
+                                          final d = doc.data()
+                                              as Map<String, dynamic>;
+                                          final rental = (d['rentalAmount'] is num)
+                                              ? (d['rentalAmount'] as num).toDouble()
+                                              : (double.tryParse(d['rentalAmount']?.toString() ?? '') ?? 0.0);
+                                          final coaching = (d['coachingAmount'] is num)
+                                              ? (d['coachingAmount'] as num).toDouble()
+                                              : (double.tryParse(d['coachingAmount']?.toString() ?? '') ?? 0.0);
+                                          final legacy = (d['coachingAmount'] is num)
+                                              ? (d['coachingAmount'] as num).toDouble()
+                                              : (double.tryParse(d['coachingAmount']?.toString() ?? '') ?? 0.0);
+                                          // Use new separate fields if present, else fall back to legacy combined field
+                                          final r = (rental + coaching) > 0
+                                              ? (rental + coaching)
+                                              : legacy;
+                                          return sum + r;
+                                        });
                                       }
 
                                       if (expensesSnapshot.hasData) {
@@ -3521,7 +3853,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     padding: const EdgeInsets
                                                         .symmetric(
                                                         horizontal: 6),
-                                                    child: _buildAdditionalProfitStatCard(
+                                                    child: _buildRentalStatCard(
                                                         totalAdditionalProfits),
                                                   ),
                                                 ),
@@ -3834,18 +4166,17 @@ class _DashboardPageState extends State<DashboardPage> {
                                                             ),
                                                           ),
                                                           DataColumn(
-                                                            label: Expanded(
-                                                              child: Text(
-                                                                  'Coaching/Rental',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                            ),
-                                                          ),
+                                                                  label: Expanded(
+                                                                    child: Text('Coaching', textAlign: TextAlign.center,
+                                                                        style: TextStyle(fontWeight: FontWeight.bold)),
+                                                                  ),
+                                                                ),
+                                                                DataColumn(
+                                                                  label: Expanded(
+                                                                    child: Text('Rental', textAlign: TextAlign.center,
+                                                                        style: TextStyle(fontWeight: FontWeight.bold)),
+                                                                  ),
+                                                                ),
                                                           DataColumn(
                                                             label: Expanded(
                                                               child: Text('Bay',
@@ -3952,21 +4283,35 @@ class _DashboardPageState extends State<DashboardPage> {
                                                                               .toString())
                                                                       : '—'),
                                                                 )),
-                                                                DataCell(Align(
-                                                                  alignment:
-                                                                      Alignment
-                                                                          .center,
-                                                                  child: Text(data[
-                                                                              'coachingRentalAmount'] !=
-                                                                          null
-                                                                      ? (data['coachingRentalAmount']
-                                                                              is num
-                                                                          ? (data['coachingRentalAmount'] as num)
-                                                                              .toString()
-                                                                          : data['coachingRentalAmount']
-                                                                              .toString())
-                                                                      : '—'),
-                                                                )),
+                                                               DataCell(Align(
+                                                                    alignment: Alignment.center,
+                                                                    child: Text(data['coachingAmount'] != null && (data['coachingAmount'] as num) > 0
+                                                                        ? (data['coachingAmount'] as num).toString()
+                                                                        : (data['coachingAmount'] != null && (data['coachingAmount'] as num) > 0
+                                                                            ? (data['coachingAmount'] as num).toString()
+                                                                            : '—')),
+                                                                  )),
+                                                                  DataCell(Align(
+                                                                    alignment: Alignment.center,
+                                                                    child: Column(
+                                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                                                      children: [
+                                                                        Text(data['rentalAmount'] != null && (data['rentalAmount'] as num) > 0
+                                                                            ? (data['rentalAmount'] as num).toString()
+                                                                            : '—'),
+                                                                        if (data['rentalType'] != null && (data['rentalType'] as String).isNotEmpty)
+                                                                          Text(
+                                                                            data['rentalType'] as String,
+                                                                            style: const TextStyle(
+                                                                              fontSize: 11,
+                                                                              color: Colors.grey,
+                                                                              fontStyle: FontStyle.italic,
+                                                                            ),
+                                                                          ),
+                                                                      ],
+                                                                    ),
+                                                                  )),
                                                                 DataCell(Align(
                                                                     alignment:
                                                                         Alignment
@@ -4179,17 +4524,17 @@ class _DashboardPageState extends State<DashboardPage> {
     return '${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')}/${now.year}';
   }
 
-  double _getSessionTotal(Map<String, dynamic> data) {
+ double _getSessionTotal(Map<String, dynamic> data) {
     final session = data['sessionAmount'];
-    final coaching = data['coachingRentalAmount'];
-    final s = session is num
+    final coaching = data['coachingAmount'];
+    final sessionAmt = session is num
         ? session.toDouble()
         : (double.tryParse(session?.toString() ?? '') ?? 0.0);
-    final c = coaching is num
+    final coachingAmt = coaching is num
         ? coaching.toDouble()
         : (double.tryParse(coaching?.toString() ?? '') ?? 0.0);
-    return s + c;
-  }
+    return sessionAmt + coachingAmt;
+  } 
 
   String _formatAmount(double value) {
     return value.toStringAsFixed(2).replaceAllMapped(
