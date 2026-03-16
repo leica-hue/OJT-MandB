@@ -27,17 +27,11 @@ class _DashboardPageState extends State<DashboardPage> {
   String _currentPage = 'Overview';
   SalesPeriod _salesPeriod = SalesPeriod.overall;
 
-  // Daily: specific date filter
   DateTime _selectedSalesDate = DateTime.now();
-
-  // Monthly: specific month+year filter
   DateTime _selectedSalesMonth =
       DateTime(DateTime.now().year, DateTime.now().month, 1);
-
-  // Yearly: specific year filter
   DateTime _selectedSalesYear = DateTime(DateTime.now().year, 1, 1);
 
-  // Controllers for add session dialog
   final TextEditingController _clientSearchController = TextEditingController();
   final TextEditingController _sessionAmountController =
       TextEditingController();
@@ -49,19 +43,16 @@ class _DashboardPageState extends State<DashboardPage> {
   final TextEditingController _durationController = TextEditingController();
   final TextEditingController _paymentOtherController = TextEditingController();
 
-  // Mode of payment for add session: 'cash', 'gcash', or 'other'
   String _sessionModeOfPayment = 'Cash';
   String? _rentalType;
   String? _rentalTypeFilter;
 
-  // Controllers for add expense dialog
   final TextEditingController _expenseAmountController =
       TextEditingController();
   final TextEditingController _expenseDescriptionController =
       TextEditingController();
   DateTime _expenseDate = DateTime.now();
 
-  // Controllers for add additional profit dialog
   final TextEditingController _profitAmountController = TextEditingController();
   final TextEditingController _profitDescriptionController =
       TextEditingController();
@@ -73,11 +64,9 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _showNewClientFields = false;
   List<DocumentSnapshot> _searchResults = [];
 
-  // Personnel search state
   String? _selectedPersonnelName;
   List<DocumentSnapshot> _personnelSearchResults = [];
 
-  // Session list search/filter
   final TextEditingController _sessionSearchController =
       TextEditingController();
 
@@ -106,7 +95,6 @@ class _DashboardPageState extends State<DashboardPage> {
     super.dispose();
   }
 
-  /// Ensures current user exists in login-accounts and updates with latest data
   Future<void> _syncToLoginAccounts() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -198,8 +186,6 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  // ── Personnel search ──────────────────────────────────────────────────────
-
   void _searchPersonnel(String query, StateSetter setDialogState) async {
     if (query.isEmpty) {
       setDialogState(() {
@@ -213,7 +199,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
     final filtered = results.docs.where((doc) {
       final data = doc.data();
-      // Support both 'name' and 'fullName' fields
       final name = (data['name'] ?? data['fullName'] ?? '').toLowerCase();
       return name.contains(query.toLowerCase());
     }).toList();
@@ -233,8 +218,6 @@ class _DashboardPageState extends State<DashboardPage> {
       _personnelSearchResults = [];
     });
   }
-
-  // ─────────────────────────────────────────────────────────────────────────
 
   void _clearSessionForm() {
     _clientSearchController.clear();
@@ -297,7 +280,6 @@ class _DashboardPageState extends State<DashboardPage> {
       final String clientId = _selectedClientId!;
       final String clientName = _clientSearchController.text;
 
-      // Format date
       final dateStr =
           '${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.year}';
 
@@ -306,7 +288,6 @@ class _DashboardPageState extends State<DashboardPage> {
       final coachingAmount =
           double.tryParse(_coachingAmountController.text) ?? 0.0;
       final rentalAmount = double.tryParse(_rentalAmountController.text) ?? 0.0;
-      // ... rest of your existing fields
 
       final String modeOfPayment = _sessionModeOfPayment;
       final Map<String, dynamic> sessionData = {
@@ -348,7 +329,6 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  /// Opens a separate modal to create a brand-new client.
   void _showAddNewClientDialog({
     required String prefillName,
     required Function(String clientId, String clientName) onClientCreated,
@@ -456,7 +436,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Client Search Field ──────────────────────────────────
                   const Text(
                     'Client Name *',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
@@ -466,10 +445,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     controller: _clientSearchController,
                     decoration: InputDecoration(
                       hintText: 'Search or enter client name...',
-                      hintStyle: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: 14,
-                      ),
+                      hintStyle:
+                          TextStyle(color: Colors.grey[400], fontSize: 14),
                       prefixIcon: const Icon(Icons.search,
                           color: Color(0xFFC41E3A), size: 20),
                       suffixIcon: _selectedClientId != null
@@ -500,8 +477,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       setDialogState(() {});
                     },
                   ),
-
-                  // Client Search Results Dropdown
                   if (_searchResults.isNotEmpty)
                     Container(
                       margin: const EdgeInsets.only(top: 4),
@@ -536,8 +511,6 @@ class _DashboardPageState extends State<DashboardPage> {
                         },
                       ),
                     ),
-
-                  // Client not found
                   if (_showNewClientFields)
                     Container(
                       margin: const EdgeInsets.only(top: 8),
@@ -557,16 +530,13 @@ class _DashboardPageState extends State<DashboardPage> {
                             child: Text(
                               'Client not found.',
                               style: TextStyle(
-                                color: Colors.blue.shade700,
-                                fontSize: 13,
-                              ),
+                                  color: Colors.blue.shade700, fontSize: 13),
                             ),
                           ),
                           TextButton.icon(
                             style: TextButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                            ),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8)),
                             onPressed: () {
                               _showAddNewClientDialog(
                                 prefillName:
@@ -590,30 +560,21 @@ class _DashboardPageState extends State<DashboardPage> {
                                 },
                               );
                             },
-                            icon: const Icon(
-                              Icons.person_add,
-                              size: 18,
-                              color: Color(0xFFC41E3A),
-                            ),
-                            label: const Text(
-                              'Add New Client',
-                              style: TextStyle(
-                                color: Color(0xFFC41E3A),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
+                            icon: const Icon(Icons.person_add,
+                                size: 18, color: Color(0xFFC41E3A)),
+                            label: const Text('Add New Client',
+                                style: TextStyle(
+                                    color: Color(0xFFC41E3A),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13)),
                           ),
                         ],
                       ),
                     ),
-
                   const SizedBox(height: 16),
-                  // ── Date Field ───────────────────────────────────────────
-                  const Text(
-                    'Date *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
+                  const Text('Date *',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 8),
                   InkWell(
                     onTap: () async {
@@ -624,9 +585,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         lastDate: DateTime(2030),
                       );
                       if (date != null) {
-                        setDialogState(() {
-                          _selectedDate = date;
-                        });
+                        setDialogState(() => _selectedDate = date);
                       }
                     },
                     child: InputDecorator(
@@ -639,23 +598,17 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
-                  // ── Personnel Search Field ───────────────────────────────
-                  const Text(
-                    'Personnel *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
+                  const Text('Personnel *',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _personnelController,
                     decoration: InputDecoration(
                       hintText: 'Search personnel...',
-                      hintStyle: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: 14,
-                      ),
+                      hintStyle:
+                          TextStyle(color: Colors.grey[400], fontSize: 14),
                       prefixIcon: const Icon(Icons.search,
                           color: Color(0xFFC41E3A), size: 20),
                       suffixIcon: _selectedPersonnelName != null
@@ -678,14 +631,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                     onChanged: (value) {
-                      setDialogState(() {
-                        _selectedPersonnelName = null;
-                      });
+                      setDialogState(() => _selectedPersonnelName = null);
                       _searchPersonnel(value, setDialogState);
                     },
                   ),
-
-                  // Personnel Search Results Dropdown
                   if (_personnelSearchResults.isNotEmpty)
                     Container(
                       margin: const EdgeInsets.only(top: 4),
@@ -715,15 +664,12 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             title: Text(name),
                             subtitle: role.isNotEmpty ? Text(role) : null,
-                            onTap: () {
-                              _selectPersonnel(personnel, setDialogState);
-                            },
+                            onTap: () =>
+                                _selectPersonnel(personnel, setDialogState),
                           );
                         },
                       ),
                     ),
-
-                  // No personnel found notice
                   if (_personnelSearchResults.isEmpty &&
                       _personnelController.text.isNotEmpty &&
                       _selectedPersonnelName == null)
@@ -745,22 +691,16 @@ class _DashboardPageState extends State<DashboardPage> {
                             child: Text(
                               'No personnel found. Check the Personnel page to add staff.',
                               style: TextStyle(
-                                color: Colors.orange.shade700,
-                                fontSize: 13,
-                              ),
+                                  color: Colors.orange.shade700, fontSize: 13),
                             ),
                           ),
                         ],
                       ),
                     ),
-
                   const SizedBox(height: 16),
-
-                  // ── Bay Number ───────────────────────────────────────────
-                  const Text(
-                    'Bay Number *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
+                  const Text('Bay Number *',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _bayNumberController,
@@ -771,12 +711,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Duration Field ───────────────────────────────────────
-                  const Text(
-                    'Duration (hours) *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
+                  const Text('Duration (hours) *',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _durationController,
@@ -789,15 +726,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  
-            
-
-                  // ── Session Amount ───────────────────────────────────────
-                  const Text(
-                    'Session Amount *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
+                  const Text('Session Amount *',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _sessionAmountController,
@@ -810,8 +741,6 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Coaching Amount ──────────────────────────────────────
                   const Text('Coaching Amount',
                       style:
                           TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
@@ -827,8 +756,6 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Rental Type ──────────────────────────────────────────
                   const Text('Rental Type',
                       style:
                           TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
@@ -838,11 +765,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       ChoiceChip(
                         label: const Text('Gloves'),
                         selected: _rentalType == 'Gloves',
-                        onSelected: (selected) {
-                          setDialogState(() {
-                            _rentalType = selected ? 'Gloves' : null;
-                          });
-                        },
+                        onSelected: (selected) => setDialogState(
+                            () => _rentalType = selected ? 'Gloves' : null),
                         selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
                         avatar: const Icon(Icons.back_hand, size: 16),
                       ),
@@ -850,19 +774,14 @@ class _DashboardPageState extends State<DashboardPage> {
                       ChoiceChip(
                         label: const Text('Golf Set'),
                         selected: _rentalType == 'Golf Set',
-                        onSelected: (selected) {
-                          setDialogState(() {
-                            _rentalType = selected ? 'Golf Set' : null;
-                          });
-                        },
+                        onSelected: (selected) => setDialogState(
+                            () => _rentalType = selected ? 'Golf Set' : null),
                         selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
                         avatar: const Icon(Icons.sports_golf, size: 16),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Rental Amount ────────────────────────────────────────
                   const Text('Rental Amount',
                       style:
                           TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
@@ -878,12 +797,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // ── Mode of Payment ───────────────────────────────────────
-                  const Text(
-                    'Mode of Payment *',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
+                  const Text('Mode of Payment *',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -891,10 +807,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         label: const Text('Cash'),
                         selected: _sessionModeOfPayment == 'Cash',
                         onSelected: (selected) {
-                          if (selected) {
+                          if (selected)
                             setDialogState(
                                 () => _sessionModeOfPayment = 'Cash');
-                          }
                         },
                         selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
                       ),
@@ -903,10 +818,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         label: const Text('GCash'),
                         selected: _sessionModeOfPayment == 'Gcash',
                         onSelected: (selected) {
-                          if (selected) {
+                          if (selected)
                             setDialogState(
                                 () => _sessionModeOfPayment = 'Gcash');
-                          }
                         },
                         selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
                       ),
@@ -915,10 +829,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         label: const Text('Other'),
                         selected: _sessionModeOfPayment == 'Other',
                         onSelected: (selected) {
-                          if (selected) {
+                          if (selected)
                             setDialogState(
                                 () => _sessionModeOfPayment = 'Other');
-                          }
                         },
                         selectedColor: const Color(0xFFC41E3A).withOpacity(0.3),
                       ),
@@ -929,8 +842,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     TextField(
                       controller: _paymentOtherController,
                       decoration: const InputDecoration(
-                        hintText:
-                            'Specify mode of payment (e.g., Bank Transfer)',
+                        hintText: 'Specify mode of payment (e.g., Bank Transfer)',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.edit),
                       ),
@@ -1006,17 +918,13 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFFC41E3A),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFFC41E3A)),
       ),
     );
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        throw Exception('User must be signed in to add expenses');
-      }
+      if (user == null) throw Exception('User must be signed in to add expenses');
 
       final dateStr =
           '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
@@ -1026,14 +934,10 @@ class _DashboardPageState extends State<DashboardPage> {
       for (final item in items) {
         final amt = double.tryParse(item['amount'] ?? '0') ?? 0;
         totalAmount += amt;
-        itemsData.add({
-          'description': item['description'] ?? '',
-          'amount': amt,
-        });
+        itemsData.add({'description': item['description'] ?? '', 'amount': amt});
       }
 
-      final firstDesc =
-          items.isNotEmpty ? (items.first['description'] ?? '') : '';
+      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
       final expenseData = {
         'date': dateStr,
         'amount': totalAmount,
@@ -1044,22 +948,16 @@ class _DashboardPageState extends State<DashboardPage> {
         'createdAt': FieldValue.serverTimestamp(),
       };
 
-      final docRef = await FirebaseFirestore.instance
-          .collection('expenses')
-          .add(expenseData);
-
+      final docRef =
+          await FirebaseFirestore.instance.collection('expenses').add(expenseData);
       final savedDoc = await docRef.get();
-      if (!savedDoc.exists) {
-        throw Exception('Failed to save expense to Firebase');
-      }
+      if (!savedDoc.exists) throw Exception('Failed to save expense to Firebase');
 
       if (mounted) {
         Navigator.pop(context);
-        if (closeDialog) {}
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                'Expense of ₱${_formatAmount(totalAmount)} saved successfully'),
+            content: Text('Expense of ₱${_formatAmount(totalAmount)} saved successfully'),
             backgroundColor: const Color(0xFFC41E3A),
             duration: const Duration(seconds: 2),
           ),
@@ -1103,21 +1001,14 @@ class _DashboardPageState extends State<DashboardPage> {
           width: MediaQuery.of(context).size.width * 0.6,
           height: MediaQuery.of(context).size.height * 0.6,
           child: StreamBuilder<QuerySnapshot>(
-            stream:
-                FirebaseFirestore.instance.collection('expenses').snapshots(),
+            stream: FirebaseFirestore.instance.collection('expenses').snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return Center(
-                  child: Text('Error loading expenses: ${snapshot.error}'),
-                );
+                return Center(child: Text('Error loading expenses: ${snapshot.error}'));
               }
-
               if (!snapshot.hasData) {
                 return const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFFC41E3A),
-                  ),
-                );
+                    child: CircularProgressIndicator(color: Color(0xFFC41E3A)));
               }
 
               final allExpenses = snapshot.data!.docs;
@@ -1133,13 +1024,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.receipt_long,
-                          size: 64, color: Colors.grey[400]),
+                      Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
-                      Text(
-                        'No expenses yet',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                      ),
+                      Text('No expenses yet',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 16)),
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
                         onPressed: () {
@@ -1163,9 +1051,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8)),
                     child: const Row(
                       children: [
                         Expanded(
@@ -1196,8 +1083,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       itemBuilder: (context, index) {
                         final expense = expenses[index];
                         final data = expense.data() as Map<String, dynamic>;
-                        final amount =
-                            (data['amount'] as num?)?.toDouble() ?? 0.0;
+                        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
                         String description = data['description'] ?? 'N/A';
                         if (data['items'] != null && data['items'] is List) {
                           final itemsList = data['items'] as List;
@@ -1206,16 +1092,11 @@ class _DashboardPageState extends State<DashboardPage> {
                             final firstDesc = first is Map
                                 ? (first['description'] ?? '').toString()
                                 : 'N/A';
-                            if (itemsList.length > 1) {
-                              description =
-                                  '$firstDesc (+${itemsList.length - 1} more)';
-                            } else {
-                              description = firstDesc;
-                            }
+                            description = itemsList.length > 1
+                                ? '$firstDesc (+${itemsList.length - 1} more)'
+                                : firstDesc;
                           }
                         }
-                        final date = data['date'] ?? 'N/A';
-
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.all(12),
@@ -1227,25 +1108,20 @@ class _DashboardPageState extends State<DashboardPage> {
                           child: Row(
                             children: [
                               Expanded(
-                                flex: 2,
-                                child: Text(date,
-                                    style: const TextStyle(fontSize: 14)),
-                              ),
+                                  flex: 2,
+                                  child: Text(data['date'] ?? 'N/A',
+                                      style: const TextStyle(fontSize: 14))),
                               Expanded(
-                                flex: 2,
-                                child: Text(description,
-                                    style: const TextStyle(fontSize: 14)),
-                              ),
+                                  flex: 2,
+                                  child: Text(description,
+                                      style: const TextStyle(fontSize: 14))),
                               Expanded(
                                 flex: 1,
-                                child: Text(
-                                  '₱${_formatAmount(amount)}',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.right,
-                                ),
+                                child: Text('₱${_formatAmount(amount)}',
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600),
+                                    textAlign: TextAlign.right),
                               ),
                               Expanded(
                                 flex: 1,
@@ -1264,8 +1140,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                     IconButton(
                                       icon: const Icon(Icons.delete,
                                           size: 20, color: Colors.red),
-                                      onPressed: () =>
-                                          _deleteExpense(expense.id),
+                                      onPressed: () => _deleteExpense(expense.id),
                                       tooltip: 'Delete',
                                     ),
                                   ],
@@ -1307,30 +1182,22 @@ class _DashboardPageState extends State<DashboardPage> {
   void _showEditExpenseDialog(DocumentSnapshot expense) {
     final data = expense.data() as Map<String, dynamic>;
     final dateStr = data['date'] ?? '';
-
     DateTime expenseDate = DateTime.now();
     if (dateStr.isNotEmpty) {
       try {
         final parts = dateStr.split('/');
         if (parts.length == 3) {
-          expenseDate = DateTime(
-            int.parse(parts[2]),
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-          );
+          expenseDate = DateTime(int.parse(parts[2]), int.parse(parts[0]),
+              int.parse(parts[1]));
         }
-      } catch (e) {
-        // Use current date if parsing fails
-      }
+      } catch (_) {}
     }
 
     List<Map<String, String>>? initialItems;
     if (data['items'] != null && data['items'] is List) {
       final list = data['items'] as List;
       initialItems = list.map<Map<String, String>>((e) {
-        final m = e is Map
-            ? Map<String, dynamic>.from(e as Map)
-            : <String, dynamic>{};
+        final m = e is Map ? Map<String, dynamic>.from(e as Map) : <String, dynamic>{};
         final amt = m['amount'];
         return {
           'description': (m['description'] ?? '').toString(),
@@ -1339,9 +1206,8 @@ class _DashboardPageState extends State<DashboardPage> {
       }).toList();
     } else {
       final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
-      final description = data['description'] ?? '';
       initialItems = [
-        {'description': description, 'amount': amount.toString()},
+        {'description': data['description'] ?? '', 'amount': amount.toString()}
       ];
     }
 
@@ -1386,30 +1252,20 @@ class _DashboardPageState extends State<DashboardPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFFC41E3A),
-        ),
-      ),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
     );
-
     try {
       final dateStr =
           '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
-
       double totalAmount = 0;
       final itemsData = <Map<String, dynamic>>[];
       for (final item in items) {
         final amt = double.tryParse(item['amount'] ?? '0') ?? 0;
         totalAmount += amt;
-        itemsData.add({
-          'description': item['description'] ?? '',
-          'amount': amt,
-        });
+        itemsData.add({'description': item['description'] ?? '', 'amount': amt});
       }
-      final firstDesc =
-          items.isNotEmpty ? (items.first['description'] ?? '') : '';
-
+      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
       await FirebaseFirestore.instance
           .collection('expenses')
           .doc(expenseId)
@@ -1420,27 +1276,22 @@ class _DashboardPageState extends State<DashboardPage> {
         'items': itemsData,
         'updatedAt': FieldValue.serverTimestamp(),
       });
-
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Expense updated successfully'),
-            backgroundColor: Color(0xFFC41E3A),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Expense updated successfully'),
+          backgroundColor: Color(0xFFC41E3A),
+          duration: Duration(seconds: 2),
+        ));
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating expense: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error updating expense: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ));
       }
     }
   }
@@ -1454,64 +1305,53 @@ class _DashboardPageState extends State<DashboardPage> {
             'Are you sure you want to delete this expense? This action cannot be undone.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
+                backgroundColor: Colors.red, foregroundColor: Colors.white),
             child: const Text('Delete'),
           ),
         ],
       ),
     );
-
     if (confirm != true) return;
-
     if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFFC41E3A),
-        ),
-      ),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
     );
-
     try {
       await FirebaseFirestore.instance
           .collection('expenses')
           .doc(expenseId)
           .delete();
-
       if (mounted) {
         Navigator.pop(context);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Expense deleted successfully'),
-            backgroundColor: Color(0xFFC41E3A),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Expense deleted successfully'),
+          backgroundColor: Color(0xFFC41E3A),
+          duration: Duration(seconds: 2),
+        ));
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting expense: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error deleting expense: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ));
       }
     }
   }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // STAT CARD BUILDERS
+  // ══════════════════════════════════════════════════════════════════════════
 
   Widget _buildStatCard({
     required String title,
@@ -1527,10 +1367,9 @@ class _DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2))
         ],
       ),
       child: Column(
@@ -1540,20 +1379,16 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text(title,
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500)),
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: iconBgColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                    color: iconBgColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8)),
                 child: Icon(icon, color: iconBgColor, size: 16),
               ),
             ],
@@ -1562,22 +1397,17 @@ class _DashboardPageState extends State<DashboardPage> {
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1a1a1a),
-              ),
-            ),
+            child: Text(value,
+                style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1a1a1a))),
           ),
           const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          Text(subtitle,
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
         ],
       ),
     );
@@ -1585,7 +1415,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildExpensesStatCard(double totalExpenses) {
     return GestureDetector(
-      onTap: () => _showExpensesHistoryDialog(),
+      onTap: _showExpensesHistoryDialog,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -1594,10 +1424,9 @@ class _DashboardPageState extends State<DashboardPage> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2))
           ],
         ),
         child: Column(
@@ -1607,20 +1436,16 @@ class _DashboardPageState extends State<DashboardPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Expenses',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text('Expenses',
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500)),
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFC41E3A).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                      color: const Color(0xFFC41E3A).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8)),
                   child: const Icon(Icons.receipt_long,
                       color: Color(0xFFC41E3A), size: 16),
                 ),
@@ -1630,22 +1455,17 @@ class _DashboardPageState extends State<DashboardPage> {
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Text(
-                '₱${_formatAmount(totalExpenses)}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1a1a1a),
-                ),
-              ),
+              child: Text('₱${_formatAmount(totalExpenses)}',
+                  style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1a1a1a))),
             ),
             const SizedBox(height: 2),
-            Text(
-              'Tap to view/edit expenses',
-              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+            Text('Tap to view/edit expenses',
+                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
           ],
         ),
       ),
@@ -1654,7 +1474,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildRentalStatCard(double totalRental) {
     return GestureDetector(
-      onTap: () => _showRentalSalesDialog(),
+      onTap: _showRentalSalesDialog,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -1663,10 +1483,9 @@ class _DashboardPageState extends State<DashboardPage> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2))
           ],
         ),
         child: Column(
@@ -1676,20 +1495,16 @@ class _DashboardPageState extends State<DashboardPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Rental Sales',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text('Rental Sales',
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500)),
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFC41E3A).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                      color: const Color(0xFFC41E3A).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8)),
                   child: const Icon(Icons.backpack,
                       color: Color(0xFFC41E3A), size: 16),
                 ),
@@ -1699,22 +1514,17 @@ class _DashboardPageState extends State<DashboardPage> {
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Text(
-                '₱${_formatAmount(totalRental)}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1a1a1a),
-                ),
-              ),
+              child: Text('₱${_formatAmount(totalRental)}',
+                  style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1a1a1a))),
             ),
             const SizedBox(height: 2),
-            Text(
-              'Tap to view by type',
-              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+            Text('Tap to view by type',
+                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
           ],
         ),
       ),
@@ -1734,7 +1544,6 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Filter chips
                   Row(
                     children: [
                       const Text('Filter: ',
@@ -1790,18 +1599,16 @@ class _DashboardPageState extends State<DashboardPage> {
                           final dt = _parseSessionDate(d['date'] as String?);
                           if (!_isDateInSalesPeriod(dt)) return false;
                           if (activeFilter != null) {
-                            final type = d['rentalType']?.toString() ?? '';
-                            return type == activeFilter;
+                            return (d['rentalType']?.toString() ?? '') ==
+                                activeFilter;
                           }
                           return true;
                         }).toList()
                           ..sort((a, b) {
-                            final da =
-                                _parseSessionDate(a['date'] as String?) ??
-                                    DateTime(2000);
-                            final db =
-                                _parseSessionDate(b['date'] as String?) ??
-                                    DateTime(2000);
+                            final da = _parseSessionDate(a['date'] as String?) ??
+                                DateTime(2000);
+                            final db = _parseSessionDate(b['date'] as String?) ??
+                                DateTime(2000);
                             return db.compareTo(da);
                           });
 
@@ -1837,8 +1644,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color:
-                                    const Color(0xFFC41E3A).withOpacity(0.08),
+                                color: const Color(0xFFC41E3A).withOpacity(0.08),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -1863,9 +1669,8 @@ class _DashboardPageState extends State<DashboardPage> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(8)),
                               child: const Row(
                                 children: [
                                   Expanded(
@@ -1921,13 +1726,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                             child:
                                                 Text(d['clientName'] ?? '—')),
                                         Expanded(
-                                          flex: 1,
-                                          child: Text(
-                                            d['date'] ?? '—',
-                                            style:
-                                                const TextStyle(fontSize: 13),
-                                          ),
-                                        ),
+                                            flex: 1,
+                                            child: Text(d['date'] ?? '—',
+                                                style: const TextStyle(
+                                                    fontSize: 13))),
                                         Expanded(
                                           flex: 1,
                                           child: Row(
@@ -1981,7 +1783,10 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // ── Builds the label shown on the date-picker button in the Sales card ──
+  // ══════════════════════════════════════════════════════════════════════════
+  // SALES FILTER HELPERS
+  // ══════════════════════════════════════════════════════════════════════════
+
   String _buildSalesFilterLabel() {
     switch (_salesPeriod) {
       case SalesPeriod.daily:
@@ -1997,10 +1802,8 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  // ── Opens the appropriate picker for the current period ──
   Future<void> _pickSalesFilter() async {
     switch (_salesPeriod) {
-      // ── Daily: full date picker ──────────────────────────────────────────
       case SalesPeriod.daily:
         final picked = await showDatePicker(
           context: context,
@@ -2014,54 +1817,33 @@ class _DashboardPageState extends State<DashboardPage> {
                 primary: Color(0xFFC41E3A),
                 onPrimary: Colors.white,
                 onSurface: Color(0xFF1a1a1a),
-                surface: Color(
-                    0xFFFBE9E7), // light pinkish-beige calendar background
+                surface: Color(0xFFFBE9E7),
                 onSurfaceVariant: Color(0xFF1a1a1a),
               ),
             ),
             child: child!,
           ),
         );
-        if (picked != null) {
-          setState(() => _selectedSalesDate = picked);
-        }
+        if (picked != null) setState(() => _selectedSalesDate = picked);
         break;
-
-      // ── Monthly: month + year picker via dialog ──────────────────────────
       case SalesPeriod.monthly:
         await _showMonthYearPicker();
         break;
-
-      // ── Yearly: year picker dialog (same style as monthly) ─────────────────
       case SalesPeriod.yearly:
         await _showYearPicker();
         break;
-
       case SalesPeriod.overall:
         break;
     }
   }
 
-  // ── Month + Year picker dialog ───────────────────────────────────────────
   Future<void> _showMonthYearPicker() async {
     int tempYear = _selectedSalesMonth.year;
     int tempMonth = _selectedSalesMonth.month;
-
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+      'January','February','March','April','May','June',
+      'July','August','September','October','November','December',
     ];
-
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -2072,29 +1854,21 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Year row ──────────────────────────────────────────────
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: () => setDialogState(() => tempYear--),
-                    ),
-                    Text(
-                      '$tempYear',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: () => setDialogState(() => tempYear--)),
+                    Text('$tempYear',
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: () => setDialogState(() => tempYear++),
-                    ),
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: () => setDialogState(() => tempYear++)),
                   ],
                 ),
                 const SizedBox(height: 12),
-                // ── Month grid ────────────────────────────────────────────
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -2108,7 +1882,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   itemBuilder: (context, index) {
                     final isSelected = (index + 1) == tempMonth;
                     return GestureDetector(
-                      onTap: () => setDialogState(() => tempMonth = index + 1),
+                      onTap: () =>
+                          setDialogState(() => tempMonth = index + 1),
                       child: Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
@@ -2136,20 +1911,17 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () {
-                setState(() {
-                  _selectedSalesMonth = DateTime(tempYear, tempMonth, 1);
-                });
+                setState(
+                    () => _selectedSalesMonth = DateTime(tempYear, tempMonth, 1));
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC41E3A),
-                foregroundColor: Colors.white,
-              ),
+                  backgroundColor: const Color(0xFFC41E3A),
+                  foregroundColor: Colors.white),
               child: const Text('Apply'),
             ),
           ],
@@ -2158,14 +1930,11 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // ── Year picker dialog (same grid style as monthly) ────────────────────────
   Future<void> _showYearPicker() async {
     const int minStartYear = 2008;
     const int maxStartYear = 2032;
     const int yearsPerPage = 12;
-
     int tempYear = _selectedSalesYear.year;
-    // Start with the page that contains the currently selected year
     int tempStartYear = minStartYear;
     while (tempStartYear + yearsPerPage <= tempYear) {
       tempStartYear += yearsPerPage;
@@ -2182,7 +1951,6 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Year range navigation (like month picker's year row) ─────
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -2194,13 +1962,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                   .clamp(minStartYear, maxStartYear))
                           : null,
                     ),
-                    Text(
-                      '$tempStartYear – ${tempStartYear + yearsPerPage - 1}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text('$tempStartYear – ${tempStartYear + yearsPerPage - 1}',
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     IconButton(
                       icon: const Icon(Icons.chevron_right),
                       onPressed: tempStartYear < maxStartYear
@@ -2212,7 +1976,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                // ── Year grid (same 4x3 layout and style as month grid) ────
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -2255,20 +2018,16 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () {
-                setState(() {
-                  _selectedSalesYear = DateTime(tempYear, 1, 1);
-                });
+                setState(() => _selectedSalesYear = DateTime(tempYear, 1, 1));
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFC41E3A),
-                foregroundColor: Colors.white,
-              ),
+                  backgroundColor: const Color(0xFFC41E3A),
+                  foregroundColor: Colors.white),
               child: const Text('Apply'),
             ),
           ],
@@ -2280,7 +2039,6 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildSalesStatCard(int salesCount, double netSales,
       double totalExpenses, double totalAdditionalProfits) {
     final filterLabel = _buildSalesFilterLabel();
-
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -2288,10 +2046,9 @@ class _DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2))
         ],
       ),
       child: Column(
@@ -2301,14 +2058,11 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Sales',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text('Sales',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500)),
               Flexible(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -2328,20 +2082,17 @@ class _DashboardPageState extends State<DashboardPage> {
                           icon: const Icon(Icons.arrow_drop_down,
                               color: Color(0xFFC41E3A), size: 18),
                           style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1a1a1a),
-                          ),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1a1a1a)),
                           items: SalesPeriod.values
                               .map((p) => DropdownMenuItem(
-                                    value: p,
-                                    child: Text(_salesPeriodLabel(p)),
-                                  ))
+                                  value: p,
+                                  child: Text(_salesPeriodLabel(p))))
                               .toList(),
                           onChanged: (SalesPeriod? value) {
-                            if (value != null) {
+                            if (value != null)
                               setState(() => _salesPeriod = value);
-                            }
                           },
                         ),
                       ),
@@ -2355,15 +2106,15 @@ class _DashboardPageState extends State<DashboardPage> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFC41E3A).withOpacity(0.1),
+                              color:
+                                  const Color(0xFFC41E3A).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                  color:
-                                      const Color(0xFFC41E3A).withOpacity(0.3)),
+                                  color: const Color(0xFFC41E3A)
+                                      .withOpacity(0.3)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
                                   _salesPeriod == SalesPeriod.daily
@@ -2379,10 +2130,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                   child: Text(
                                     filterLabel,
                                     style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF1a1a1a),
-                                    ),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1a1a1a)),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -2405,17 +2155,17 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Text(
                 '₱${_formatAmount(netSales)}',
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: netSales < 0 ? Colors.red : const Color(0xFF1a1a1a),
-                ),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: netSales < 0
+                        ? Colors.red
+                        : const Color(0xFF1a1a1a)),
               ),
             ),
           ),
           const SizedBox(height: 2),
           Text(
-            _getSalesSubtitle(
-                salesCount, totalExpenses, totalAdditionalProfits),
+            _getSalesSubtitle(salesCount, totalExpenses, totalAdditionalProfits),
             style: TextStyle(fontSize: 11, color: Colors.grey[600]),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -2424,6 +2174,10 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // EXCEL CELL STYLES
+  // ══════════════════════════════════════════════════════════════════════════
 
   xl.CellStyle _titleStyle() => xl.CellStyle(
         bold: true,
@@ -2500,17 +2254,320 @@ class _DashboardPageState extends State<DashboardPage> {
             right ? xl.HorizontalAlign.Right : xl.HorizontalAlign.Left,
       );
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // EXCEL CELL WRITER
+  // ══════════════════════════════════════════════════════════════════════════
+
   void _setCell(
       xl.Sheet sheet, int col, int row, dynamic value, xl.CellStyle style) {
     final cell = sheet
         .cell(xl.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row));
     if (value is double) {
       cell.value = xl.DoubleCellValue(value);
+    } else if (value is int) {
+      cell.value = xl.IntCellValue(value);
+    } else if (value is String && value.startsWith('=')) {
+      cell.value = xl.FormulaCellValue(value.substring(1));
     } else {
       cell.value = xl.TextCellValue(value?.toString() ?? '');
     }
     cell.cellStyle = style;
   }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // EXCEL COLUMN LETTER HELPER  (0-based index → "A", "B", … "AA" …)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  String _colLetter(int col) {
+    String result = '';
+    int c = col + 1;
+    while (c > 0) {
+      c -= 1;
+      result = String.fromCharCode(65 + (c % 26)) + result;
+      c ~/= 26;
+    }
+    return result;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // NEW _populateDaySheet — matches screenshot layout
+  //
+  // Left block  (cols 0-5):
+  //   0  Client's Name | 1 Tee Girl | 2 Bay | 3 Duration | 4 Coaching | 5 Amount
+  //
+  // Gap cols 6-7 (blank)
+  //
+  // Total Amount block (cols 7-8):
+  //   7  "Total Amount:" label  |  8  =SUM formula value
+  //
+  // Rentals block (cols 9-12):
+  //   9  Golf Set  |  10 Gloves  |  11 "Total Rentals:" label  |  12 value
+  //
+  // Below totals row: Expenses then Additional Profits section (cols 4-8)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  void _populateDaySheet(
+    xl.Sheet sheet,
+    DateTime filterDate,
+    List<QueryDocumentSnapshot> sessionDocs,
+    List<QueryDocumentSnapshot> expenseDocs,
+    List<QueryDocumentSnapshot> profitDocs,
+  ) {
+    // ── Column layout (0-based → Excel column letter) ────────────────────────
+    // A(0) Client's Name | B(1) Tee Girl | C(2) Bay | D(3) Duration
+    // E(4) Coaching | F(5) Amount | G(6) Total Amount label | H(7) Total Amount value
+    // I(8) gap | J(9) gap (highlighted) | K(10) Golf Set | L(11) Gloves
+    // M(12) Total Rentals label | N(13) Total Rentals value
+    const colWidths = [
+      26.0, // 0  A  Client's Name
+      14.0, // 1  B  Tee Girl
+       10.0, // 2  C  Bay
+      16.0, // 3  D  Duration
+      14.0, // 4  E  Coaching
+      14.0, // 5  F  Amount
+      20.0, // 6  G  Total Amount label
+      14.0, // 7  H  Total Amount value
+       8.0, // 8  I  gap
+       8.0, // 9  J  gap (highlighted in screenshot)
+      16.0, // 10 K  Golf Set
+      16.0, // 11 L  Gloves
+      20.0, // 12 M  Total Rentals label
+      14.0, // 13 N  Total Rentals value
+    ];
+    for (var i = 0; i < colWidths.length; i++) {
+      sheet.setColumnWidth(i, colWidths[i]);
+    }
+
+    final dateStr =
+        '${filterDate.month.toString().padLeft(2, '0')}/${filterDate.day.toString().padLeft(2, '0')}/${filterDate.year}';
+
+    // ── Parse expense line items ─────────────────────────────────────────────
+    final List<Map<String, dynamic>> expenseItems = [];
+    for (final doc in expenseDocs) {
+      final d = doc.data() as Map<String, dynamic>;
+      if (d['items'] is List) {
+        for (final item in d['items'] as List) {
+          if (item is Map) {
+            expenseItems.add({
+              'description': item['description']?.toString() ?? '',
+              'amount': (item['amount'] is num)
+                  ? (item['amount'] as num).toDouble()
+                  : (double.tryParse(item['amount']?.toString() ?? '') ?? 0.0),
+            });
+          }
+        }
+      } else {
+        expenseItems.add({
+          'description': d['description']?.toString() ?? '',
+          'amount': (d['amount'] is num)
+              ? (d['amount'] as num).toDouble()
+              : (double.tryParse(d['amount']?.toString() ?? '') ?? 0.0),
+        });
+      }
+    }
+
+    // ── Parse additional profit line items ───────────────────────────────────
+    final List<Map<String, dynamic>> profitItems = [];
+    for (final doc in profitDocs) {
+      final d = doc.data() as Map<String, dynamic>;
+      if (d['items'] is List) {
+        for (final item in d['items'] as List) {
+          if (item is Map) {
+            profitItems.add({
+              'description': item['description']?.toString() ?? '',
+              'amount': (item['amount'] is num)
+                  ? (item['amount'] as num).toDouble()
+                  : (double.tryParse(item['amount']?.toString() ?? '') ?? 0.0),
+            });
+          }
+        }
+      } else {
+        profitItems.add({
+          'description': d['description']?.toString() ?? '',
+          'amount': (d['amount'] is num)
+              ? (d['amount'] as num).toDouble()
+              : (double.tryParse(d['amount']?.toString() ?? '') ?? 0.0),
+        });
+      }
+    }
+
+    // ── Parse session rows ───────────────────────────────────────────────────
+    final List<Map<String, dynamic>> sessionRows = [];
+    for (final doc in sessionDocs) {
+      final d = doc.data() as Map<String, dynamic>;
+      sessionRows.add({
+        'clientName': d['clientName']?.toString() ?? '',
+        'personnel': d['personnel']?.toString() ?? '',
+        'bayNumber': d['bayNumber']?.toString() ?? '',
+        'duration': (d['duration'] is num)
+            ? (d['duration'] as num).toDouble()
+            : (double.tryParse(d['duration']?.toString() ?? '') ?? 0.0),
+        'sessionAmount': (d['sessionAmount'] is num)
+            ? (d['sessionAmount'] as num).toDouble()
+            : (double.tryParse(d['sessionAmount']?.toString() ?? '') ?? 0.0),
+        'coachingAmount': (d['coachingAmount'] is num)
+            ? (d['coachingAmount'] as num).toDouble()
+            : (double.tryParse(d['coachingAmount']?.toString() ?? '') ?? 0.0),
+        'rentalType': d['rentalType']?.toString() ?? '',
+        'rentalAmount': (d['rentalAmount'] is num)
+            ? (d['rentalAmount'] as num).toDouble()
+            : (double.tryParse(d['rentalAmount']?.toString() ?? '') ?? 0.0),
+      });
+    }
+
+    // ── Pre-compute ALL totals in Dart ───────────────────────────────────────
+    double totalDuration = 0, totalCoaching = 0, totalSessionAmt = 0;
+    double totalGolfSet = 0, totalGloves = 0;
+    for (final s in sessionRows) {
+      totalDuration   += s['duration']       as double;
+      totalCoaching   += s['coachingAmount'] as double;
+      totalSessionAmt += s['sessionAmount']  as double;
+      final rentalAmt  = s['rentalAmount']   as double;
+      final rentalType = s['rentalType']     as String;
+      if (rentalType == 'Golf Set') totalGolfSet += rentalAmt;
+      if (rentalType == 'Gloves')   totalGloves  += rentalAmt;
+    }
+    final double totalAmount   = totalCoaching + totalSessionAmt;
+    final double totalRentals  = totalGolfSet + totalGloves;
+    final double totalExpenses =
+        expenseItems.fold(0.0, (s, e) => s + (e['amount'] as double));
+    final double totalProfitsAmt =
+        profitItems.fold(0.0, (s, e) => s + (e['amount'] as double));
+    final double totalProfit   = totalAmount - totalExpenses + totalProfitsAmt;
+
+    int row = 0;
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ROW 0 — Title (left cols 0-5) + "Rentals" header (right cols 10-13)
+    // ════════════════════════════════════════════════════════════════════════
+    sheet.merge(
+      xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+      xl.CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: row),
+    );
+    _setCell(sheet, 0, row, 'Daily Report \u2014 $dateStr', _titleStyle());
+
+    sheet.merge(
+      xl.CellIndex.indexByColumnRow(columnIndex: 10, rowIndex: row),
+      xl.CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row),
+    );
+    _setCell(sheet, 10, row, 'Rentals', _titleStyle());
+    sheet.setRowHeight(row, 26);
+    row++;
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ROW 1 — Column headers
+    // ════════════════════════════════════════════════════════════════════════
+    const leftHeaders = [
+      "Client's Name", // 0 A
+      'Tee Girl',      // 1 B
+      'Bay',           // 2 C
+      'Duration',      // 3 D
+      'Coaching',      // 4 E
+      'Amount',        // 5 F
+    ];
+    for (var c = 0; c < leftHeaders.length; c++) {
+      _setCell(sheet, c, row, leftHeaders[c], _headerStyle());
+    }
+    // Rental headers — centered
+    _setCell(sheet, 10, row, 'Golf Set', _headerStyle());
+    _setCell(sheet, 11, row, 'Gloves',   _headerStyle());
+    sheet.setRowHeight(row, 20);
+    row++;
+
+    // ════════════════════════════════════════════════════════════════════════
+    // DATA ROWS
+    // ════════════════════════════════════════════════════════════════════════
+    for (final s in sessionRows) {
+      _setCell(sheet, 0, row, s['clientName'] as String, _dataStyle());
+      _setCell(sheet, 1, row, s['personnel']  as String, _dataStyle(center: true));
+      _setCell(sheet, 2, row, s['bayNumber']  as String, _dataStyle(center: true));
+
+      final dur        = s['duration']       as double;
+      final coaching   = s['coachingAmount'] as double;
+      final amount     = s['sessionAmount']  as double;
+      final rentalAmt  = s['rentalAmount']   as double;
+      final rentalType = s['rentalType']     as String;
+
+      if (dur      > 0) _setCell(sheet, 3, row, dur,      _dataStyle(center: true));
+      if (coaching > 0) _setCell(sheet, 4, row, coaching, _dataStyle(center: true));
+      if (amount   > 0) _setCell(sheet, 5, row, amount,   _dataStyle(center: true));
+
+      // Rental values — centered under Golf Set / Gloves headers
+      if (rentalAmt > 0) {
+        if (rentalType == 'Golf Set') {
+          _setCell(sheet, 10, row, rentalAmt, _dataStyle(center: true));
+        } else if (rentalType == 'Gloves') {
+          _setCell(sheet, 11, row, rentalAmt, _dataStyle(center: true));
+        }
+      }
+      row++;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // TOTALS ROW  (blank spacer row first)
+    // ════════════════════════════════════════════════════════════════════════
+    row++; // blank spacer
+
+    // Left side column totals
+    if (totalDuration   > 0) _setCell(sheet, 3, row, totalDuration,   _boldStyle());
+    if (totalCoaching   > 0) _setCell(sheet, 4, row, totalCoaching,   _boldStyle(right: true));
+    if (totalSessionAmt > 0) _setCell(sheet, 5, row, totalSessionAmt, _boldStyle(right: true));
+
+    // Total Amount — col G(6) label, col H(7) value
+    _setCell(sheet, 6, row, 'Total Amount:', _pinkBoldStyle());
+    _setCell(sheet, 7, row, totalAmount,      _pinkBoldStyle(right: true));
+
+    // Rental column totals — centered (cols K=10, L=11)
+    _setCell(sheet, 10, row, totalGolfSet, _boldStyle(right: false));
+    _setCell(sheet, 11, row, totalGloves,  _boldStyle(right: false));
+
+    // Total Rentals — col M(12) label, col N(13) value right-justified
+    _setCell(sheet, 12, row, 'Total Rentals:', _pinkBoldStyle());
+    _setCell(sheet, 13, row, totalRentals,       _pinkBoldStyle(right: true));
+
+    row++; // past totals row
+    row++; // blank spacer
+
+    // ════════════════════════════════════════════════════════════════════════
+    // EXPENSES SECTION
+    // Col D(3) label | Col E(4) description | Col H(7) amount
+    // ════════════════════════════════════════════════════════════════════════
+    _setCell(sheet, 3, row, 'Daily Expenses:', _pinkBoldStyle());
+    row++;
+    for (final item in expenseItems) {
+      _setCell(sheet, 4, row, item['description'] as String, _pinkStyle());
+      _setCell(sheet, 7, row, item['amount']      as double, _pinkStyle(right: true));
+      row++;
+    }
+    _setCell(sheet, 3, row, 'Total Expenses:', _pinkBoldStyle());
+    _setCell(sheet, 7, row, totalExpenses,       _pinkBoldStyle(right: true));
+    row++;
+    row++; // blank spacer
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ADDITIONAL PROFITS SECTION (only if any)
+    // ════════════════════════════════════════════════════════════════════════
+    if (profitItems.isNotEmpty) {
+      _setCell(sheet, 3, row, 'Additional Profit:', _pinkBoldStyle());
+      row++;
+      for (final item in profitItems) {
+        _setCell(sheet, 4, row, item['description'] as String, _pinkStyle());
+        _setCell(sheet, 7, row, item['amount']      as double, _pinkStyle(right: true));
+        row++;
+      }
+      row++; // blank spacer
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // TOTAL PROFIT
+    // ════════════════════════════════════════════════════════════════════════
+    _setCell(sheet, 3, row, 'Total Profit:', _pinkBoldStyle());
+    _setCell(sheet, 7, row, totalProfit,      _pinkBoldStyle(right: true));
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // MONTHLY SHEET HELPERS  (unchanged from original)
+  // ══════════════════════════════════════════════════════════════════════════
 
   int _populateDayBlock(
     xl.Sheet sheet,
@@ -2614,14 +2671,8 @@ class _DashboardPageState extends State<DashboardPage> {
     row++;
 
     const headers = [
-      "Client's Name",
-      'Tee Girl',
-      'Bay',
-      'Duration',
-      'Amount',
-      'Coaching/Rental',
-      '',
-      ''
+      "Client's Name", 'Tee Girl', 'Bay', 'Duration', 'Amount',
+      'Coaching/Rental', '', ''
     ];
     for (var c = 0; c < headers.length; c++) {
       _setCell(sheet, c, row, headers[c], _headerStyle());
@@ -2640,8 +2691,7 @@ class _DashboardPageState extends State<DashboardPage> {
       final cAmt = (data['coachingAmount'] is num)
           ? (data['coachingAmount'] as num).toDouble()
           : (double.tryParse(data['coachingAmount']?.toString() ?? '') ?? 0.0);
-      _setCell(
-          sheet, 0, row, data['clientName']?.toString() ?? '', _dataStyle());
+      _setCell(sheet, 0, row, data['clientName']?.toString() ?? '', _dataStyle());
       _setCell(sheet, 1, row, data['personnel']?.toString() ?? '',
           _dataStyle(center: true));
       _setCell(sheet, 2, row, data['bayNumber']?.toString() ?? '',
@@ -2702,8 +2752,7 @@ class _DashboardPageState extends State<DashboardPage> {
         final lr = leftRows[i];
         if (lr['type'] == 'personnel') {
           _setCell(sheet, 1, row, lr['name'] as String, _dataStyle());
-          _setCell(
-              sheet, 3, row, lr['hrs'] as double, _dataStyle(center: true));
+          _setCell(sheet, 3, row, lr['hrs'] as double, _dataStyle(center: true));
         } else if (lr['type'] == 'totalHrsLabel') {
           _setCell(sheet, 3, row, 'Total hrs', _boldStyle());
         } else if (lr['type'] == 'totalHrsValue') {
@@ -2737,7 +2786,6 @@ class _DashboardPageState extends State<DashboardPage> {
     return row - startRow;
   }
 
-  /// Renders one full month sheet: a month title followed by stacked daily blocks.
   void _populateMonthSheet(
     xl.Sheet sheet,
     int year,
@@ -2771,622 +2819,26 @@ class _DashboardPageState extends State<DashboardPage> {
         expensesByDay[day] ?? [],
         profitsByDay[day] ?? [],
       );
-      currentRow += rowsUsed + 2; // visual gap between days
+      currentRow += rowsUsed + 2;
     }
   }
 
-//Populate Daily sheets
-  void _populateDaySheet(
-    xl.Sheet sheet,
-    DateTime filterDate,
-    List<QueryDocumentSnapshot> sessionDocs,
-    List<QueryDocumentSnapshot> expenseDocs,
-    List<QueryDocumentSnapshot> profitDocs,
-  ) {
-    final filterDesc =
-        '${filterDate.month.toString().padLeft(2, '0')}/${filterDate.day.toString().padLeft(2, '0')}/${filterDate.year}';
+  // ══════════════════════════════════════════════════════════════════════════
+  // EXPORT: DAILY REPORT
+  // ══════════════════════════════════════════════════════════════════════════
 
-    const colWidths = [28.0, 20.0, 10.0, 14.0, 22.0, 20.0, 14.0, 14.0];
-    for (var i = 0; i < colWidths.length; i++) {
-      sheet.setColumnWidth(i, colWidths[i]);
-    }
-
-    // ── Build expense line items ─────────────────────────────────────────
-    final List<Map<String, dynamic>> expenseLineItems = [];
-    for (final doc in expenseDocs) {
-      final data = doc.data() as Map<String, dynamic>;
-      if (data['items'] != null && data['items'] is List) {
-        for (final item in (data['items'] as List)) {
-          if (item is Map) {
-            expenseLineItems.add({
-              'description': item['description']?.toString() ?? '',
-              'amount': (item['amount'] is num)
-                  ? (item['amount'] as num).toDouble()
-                  : (double.tryParse(item['amount']?.toString() ?? '') ?? 0.0),
-            });
-          }
-        }
-      } else {
-        expenseLineItems.add({
-          'description': data['description']?.toString() ?? '',
-          'amount': (data['amount'] is num)
-              ? (data['amount'] as num).toDouble()
-              : (double.tryParse(data['amount']?.toString() ?? '') ?? 0.0),
-        });
-      }
-    }
-
-    // ── Build profit line items ──────────────────────────────────────────
-    final List<Map<String, dynamic>> profitLineItems = [];
-    for (final doc in profitDocs) {
-      final data = doc.data() as Map<String, dynamic>;
-      if (data['items'] != null && data['items'] is List) {
-        for (final item in (data['items'] as List)) {
-          if (item is Map) {
-            profitLineItems.add({
-              'description': item['description']?.toString() ?? '',
-              'amount': (item['amount'] is num)
-                  ? (item['amount'] as num).toDouble()
-                  : (double.tryParse(item['amount']?.toString() ?? '') ?? 0.0),
-            });
-          }
-        }
-      } else {
-        profitLineItems.add({
-          'description': data['description']?.toString() ?? '',
-          'amount': (data['amount'] is num)
-              ? (data['amount'] as num).toDouble()
-              : (double.tryParse(data['amount']?.toString() ?? '') ?? 0.0),
-        });
-      }
-    }
-
-    // ── Totals ────────────────────────────────────────────────────────────
-    double totalDuration = 0.0;
-    double totalSessionAmt = 0.0;
-    double totalCoachingAmt = 0.0;
-    final Map<String, double> personnelHours = {};
-
-    for (final doc in sessionDocs) {
-      final data = doc.data() as Map<String, dynamic>;
-      final duration = (data['duration'] is num)
-          ? (data['duration'] as num).toDouble()
-          : (double.tryParse(data['duration']?.toString() ?? '') ?? 0.0);
-      final sAmt = (data['sessionAmount'] is num)
-          ? (data['sessionAmount'] as num).toDouble()
-          : (double.tryParse(data['sessionAmount']?.toString() ?? '') ?? 0.0);
-      final cAmt = (data['coachingAmount'] is num)
-          ? (data['coachingAmount'] as num).toDouble()
-          : (double.tryParse(data['coachingAmount']?.toString() ?? '') ?? 0.0);
-      totalDuration += duration;
-      totalSessionAmt += sAmt;
-      totalCoachingAmt += cAmt;
-      final personnel = data['personnel']?.toString() ?? '';
-      if (personnel.isNotEmpty) {
-        personnelHours[personnel] = (personnelHours[personnel] ?? 0) + duration;
-      }
-    }
-
-    final totalAmount = totalSessionAmt + totalCoachingAmt;
-    final totalExpenses =
-        expenseLineItems.fold(0.0, (s, e) => s + (e['amount'] as double));
-    final totalProfits =
-        profitLineItems.fold(0.0, (s, e) => s + (e['amount'] as double));
-    final totalSales = totalAmount - totalExpenses + totalProfits;
-
-    int row = 0;
-
-    // Title
-    sheet.merge(
-      xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
-      xl.CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: row),
-    );
-    _setCell(sheet, 0, row, 'Daily Report — $filterDesc', _titleStyle());
-    sheet.setRowHeight(row, 28);
-    row++;
-
-    // Column headers
-    const headers = [
-      "Client's Name",
-      'Tee Girl',
-      'Bay',
-      'Duration',
-      'Amount',
-      'Coaching/Rental',
-      '',
-      '',
-    ];
-    for (var c = 0; c < headers.length; c++) {
-      _setCell(sheet, c, row, headers[c], _headerStyle());
-    }
-    sheet.setRowHeight(row, 22);
-    row++;
-
-    // Session rows
-    for (final doc in sessionDocs) {
-      final data = doc.data() as Map<String, dynamic>;
-      final duration = (data['duration'] is num)
-          ? (data['duration'] as num).toDouble()
-          : (double.tryParse(data['duration']?.toString() ?? '') ?? 0.0);
-      final sAmt = (data['sessionAmount'] is num)
-          ? (data['sessionAmount'] as num).toDouble()
-          : (double.tryParse(data['sessionAmount']?.toString() ?? '') ?? 0.0);
-      final cAmt = (data['coachingAmount'] is num)
-          ? (data['coachingAmount'] as num).toDouble()
-          : (double.tryParse(data['coachingAmount']?.toString() ?? '') ?? 0.0);
-
-      _setCell(
-          sheet, 0, row, data['clientName']?.toString() ?? '', _dataStyle());
-      _setCell(sheet, 1, row, data['personnel']?.toString() ?? '',
-          _dataStyle(center: true));
-      _setCell(sheet, 2, row, data['bayNumber']?.toString() ?? '',
-          _dataStyle(center: true));
-      _setCell(sheet, 3, row, duration, _dataStyle(center: true));
-      _setCell(sheet, 4, row, sAmt > 0 ? sAmt : '', _dataStyle(center: true));
-      _setCell(sheet, 5, row, cAmt > 0 ? cAmt : '', _dataStyle(center: true));
-      row++;
-    }
-
-    row++; // spacer
-
-    // Totals row
-    _setCell(sheet, 3, row, totalDuration, _boldStyle());
-    _setCell(sheet, 4, row, totalSessionAmt > 0 ? totalSessionAmt : '',
-        _boldStyle(right: true));
-    _setCell(sheet, 5, row, totalCoachingAmt > 0 ? totalCoachingAmt : '',
-        _boldStyle(right: true));
-    _setCell(sheet, 6, row, 'Total Amount', _pinkBoldStyle());
-    _setCell(sheet, 7, row, totalAmount, _pinkBoldStyle(right: true));
-    row++;
-
-    row++; // spacer
-
-    // Personnel + expenses/profits side-by-side
-    _setCell(sheet, 0, row, 'Total hrs per personnel', _boldStyle());
-    row++;
-
-    final personnelEntries = personnelHours.entries.toList();
-
-    final List<Map<String, dynamic>> rightRows = [];
-    rightRows.add({'type': 'expHeader'});
-    for (final item in expenseLineItems) {
-      rightRows.add({
-        'type': 'expItem',
-        'desc': item['description'],
-        'amt': item['amount']
-      });
-    }
-    rightRows.add({'type': 'expTotal', 'amt': totalExpenses});
-    rightRows.add({'type': 'blank'});
-    rightRows.add({'type': 'profHeader'});
-    for (final item in profitLineItems) {
-      rightRows.add({
-        'type': 'profItem',
-        'desc': item['description'],
-        'amt': item['amount']
-      });
-    }
-    rightRows.add({'type': 'blank'});
-    rightRows.add({'type': 'totalSales', 'amt': totalSales});
-
-    final List<Map<String, dynamic>> leftRows = [];
-    for (final e in personnelEntries) {
-      leftRows.add({'type': 'personnel', 'name': e.key, 'hrs': e.value});
-    }
-    leftRows.add({'type': 'totalHrsLabel'});
-    leftRows.add({'type': 'totalHrsValue', 'hrs': totalDuration});
-
-    final maxRows =
-        leftRows.length > rightRows.length ? leftRows.length : rightRows.length;
-
-    for (var i = 0; i < maxRows; i++) {
-      if (i < leftRows.length) {
-        final lr = leftRows[i];
-        if (lr['type'] == 'personnel') {
-          _setCell(sheet, 1, row, lr['name'] as String, _dataStyle());
-          _setCell(
-              sheet, 3, row, lr['hrs'] as double, _dataStyle(center: true));
-        } else if (lr['type'] == 'totalHrsLabel') {
-          _setCell(sheet, 3, row, 'Total hrs', _boldStyle());
-        } else if (lr['type'] == 'totalHrsValue') {
-          _setCell(sheet, 3, row, lr['hrs'] as double, _boldStyle());
-        }
-      }
-      if (i < rightRows.length) {
-        final rr = rightRows[i];
-        if (rr['type'] == 'expHeader') {
-          _setCell(sheet, 4, row, 'Daily Expenses:', _pinkBoldStyle());
-        } else if (rr['type'] == 'expItem') {
-          _setCell(sheet, 5, row, rr['desc'] as String, _pinkStyle());
-          _setCell(sheet, 7, row, rr['amt'] as double, _pinkStyle(right: true));
-        } else if (rr['type'] == 'expTotal') {
-          _setCell(sheet, 4, row, 'Total Expenses:', _pinkBoldStyle());
-          _setCell(
-              sheet, 7, row, rr['amt'] as double, _pinkBoldStyle(right: true));
-        } else if (rr['type'] == 'profHeader') {
-          _setCell(sheet, 4, row, 'Additional Profit:', _pinkBoldStyle());
-        } else if (rr['type'] == 'profItem') {
-          _setCell(sheet, 5, row, rr['desc'] as String, _pinkStyle());
-          _setCell(sheet, 7, row, rr['amt'] as double, _pinkStyle(right: true));
-        } else if (rr['type'] == 'totalSales') {
-          _setCell(sheet, 4, row, 'Total Profit:', _pinkBoldStyle());
-          _setCell(
-              sheet, 7, row, rr['amt'] as double, _pinkBoldStyle(right: true));
-        }
-      }
-      row++;
-    }
-  }
-
-//Export Yearly
-  Future<void> _exportYearlyReport() async {
-    final year = _selectedSalesYear.year;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-          child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
-    );
-
-    try {
-      final sessionsSnap =
-          await FirebaseFirestore.instance.collection('sessions').get();
-      final expensesSnap =
-          await FirebaseFirestore.instance.collection('expenses').get();
-      final profitsSnap = await FirebaseFirestore.instance
-          .collection('additional-profits')
-          .get();
-
-      // Group by month → day
-      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthSessionsByDay =
-          {};
-      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthExpensesByDay =
-          {};
-      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthProfitsByDay =
-          {};
-      final Set<int> activeMonths = {};
-
-      void groupDoc(QueryDocumentSnapshot doc,
-          Map<int, Map<int, List<QueryDocumentSnapshot>>> target) {
-        final dt = _parseSessionDate(doc['date'] as String?);
-        if (dt == null || dt.year != year) return;
-        target.putIfAbsent(dt.month, () => {});
-        target[dt.month]!.putIfAbsent(dt.day, () => []).add(doc);
-        activeMonths.add(dt.month);
-      }
-
-      for (final doc in sessionsSnap.docs) groupDoc(doc, monthSessionsByDay);
-      for (final doc in expensesSnap.docs) groupDoc(doc, monthExpensesByDay);
-      for (final doc in profitsSnap.docs) groupDoc(doc, monthProfitsByDay);
-
-      if (activeMonths.isEmpty) {
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('No data found for $year'),
-              backgroundColor: Colors.orange));
-        }
-        return;
-      }
-
-      final excel = xl.Excel.createExcel();
-      if (excel.sheets.containsKey('Sheet1')) excel.delete('Sheet1');
-      final sortedMonths = activeMonths.toList()..sort();
-
-      // ── Sheet 1: Year Summary ──────────────────────────────────────────
-      final summarySheet = excel['Year Summary'];
-      const summaryColWidths = [20.0, 14.0, 16.0, 18.0, 16.0, 16.0, 18.0, 16.0];
-      for (var i = 0; i < summaryColWidths.length; i++) {
-        summarySheet.setColumnWidth(i, summaryColWidths[i]);
-      }
-
-      int sRow = 0;
-      summarySheet.merge(
-        xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: sRow),
-        xl.CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: sRow),
-      );
-      _setCell(summarySheet, 0, sRow, 'Yearly Report — $year', _titleStyle());
-      summarySheet.setRowHeight(sRow, 30);
-      sRow += 2;
-
-      final summaryHeaders = [
-        'Month',
-        'Sessions',
-        'Session Amt',
-        'Coaching/Rental',
-        'Total Revenue',
-        'Expenses',
-        'Addl. Profit',
-        'Net Profit'
-      ];
-      for (var c = 0; c < summaryHeaders.length; c++) {
-        _setCell(summarySheet, c, sRow, summaryHeaders[c],
-            _monthSummaryHeaderStyle());
-      }
-      summarySheet.setRowHeight(sRow, 22);
-      sRow++;
-
-      double grandRevenue = 0,
-          grandExpenses = 0,
-          grandProfits = 0,
-          grandNet = 0;
-      int grandSessions = 0;
-
-      for (final month in sortedMonths) {
-        final sessionsByDay = monthSessionsByDay[month] ?? {};
-        final expensesByDay = monthExpensesByDay[month] ?? {};
-        final profitsByDay = monthProfitsByDay[month] ?? {};
-
-        double mRevenue = 0,
-            mExpenses = 0,
-            mProfits = 0,
-            mSessionAmt = 0,
-            mCoachingAmt = 0;
-        int mSessionCount = 0;
-
-        for (final dayDocs in sessionsByDay.values) {
-          for (final doc in dayDocs) {
-            final d = doc.data() as Map<String, dynamic>;
-            final s = (d['sessionAmount'] is num)
-                ? (d['sessionAmount'] as num).toDouble()
-                : (double.tryParse(d['sessionAmount']?.toString() ?? '') ??
-                    0.0);
-            final c = (d['coachingAmount'] is num)
-                ? (d['coachingAmount'] as num).toDouble()
-                : (double.tryParse(d['coachingAmount']?.toString() ?? '') ??
-                    0.0);
-            mSessionAmt += s;
-            mCoachingAmt += c;
-            mSessionCount++;
-          }
-        }
-        mRevenue = mSessionAmt + mCoachingAmt;
-
-        void sumItems(Map<int, List<QueryDocumentSnapshot>> byDay,
-            void Function(double) add) {
-          for (final dayDocs in byDay.values) {
-            for (final doc in dayDocs) {
-              final d = doc.data() as Map<String, dynamic>;
-              if (d['items'] != null && d['items'] is List) {
-                for (final item in (d['items'] as List)) {
-                  if (item is Map)
-                    add((item['amount'] is num)
-                        ? (item['amount'] as num).toDouble()
-                        : (double.tryParse(item['amount']?.toString() ?? '') ??
-                            0.0));
-                }
-              } else {
-                add((d['amount'] is num)
-                    ? (d['amount'] as num).toDouble()
-                    : (double.tryParse(d['amount']?.toString() ?? '') ?? 0.0));
-              }
-            }
-          }
-        }
-
-        sumItems(expensesByDay, (v) => mExpenses += v);
-        sumItems(profitsByDay, (v) => mProfits += v);
-
-        final mNet = mRevenue - mExpenses + mProfits;
-        grandRevenue += mRevenue;
-        grandExpenses += mExpenses;
-        grandProfits += mProfits;
-        grandNet += mNet;
-        grandSessions += mSessionCount;
-
-        _setCell(summarySheet, 0, sRow, _getFullMonthName(month),
-            _monthSummaryDataStyle());
-        _setCell(summarySheet, 1, sRow, mSessionCount.toDouble(),
-            _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 2, sRow, mSessionAmt,
-            _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 3, sRow, mCoachingAmt,
-            _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 4, sRow, mRevenue,
-            _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 5, sRow, mExpenses,
-            _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 6, sRow, mProfits,
-            _monthSummaryDataStyle(right: true));
-        _setCell(
-            summarySheet, 7, sRow, mNet, _monthSummaryDataStyle(right: true));
-        sRow++;
-      }
-
-      sRow++;
-      _setCell(summarySheet, 0, sRow, 'TOTAL', _monthSummaryTotalStyle());
-      _setCell(summarySheet, 1, sRow, grandSessions.toDouble(),
-          _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 2, sRow, '', _monthSummaryTotalStyle());
-      _setCell(summarySheet, 3, sRow, '', _monthSummaryTotalStyle());
-      _setCell(summarySheet, 4, sRow, grandRevenue,
-          _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 5, sRow, grandExpenses,
-          _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 6, sRow, grandProfits,
-          _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 7, sRow, grandNet,
-          _monthSummaryTotalStyle(right: true));
-
-      // ── One sheet per active month ────────────────────────────────────
-      for (final month in sortedMonths) {
-        final sheetName = _getFullMonthName(month);
-        final monthSheet = excel[sheetName];
-        final sessionsByDay = monthSessionsByDay[month] ?? {};
-        final expensesByDay = monthExpensesByDay[month] ?? {};
-        final profitsByDay = monthProfitsByDay[month] ?? {};
-        final Set<int> daySet = {
-          ...sessionsByDay.keys,
-          ...expensesByDay.keys,
-          ...profitsByDay.keys
-        };
-        final sortedDays = daySet.toList()..sort();
-        _populateMonthSheet(monthSheet, year, month, sortedDays, sessionsByDay,
-            expensesByDay, profitsByDay);
-      }
-
-      // ── Save & share ────────────────────────────────────────────────
-      final fileName = 'Yearly_Report_$year.xlsx';
-      if (kIsWeb) {
-        excel.save(fileName: fileName);
-        if (mounted) Navigator.pop(context);
-        return;
-      }
-      final bytes = excel.save();
-      if (bytes == null) throw Exception('Failed to generate Excel file');
-      final dir = await getTemporaryDirectory();
-      final filePath = '${dir.path}/$fileName';
-      await File(filePath).writeAsBytes(bytes);
-      if (mounted) Navigator.pop(context);
-      await Share.shareXFiles([XFile(filePath, name: fileName)],
-          subject: 'Yearly Report — $year');
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Yearly export failed: $e'),
-            backgroundColor: Colors.red));
-      }
-    }
-  }
-
-//Export Monthly
-  Future<void> _exportMonthlyReport() async {
-    final month = _selectedSalesMonth;
-    final monthLabel = '${_getMonthName(month.month)}_${month.year}';
-    final monthDisplay = '${_getMonthName(month.month)} ${month.year}';
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-          child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
-    );
-
-    try {
-      // Fetch all data once
-      final sessionsSnap =
-          await FirebaseFirestore.instance.collection('sessions').get();
-      final expensesSnap =
-          await FirebaseFirestore.instance.collection('expenses').get();
-      final profitsSnap = await FirebaseFirestore.instance
-          .collection('additional-profits')
-          .get();
-
-      // Group by day-of-month
-      final Map<int, List<QueryDocumentSnapshot>> sessionsByDay = {};
-      final Map<int, List<QueryDocumentSnapshot>> expensesByDay = {};
-      final Map<int, List<QueryDocumentSnapshot>> profitsByDay = {};
-      final Set<int> activeDays = {};
-
-      for (final doc in sessionsSnap.docs) {
-        final dt = _parseSessionDate(doc['date'] as String?);
-        if (dt == null || dt.year != month.year || dt.month != month.month)
-          continue;
-        sessionsByDay.putIfAbsent(dt.day, () => []).add(doc);
-        activeDays.add(dt.day);
-      }
-      for (final doc in expensesSnap.docs) {
-        final dt = _parseSessionDate(doc['date'] as String?);
-        if (dt == null || dt.year != month.year || dt.month != month.month)
-          continue;
-        expensesByDay.putIfAbsent(dt.day, () => []).add(doc);
-        activeDays.add(dt.day);
-      }
-      for (final doc in profitsSnap.docs) {
-        final dt = _parseSessionDate(doc['date'] as String?);
-        if (dt == null || dt.year != month.year || dt.month != month.month)
-          continue;
-        profitsByDay.putIfAbsent(dt.day, () => []).add(doc);
-        activeDays.add(dt.day);
-      }
-
-      if (activeDays.isEmpty) {
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('No data found for $monthDisplay'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-        return;
-      }
-
-      // Build workbook — one sheet per active day, sorted chronologically
-      final excel = xl.Excel.createExcel();
-      if (excel.sheets.containsKey('Sheet1')) excel.delete('Sheet1');
-
-      final sortedDays = activeDays.toList()..sort();
-
-      for (final day in sortedDays) {
-        final dayDate = DateTime(month.year, month.month, day);
-        // Sheet name: MM-DD-YYYY  (10 chars, well within Excel's 31-char limit)
-        final sheetName =
-            '${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}-${dayDate.year}';
-
-        final sheet = excel[sheetName];
-
-        _populateDaySheet(
-          sheet,
-          dayDate,
-          sessionsByDay[day] ?? [],
-          expensesByDay[day] ?? [],
-          profitsByDay[day] ?? [],
-        );
-      }
-
-      // Save & share
-      final fileName = 'Monthly_Report_$monthLabel.xlsx';
-
-      if (kIsWeb) {
-        excel.save(fileName: fileName);
-        if (mounted) Navigator.pop(context);
-        return;
-      }
-
-      final bytes = excel.save();
-      if (bytes == null) throw Exception('Failed to generate Excel file');
-
-      final dir = await getTemporaryDirectory();
-      final filePath = '${dir.path}/$fileName';
-      await File(filePath).writeAsBytes(bytes);
-
-      if (mounted) Navigator.pop(context);
-
-      await Share.shareXFiles(
-        [XFile(filePath, name: fileName)],
-        subject: 'Monthly Report — $monthDisplay',
-      );
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Monthly export failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-// _exportDailyReport()
   Future<void> _exportDailyReport() async {
-    // Route yearly period to dedicated yearly export
+    // Route to dedicated exporters for other periods
     if (_salesPeriod == SalesPeriod.yearly) {
       await _exportYearlyReport();
       return;
     }
-
-    // Branch: monthly period -> multi-sheet workbook
     if (_salesPeriod == SalesPeriod.monthly) {
       await _exportMonthlyReport();
       return;
     }
 
+    // Daily or Overall → use selected date (or today for Overall)
     final DateTime filterDate =
         _salesPeriod == SalesPeriod.daily ? _selectedSalesDate : DateTime.now();
 
@@ -3440,8 +2892,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
       _populateDaySheet(sheet, filterDate, sessions, expenses, profits);
 
+      final fileName = 'Daily_Report_$dateLabel.xlsx';
+
       if (kIsWeb) {
-        excel.save(fileName: 'Daily_Report_$dateLabel.xlsx');
+        excel.save(fileName: fileName);
         if (mounted) Navigator.pop(context);
         return;
       }
@@ -3450,7 +2904,6 @@ class _DashboardPageState extends State<DashboardPage> {
       if (bytes == null) throw Exception('Failed to generate Excel file');
 
       final dir = await getTemporaryDirectory();
-      final fileName = 'Daily_Report_$dateLabel.xlsx';
       final filePath = '${dir.path}/$fileName';
       await File(filePath).writeAsBytes(bytes);
 
@@ -3472,6 +2925,355 @@ class _DashboardPageState extends State<DashboardPage> {
       }
     }
   }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // EXPORT: MONTHLY REPORT
+  // ══════════════════════════════════════════════════════════════════════════
+
+  Future<void> _exportMonthlyReport() async {
+    final month = _selectedSalesMonth;
+    final monthLabel = '${_getMonthName(month.month)}_${month.year}';
+    final monthDisplay = '${_getMonthName(month.month)} ${month.year}';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
+    );
+
+    try {
+      final sessionsSnap =
+          await FirebaseFirestore.instance.collection('sessions').get();
+      final expensesSnap =
+          await FirebaseFirestore.instance.collection('expenses').get();
+      final profitsSnap = await FirebaseFirestore.instance
+          .collection('additional-profits')
+          .get();
+
+      final Map<int, List<QueryDocumentSnapshot>> sessionsByDay = {};
+      final Map<int, List<QueryDocumentSnapshot>> expensesByDay = {};
+      final Map<int, List<QueryDocumentSnapshot>> profitsByDay = {};
+      final Set<int> activeDays = {};
+
+      for (final doc in sessionsSnap.docs) {
+        final dt = _parseSessionDate(doc['date'] as String?);
+        if (dt == null || dt.year != month.year || dt.month != month.month)
+          continue;
+        sessionsByDay.putIfAbsent(dt.day, () => []).add(doc);
+        activeDays.add(dt.day);
+      }
+      for (final doc in expensesSnap.docs) {
+        final dt = _parseSessionDate(doc['date'] as String?);
+        if (dt == null || dt.year != month.year || dt.month != month.month)
+          continue;
+        expensesByDay.putIfAbsent(dt.day, () => []).add(doc);
+        activeDays.add(dt.day);
+      }
+      for (final doc in profitsSnap.docs) {
+        final dt = _parseSessionDate(doc['date'] as String?);
+        if (dt == null || dt.year != month.year || dt.month != month.month)
+          continue;
+        profitsByDay.putIfAbsent(dt.day, () => []).add(doc);
+        activeDays.add(dt.day);
+      }
+
+      if (activeDays.isEmpty) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('No data found for $monthDisplay'),
+            backgroundColor: Colors.orange,
+          ));
+        }
+        return;
+      }
+
+      final excel = xl.Excel.createExcel();
+      if (excel.sheets.containsKey('Sheet1')) excel.delete('Sheet1');
+      final sortedDays = activeDays.toList()..sort();
+
+      for (final day in sortedDays) {
+        final dayDate = DateTime(month.year, month.month, day);
+        final sheetName =
+            '${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}-${dayDate.year}';
+        final sheet = excel[sheetName];
+        _populateDaySheet(
+          sheet,
+          dayDate,
+          sessionsByDay[day] ?? [],
+          expensesByDay[day] ?? [],
+          profitsByDay[day] ?? [],
+        );
+      }
+
+      final fileName = 'Monthly_Report_$monthLabel.xlsx';
+
+      if (kIsWeb) {
+        excel.save(fileName: fileName);
+        if (mounted) Navigator.pop(context);
+        return;
+      }
+
+      final bytes = excel.save();
+      if (bytes == null) throw Exception('Failed to generate Excel file');
+
+      final dir = await getTemporaryDirectory();
+      final filePath = '${dir.path}/$fileName';
+      await File(filePath).writeAsBytes(bytes);
+
+      if (mounted) Navigator.pop(context);
+
+      await Share.shareXFiles(
+        [XFile(filePath, name: fileName)],
+        subject: 'Monthly Report — $monthDisplay',
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Monthly export failed: $e'),
+          backgroundColor: Colors.red,
+        ));
+      }
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // EXPORT: YEARLY REPORT
+  // ══════════════════════════════════════════════════════════════════════════
+
+  Future<void> _exportYearlyReport() async {
+    final year = _selectedSalesYear.year;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
+    );
+
+    try {
+      final sessionsSnap =
+          await FirebaseFirestore.instance.collection('sessions').get();
+      final expensesSnap =
+          await FirebaseFirestore.instance.collection('expenses').get();
+      final profitsSnap = await FirebaseFirestore.instance
+          .collection('additional-profits')
+          .get();
+
+      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthSessionsByDay = {};
+      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthExpensesByDay = {};
+      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthProfitsByDay = {};
+      final Set<int> activeMonths = {};
+
+      void groupDoc(QueryDocumentSnapshot doc,
+          Map<int, Map<int, List<QueryDocumentSnapshot>>> target) {
+        final dt = _parseSessionDate(doc['date'] as String?);
+        if (dt == null || dt.year != year) return;
+        target.putIfAbsent(dt.month, () => {});
+        target[dt.month]!.putIfAbsent(dt.day, () => []).add(doc);
+        activeMonths.add(dt.month);
+      }
+
+      for (final doc in sessionsSnap.docs) groupDoc(doc, monthSessionsByDay);
+      for (final doc in expensesSnap.docs) groupDoc(doc, monthExpensesByDay);
+      for (final doc in profitsSnap.docs) groupDoc(doc, monthProfitsByDay);
+
+      if (activeMonths.isEmpty) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('No data found for $year'),
+              backgroundColor: Colors.orange));
+        }
+        return;
+      }
+
+      final excel = xl.Excel.createExcel();
+      if (excel.sheets.containsKey('Sheet1')) excel.delete('Sheet1');
+      final sortedMonths = activeMonths.toList()..sort();
+
+      // ── Year Summary sheet ──────────────────────────────────────────────
+      final summarySheet = excel['Year Summary'];
+      const summaryColWidths = [
+        20.0, 14.0, 16.0, 18.0, 16.0, 16.0, 18.0, 16.0
+      ];
+      for (var i = 0; i < summaryColWidths.length; i++) {
+        summarySheet.setColumnWidth(i, summaryColWidths[i]);
+      }
+
+      int sRow = 0;
+      summarySheet.merge(
+        xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: sRow),
+        xl.CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: sRow),
+      );
+      _setCell(summarySheet, 0, sRow, 'Yearly Report — $year', _titleStyle());
+      summarySheet.setRowHeight(sRow, 30);
+      sRow += 2;
+
+      final summaryHeaders = [
+        'Month', 'Sessions', 'Session Amt', 'Coaching/Rental',
+        'Total Revenue', 'Expenses', 'Addl. Profit', 'Net Profit'
+      ];
+      for (var c = 0; c < summaryHeaders.length; c++) {
+        _setCell(summarySheet, c, sRow, summaryHeaders[c],
+            _monthSummaryHeaderStyle());
+      }
+      summarySheet.setRowHeight(sRow, 22);
+      sRow++;
+
+      double grandRevenue = 0,
+          grandExpenses = 0,
+          grandProfits = 0,
+          grandNet = 0;
+      int grandSessions = 0;
+
+      for (final month in sortedMonths) {
+        final sessionsByDay = monthSessionsByDay[month] ?? {};
+        final expensesByDay = monthExpensesByDay[month] ?? {};
+        final profitsByDay = monthProfitsByDay[month] ?? {};
+
+        double mRevenue = 0,
+            mExpenses = 0,
+            mProfits = 0,
+            mSessionAmt = 0,
+            mCoachingAmt = 0;
+        int mSessionCount = 0;
+
+        for (final dayDocs in sessionsByDay.values) {
+          for (final doc in dayDocs) {
+            final d = doc.data() as Map<String, dynamic>;
+            final s = (d['sessionAmount'] is num)
+                ? (d['sessionAmount'] as num).toDouble()
+                : (double.tryParse(d['sessionAmount']?.toString() ?? '') ?? 0.0);
+            final c = (d['coachingAmount'] is num)
+                ? (d['coachingAmount'] as num).toDouble()
+                : (double.tryParse(d['coachingAmount']?.toString() ?? '') ?? 0.0);
+            mSessionAmt += s;
+            mCoachingAmt += c;
+            mSessionCount++;
+          }
+        }
+        mRevenue = mSessionAmt + mCoachingAmt;
+
+        void sumItems(Map<int, List<QueryDocumentSnapshot>> byDay,
+            void Function(double) add) {
+          for (final dayDocs in byDay.values) {
+            for (final doc in dayDocs) {
+              final d = doc.data() as Map<String, dynamic>;
+              if (d['items'] != null && d['items'] is List) {
+                for (final item in (d['items'] as List)) {
+                  if (item is Map)
+                    add((item['amount'] is num)
+                        ? (item['amount'] as num).toDouble()
+                        : (double.tryParse(
+                                item['amount']?.toString() ?? '') ??
+                            0.0));
+                }
+              } else {
+                add((d['amount'] is num)
+                    ? (d['amount'] as num).toDouble()
+                    : (double.tryParse(d['amount']?.toString() ?? '') ?? 0.0));
+              }
+            }
+          }
+        }
+
+        sumItems(expensesByDay, (v) => mExpenses += v);
+        sumItems(profitsByDay, (v) => mProfits += v);
+
+        final mNet = mRevenue - mExpenses + mProfits;
+        grandRevenue += mRevenue;
+        grandExpenses += mExpenses;
+        grandProfits += mProfits;
+        grandNet += mNet;
+        grandSessions += mSessionCount;
+
+        _setCell(summarySheet, 0, sRow, _getFullMonthName(month),
+            _monthSummaryDataStyle());
+        _setCell(summarySheet, 1, sRow, mSessionCount.toDouble(),
+            _monthSummaryDataStyle(right: true));
+        _setCell(
+            summarySheet, 2, sRow, mSessionAmt, _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 3, sRow, mCoachingAmt,
+            _monthSummaryDataStyle(right: true));
+        _setCell(
+            summarySheet, 4, sRow, mRevenue, _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 5, sRow, mExpenses,
+            _monthSummaryDataStyle(right: true));
+        _setCell(
+            summarySheet, 6, sRow, mProfits, _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 7, sRow, mNet, _monthSummaryDataStyle(right: true));
+        sRow++;
+      }
+
+      sRow++;
+      _setCell(summarySheet, 0, sRow, 'TOTAL', _monthSummaryTotalStyle());
+      _setCell(summarySheet, 1, sRow, grandSessions.toDouble(),
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 2, sRow, '', _monthSummaryTotalStyle());
+      _setCell(summarySheet, 3, sRow, '', _monthSummaryTotalStyle());
+      _setCell(summarySheet, 4, sRow, grandRevenue,
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 5, sRow, grandExpenses,
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 6, sRow, grandProfits,
+          _monthSummaryTotalStyle(right: true));
+      _setCell(
+          summarySheet, 7, sRow, grandNet, _monthSummaryTotalStyle(right: true));
+
+      // ── One sheet per active month ──────────────────────────────────────
+      for (final month in sortedMonths) {
+        final sheetName = _getFullMonthName(month);
+        final monthSheet = excel[sheetName];
+        final sessionsByDay = monthSessionsByDay[month] ?? {};
+        final expensesByDay = monthExpensesByDay[month] ?? {};
+        final profitsByDay = monthProfitsByDay[month] ?? {};
+        final Set<int> daySet = {
+          ...sessionsByDay.keys,
+          ...expensesByDay.keys,
+          ...profitsByDay.keys
+        };
+        final sortedDays = daySet.toList()..sort();
+        _populateMonthSheet(monthSheet, year, month, sortedDays, sessionsByDay,
+            expensesByDay, profitsByDay);
+      }
+
+      final fileName = 'Yearly_Report_$year.xlsx';
+
+      if (kIsWeb) {
+        excel.save(fileName: fileName);
+        if (mounted) Navigator.pop(context);
+        return;
+      }
+
+      final bytes = excel.save();
+      if (bytes == null) throw Exception('Failed to generate Excel file');
+
+      final dir = await getTemporaryDirectory();
+      final filePath = '${dir.path}/$fileName';
+      await File(filePath).writeAsBytes(bytes);
+
+      if (mounted) Navigator.pop(context);
+
+      await Share.shareXFiles(
+        [XFile(filePath, name: fileName)],
+        subject: 'Yearly Report — $year',
+      );
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Yearly export failed: $e'),
+            backgroundColor: Colors.red));
+      }
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // BUILD
+  // ══════════════════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
@@ -3495,7 +3297,6 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             child: Column(
               children: [
-                // Header
                 ClipRect(
                   child: Container(
                     padding: const EdgeInsets.all(20),
@@ -3527,7 +3328,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Menu Items
                 _buildMenuItem(
                   icon: Icons.dashboard_outlined,
                   label: 'Overview',
@@ -3547,8 +3347,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   onTap: () => _navigateToPage('Personnel'),
                 ),
                 const Spacer(),
-                // User Profile - Clickable
-                // User Profile - Clickable
                 InkWell(
                   onTap: () {
                     Navigator.of(context).push(
@@ -3564,20 +3362,17 @@ class _DashboardPageState extends State<DashboardPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: _isSidebarCollapsed
-                        // ✅ When collapsed: just center the avatar, no Row
                         ? Center(
                             child: CircleAvatar(
                               backgroundColor: Colors.white,
                               child: Text(
                                 displayName[0].toUpperCase(),
                                 style: const TextStyle(
-                                  color: Color(0xFFC41E3A),
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                    color: Color(0xFFC41E3A),
+                                    fontWeight: FontWeight.bold),
                               ),
                             ),
                           )
-                        // When expanded: full Row with name/role
                         : Row(
                             children: [
                               CircleAvatar(
@@ -3585,9 +3380,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                 child: Text(
                                   displayName[0].toUpperCase(),
                                   style: const TextStyle(
-                                    color: Color(0xFFC41E3A),
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                      color: Color(0xFFC41E3A),
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -3598,19 +3392,15 @@ class _DashboardPageState extends State<DashboardPage> {
                                     Text(
                                       displayName,
                                       style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                      ),
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14),
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    const Text(
-                                      'Administrator',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 12,
-                                      ),
-                                    ),
+                                    const Text('Administrator',
+                                        style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12)),
                                   ],
                                 ),
                               ),
@@ -3636,10 +3426,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       color: Colors.white,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2))
                       ],
                     ),
                     child: Row(
@@ -3651,18 +3440,15 @@ class _DashboardPageState extends State<DashboardPage> {
                             const Text(
                               'M3 Golf Driving Range',
                               style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1a1a1a),
-                              ),
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1a1a1a)),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Recent client sessions and Sales performance',
                               style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
+                                  fontSize: 14, color: Colors.grey[600]),
                             ),
                           ],
                         ),
@@ -3721,12 +3507,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                       if (snapshot.hasData) {
                                         final allDocs = snapshot.data!.docs;
                                         final todayStr = _getTodayDate();
-                                        final todayDocs = allDocs
+                                        todaySessions = allDocs
                                             .where((doc) =>
                                                 doc['date'] == todayStr)
-                                            .toList();
-
-                                        todaySessions = todayDocs.length;
+                                            .length;
 
                                         final salesDocs = allDocs.where((doc) {
                                           final dt = _parseSessionDate(
@@ -3746,74 +3530,61 @@ class _DashboardPageState extends State<DashboardPage> {
                                             salesDocs.fold(0.0, (sum, doc) {
                                           final d = doc.data()
                                               as Map<String, dynamic>;
-                                          final rental = (d['rentalAmount']
-                                                  is num)
-                                              ? (d['rentalAmount'] as num)
-                                                  .toDouble()
-                                              : (double.tryParse(
-                                                      d['rentalAmount']
-                                                              ?.toString() ??
-                                                          '') ??
-                                                  0.0);
+                                          final rental =
+                                              (d['rentalAmount'] is num)
+                                                  ? (d['rentalAmount'] as num)
+                                                      .toDouble()
+                                                  : (double.tryParse(
+                                                          d['rentalAmount']
+                                                                  ?.toString() ??
+                                                              '') ??
+                                                      0.0);
                                           return sum + rental;
                                         });
                                       }
 
                                       if (expensesSnapshot.hasData) {
-                                        final expensesDocs =
-                                            expensesSnapshot.data!.docs;
-                                        final filteredExpenses =
-                                            expensesDocs.where((doc) {
-                                          final dateStr =
-                                              doc['date'] as String?;
-                                          if (dateStr == null) return false;
-                                          final dt = _parseSessionDate(dateStr);
+                                        totalExpenses = expensesSnapshot
+                                            .data!.docs
+                                            .where((doc) {
+                                          final dt = _parseSessionDate(
+                                              doc['date'] as String?);
                                           return _isDateInSalesPeriod(dt);
-                                        }).toList();
-
-                                        totalExpenses = filteredExpenses
-                                            .fold(0.0, (sum, doc) {
+                                        }).fold(0.0, (sum, doc) {
                                           final amount = doc['amount'];
-                                          if (amount is num) {
-                                            return sum + amount.toDouble();
-                                          }
                                           return sum +
-                                              (double.tryParse(
-                                                      amount?.toString() ??
-                                                          '') ??
-                                                  0.0);
+                                              (amount is num
+                                                  ? amount.toDouble()
+                                                  : (double.tryParse(
+                                                          amount?.toString() ??
+                                                              '') ??
+                                                      0.0));
                                         });
                                       }
 
                                       if (profitsSnapshot.hasData) {
-                                        final profitsDocs =
-                                            profitsSnapshot.data!.docs;
-                                        final filteredProfits =
-                                            profitsDocs.where((doc) {
-                                          final dateStr =
-                                              doc['date'] as String?;
-                                          if (dateStr == null) return false;
-                                          final dt = _parseSessionDate(dateStr);
+                                        totalAdditionalProfits = profitsSnapshot
+                                            .data!.docs
+                                            .where((doc) {
+                                          final dt = _parseSessionDate(
+                                              doc['date'] as String?);
                                           return _isDateInSalesPeriod(dt);
-                                        }).toList();
-
-                                        totalAdditionalProfits = filteredProfits
-                                            .fold(0.0, (sum, doc) {
+                                        }).fold(0.0, (sum, doc) {
                                           final amount = doc['amount'];
-                                          if (amount is num) {
-                                            return sum + amount.toDouble();
-                                          }
                                           return sum +
-                                              (double.tryParse(
-                                                      amount?.toString() ??
-                                                          '') ??
-                                                  0.0);
+                                              (amount is num
+                                                  ? amount.toDouble()
+                                                  : (double.tryParse(
+                                                          amount?.toString() ??
+                                                              '') ??
+                                                      0.0));
                                         });
                                       }
 
-                                      final netSales = totalRevenueSalesPeriod -
-                                          totalExpenses +
-                                          totalAdditionalProfits;
+                                      final netSales =
+                                          totalRevenueSalesPeriod -
+                                              totalExpenses +
+                                              totalAdditionalProfits;
 
                                       return LayoutBuilder(
                                         builder: (context, constraints) {
@@ -3835,14 +3606,11 @@ class _DashboardPageState extends State<DashboardPage> {
                                                         const EdgeInsets.only(
                                                             right: 6),
                                                     child: _buildStatCard(
-                                                      title:
-                                                          'Today\'s Sessions',
+                                                      title: 'Today\'s Sessions',
                                                       value: todaySessions
                                                           .toString(),
-                                                      subtitle:
-                                                          'Sessions today',
-                                                      icon:
-                                                          Icons.calendar_today,
+                                                      subtitle: 'Sessions today',
+                                                      icon: Icons.calendar_today,
                                                       iconBgColor: const Color(
                                                           0xFFC41E3A),
                                                     ),
@@ -3862,9 +3630,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     padding: const EdgeInsets
                                                         .symmetric(
                                                         horizontal: 6),
-                                                    child:
-                                                        _buildExpensesStatCard(
-                                                            totalExpenses),
+                                                    child: _buildExpensesStatCard(
+                                                        totalExpenses),
                                                   ),
                                                 ),
                                                 Expanded(
@@ -3903,10 +3670,9 @@ class _DashboardPageState extends State<DashboardPage> {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2))
                               ],
                             ),
                             child: Column(
@@ -3916,10 +3682,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                 const Text(
                                   'Recent Client Sessions',
                                   style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1a1a1a),
-                                  ),
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1a1a1a)),
                                 ),
                                 const SizedBox(height: 10),
                                 TextField(
@@ -3928,9 +3693,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                     hintText:
                                         'Search by client, date, personnel, bay...',
                                     hintStyle: TextStyle(
-                                      color: Colors.grey[400],
-                                      fontSize: 14,
-                                    ),
+                                        color: Colors.grey[400], fontSize: 14),
                                     prefixIcon: const Icon(Icons.search,
                                         color: Color(0xFFC41E3A), size: 20),
                                     suffixIcon: _sessionSearchController
@@ -3961,8 +3724,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                     ),
                                   ),
                                   onChanged: (_) => setState(() {
-                                    _currentSessionPage =
-                                        0; // reset to first page on new search
+                                    _currentSessionPage = 0;
                                   }),
                                 ),
                                 const SizedBox(height: 10),
@@ -3980,26 +3742,24 @@ class _DashboardPageState extends State<DashboardPage> {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 const Text(
-                                                  'Error loading sessions',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: Color(0xFF1a1a1a)),
-                                                ),
+                                                    'Error loading sessions',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color:
+                                                            Color(0xFF1a1a1a))),
                                                 const SizedBox(height: 8),
-                                                Text(
-                                                  '${snapshot.error}',
-                                                  style: TextStyle(
-                                                      fontSize: 13,
-                                                      color: Colors.grey[600]),
-                                                  textAlign: TextAlign.center,
-                                                ),
+                                                Text('${snapshot.error}',
+                                                    style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.grey[600]),
+                                                    textAlign:
+                                                        TextAlign.center),
                                               ],
                                             ),
                                           ),
                                         );
                                       }
-
                                       if (!snapshot.hasData) {
                                         return const Center(
                                             child: CircularProgressIndicator(
@@ -4007,8 +3767,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                       }
 
                                       final allSessions = snapshot.data!.docs;
-
-// Sort by parsed date descending (latest first)
                                       final sortedSessions = [...allSessions]
                                         ..sort((a, b) {
                                           final da = _parseSessionDate(
@@ -4020,7 +3778,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                           return db.compareTo(da);
                                         });
 
-// Apply sales period filter (Overall = show all)
                                       final periodFilteredSessions =
                                           _salesPeriod == SalesPeriod.overall
                                               ? sortedSessions
@@ -4035,32 +3792,27 @@ class _DashboardPageState extends State<DashboardPage> {
                                           .text
                                           .trim()
                                           .toLowerCase();
-
                                       final filteredSessions = query.isEmpty
                                           ? periodFilteredSessions
                                           : periodFilteredSessions.where((doc) {
                                               final d = doc.data()
                                                   as Map<String, dynamic>;
-                                              final clientName =
-                                                  (d['clientName'] ?? '')
+                                              return (d['clientName'] ?? '')
                                                       .toString()
-                                                      .toLowerCase();
-                                              final personnel =
+                                                      .toLowerCase()
+                                                      .contains(query) ||
                                                   (d['personnel'] ?? '')
                                                       .toString()
-                                                      .toLowerCase();
-                                              final date = (d['date'] ?? '')
-                                                  .toString()
-                                                  .toLowerCase();
-                                              final bayNumber =
+                                                      .toLowerCase()
+                                                      .contains(query) ||
+                                                  (d['date'] ?? '')
+                                                      .toString()
+                                                      .toLowerCase()
+                                                      .contains(query) ||
                                                   (d['bayNumber'] ?? '')
                                                       .toString()
-                                                      .toLowerCase();
-                                              return clientName
-                                                      .contains(query) ||
-                                                  personnel.contains(query) ||
-                                                  date.contains(query) ||
-                                                  bayNumber.contains(query);
+                                                      .toLowerCase()
+                                                      .contains(query);
                                             }).toList();
 
                                       final int totalItems =
@@ -4131,130 +3883,104 @@ class _DashboardPageState extends State<DashboardPage> {
                                                                     .grey[100]),
                                                         columns: const [
                                                           DataColumn(
-                                                            label: Text(
-                                                                'Client Name',
-                                                                style: TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold)),
-                                                          ),
-                                                          DataColumn(
-                                                            label: Expanded(
-                                                              child: Text(
-                                                                  'Date',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
+                                                              label: Text(
+                                                                  'Client Name',
                                                                   style: TextStyle(
                                                                       fontWeight:
                                                                           FontWeight
-                                                                              .bold)),
-                                                            ),
-                                                          ),
+                                                                              .bold))),
                                                           DataColumn(
-                                                            label: Expanded(
-                                                              child: Text(
-                                                                  'Session Amount',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                            ),
-                                                          ),
+                                                              label: Expanded(
+                                                                  child: Text(
+                                                                      'Date',
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .center,
+                                                                      style: TextStyle(
+                                                                          fontWeight:
+                                                                              FontWeight.bold)))),
                                                           DataColumn(
-                                                            label: Expanded(
-                                                              child: Text(
-                                                                  'Coaching',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                            ),
-                                                          ),
+                                                              label: Expanded(
+                                                                  child: Text(
+                                                                      'Session Amount',
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .center,
+                                                                      style: TextStyle(
+                                                                          fontWeight:
+                                                                              FontWeight.bold)))),
                                                           DataColumn(
-                                                            label: Expanded(
-                                                              child: Text(
-                                                                  'Rental',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                            ),
-                                                          ),
+                                                              label: Expanded(
+                                                                  child: Text(
+                                                                      'Coaching',
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .center,
+                                                                      style: TextStyle(
+                                                                          fontWeight:
+                                                                              FontWeight.bold)))),
                                                           DataColumn(
-                                                            label: Expanded(
-                                                              child: Text('Bay',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                            ),
-                                                          ),
+                                                              label: Expanded(
+                                                                  child: Text(
+                                                                      'Rental',
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .center,
+                                                                      style: TextStyle(
+                                                                          fontWeight:
+                                                                              FontWeight.bold)))),
                                                           DataColumn(
-                                                            label: Expanded(
-                                                              child: Text(
-                                                                  'Personnel',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                            ),
-                                                          ),
+                                                              label: Expanded(
+                                                                  child: Text(
+                                                                      'Bay',
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .center,
+                                                                      style: TextStyle(
+                                                                          fontWeight:
+                                                                              FontWeight.bold)))),
                                                           DataColumn(
-                                                            label: Expanded(
-                                                              child: Text(
-                                                                  'Duration (hrs)',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .center,
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                            ),
-                                                          ),
+                                                              label: Expanded(
+                                                                  child: Text(
+                                                                      'Personnel',
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .center,
+                                                                      style: TextStyle(
+                                                                          fontWeight:
+                                                                              FontWeight.bold)))),
                                                           DataColumn(
-                                                            numeric: true,
-                                                            label: Expanded(
-                                                              child: Text('MOP',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .right,
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                            ),
-                                                          ),
+                                                              label: Expanded(
+                                                                  child: Text(
+                                                                      'Duration (hrs)',
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .center,
+                                                                      style: TextStyle(
+                                                                          fontWeight:
+                                                                              FontWeight.bold)))),
                                                           DataColumn(
-                                                            numeric: true,
-                                                            label: Expanded(
-                                                              child: Text(
-                                                                  'Total',
-                                                                  textAlign:
-                                                                      TextAlign
-                                                                          .right,
-                                                                  style: TextStyle(
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold)),
-                                                            ),
-                                                          ),
+                                                              numeric: true,
+                                                              label: Expanded(
+                                                                  child: Text(
+                                                                      'MOP',
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .right,
+                                                                      style: TextStyle(
+                                                                          fontWeight:
+                                                                              FontWeight.bold)))),
+                                                          DataColumn(
+                                                              numeric: true,
+                                                              label: Expanded(
+                                                                  child: Text(
+                                                                      'Total',
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .right,
+                                                                      style: TextStyle(
+                                                                          fontWeight:
+                                                                              FontWeight.bold)))),
                                                         ],
                                                         rows: sessions
                                                             .map((session) {
@@ -4265,128 +3991,119 @@ class _DashboardPageState extends State<DashboardPage> {
                                                           final total =
                                                               _getSessionTotal(
                                                                   data);
-                                                          return DataRow(
-                                                              cells: [
-                                                                DataCell(Align(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .centerLeft,
-                                                                    child: Text(
-                                                                        data['clientName'] ??
-                                                                            'N/A'))),
-                                                                DataCell(Align(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .center,
-                                                                    child: Text(
-                                                                        data['date'] ??
-                                                                            'N/A'))),
-                                                                DataCell(Align(
-                                                                  alignment:
-                                                                      Alignment
-                                                                          .center,
-                                                                  child: Text(data[
-                                                                              'sessionAmount'] !=
-                                                                          null
+                                                          return DataRow(cells: [
+                                                            DataCell(Align(
+                                                                alignment: Alignment
+                                                                    .centerLeft,
+                                                                child: Text(
+                                                                    data['clientName'] ??
+                                                                        'N/A'))),
+                                                            DataCell(Align(
+                                                                alignment: Alignment
+                                                                    .center,
+                                                                child: Text(
+                                                                    data['date'] ??
+                                                                        'N/A'))),
+                                                            DataCell(Align(
+                                                              alignment: Alignment
+                                                                  .center,
+                                                              child: Text(data[
+                                                                          'sessionAmount'] !=
+                                                                      null
+                                                                  ? (data['sessionAmount']
+                                                                          is num
                                                                       ? (data['sessionAmount']
-                                                                              is num
-                                                                          ? (data['sessionAmount'] as num)
-                                                                              .toString()
-                                                                          : data['sessionAmount']
-                                                                              .toString())
-                                                                      : '—'),
-                                                                )),
-                                                                DataCell(Align(
-                                                                  alignment:
-                                                                      Alignment
-                                                                          .center,
-                                                                  child: Text(data['coachingAmount'] !=
-                                                                              null &&
-                                                                          (data['coachingAmount'] as num) >
-                                                                              0
-                                                                      ? (data['coachingAmount']
                                                                               as num)
                                                                           .toString()
-                                                                      : (data['coachingAmount'] != null &&
-                                                                              (data['coachingAmount'] as num) >
-                                                                                  0
-                                                                          ? (data['coachingAmount'] as num)
-                                                                              .toString()
-                                                                          : '—')),
-                                                                )),
-                                                                DataCell(Align(
-                                                                  alignment:
-                                                                      Alignment
-                                                                          .center,
-                                                                  child: Column(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .center,
-                                                                    crossAxisAlignment:
-                                                                        CrossAxisAlignment
-                                                                            .center,
-                                                                    children: [
-                                                                      Text(data['rentalAmount'] != null &&
-                                                                              (data['rentalAmount'] as num) >
-                                                                                  0
-                                                                          ? (data['rentalAmount'] as num)
-                                                                              .toString()
-                                                                          : '—'),
-                                                                      if (data['rentalType'] !=
+                                                                      : data['sessionAmount']
+                                                                          .toString())
+                                                                  : '—'),
+                                                            )),
+                                                            DataCell(Align(
+                                                              alignment: Alignment
+                                                                  .center,
+                                                              child: Text(data['coachingAmount'] !=
+                                                                          null &&
+                                                                      (data['coachingAmount']
+                                                                              as num) >
+                                                                          0
+                                                                  ? (data['coachingAmount']
+                                                                          as num)
+                                                                      .toString()
+                                                                  : '—'),
+                                                            )),
+                                                            DataCell(Align(
+                                                              alignment: Alignment
+                                                                  .center,
+                                                              child: Column(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .center,
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .center,
+                                                                children: [
+                                                                  Text(data['rentalAmount'] !=
                                                                               null &&
-                                                                          (data['rentalType'] as String)
-                                                                              .isNotEmpty)
-                                                                        Text(
-                                                                          data['rentalType']
-                                                                              as String,
-                                                                          style:
-                                                                              const TextStyle(
-                                                                            fontSize:
-                                                                                11,
-                                                                            color:
-                                                                                Colors.grey,
-                                                                            fontStyle:
-                                                                                FontStyle.italic,
-                                                                          ),
-                                                                        ),
-                                                                    ],
-                                                                  ),
-                                                                )),
-                                                                DataCell(Align(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .center,
-                                                                    child: Text(
-                                                                        data['bayNumber']?.toString() ??
-                                                                            '—'))),
-                                                                DataCell(Align(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .center,
-                                                                    child: Text(
-                                                                        data['personnel'] ??
-                                                                            'N/A'))),
-                                                                DataCell(Align(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .center,
-                                                                    child: Text(
-                                                                        data['duration']?.toString() ??
-                                                                            '0.0'))),
-                                                                DataCell(Align(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .centerRight,
-                                                                    child: Text(
-                                                                        data['modeOfPayment']?.toString() ??
-                                                                            'N/A'))),
-                                                                DataCell(Align(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .centerRight,
-                                                                    child: Text(
-                                                                        '₱${_formatAmount(total)}'))),
-                                                              ]);
+                                                                          (data['rentalAmount']
+                                                                                  as num) >
+                                                                              0
+                                                                      ? (data['rentalAmount']
+                                                                              as num)
+                                                                          .toString()
+                                                                      : '—'),
+                                                                  if (data['rentalType'] !=
+                                                                          null &&
+                                                                      (data['rentalType']
+                                                                              as String)
+                                                                          .isNotEmpty)
+                                                                    Text(
+                                                                      data['rentalType']
+                                                                          as String,
+                                                                      style: const TextStyle(
+                                                                          fontSize:
+                                                                              11,
+                                                                          color: Colors
+                                                                              .grey,
+                                                                          fontStyle:
+                                                                              FontStyle.italic),
+                                                                    ),
+                                                                ],
+                                                              ),
+                                                            )),
+                                                            DataCell(Align(
+                                                                alignment: Alignment
+                                                                    .center,
+                                                                child: Text(
+                                                                    data['bayNumber']
+                                                                            ?.toString() ??
+                                                                        '—'))),
+                                                            DataCell(Align(
+                                                                alignment: Alignment
+                                                                    .center,
+                                                                child: Text(
+                                                                    data['personnel'] ??
+                                                                        'N/A'))),
+                                                            DataCell(Align(
+                                                                alignment: Alignment
+                                                                    .center,
+                                                                child: Text(
+                                                                    data['duration']
+                                                                            ?.toString() ??
+                                                                        '0.0'))),
+                                                            DataCell(Align(
+                                                                alignment: Alignment
+                                                                    .centerRight,
+                                                                child: Text(
+                                                                    data['modeOfPayment']
+                                                                            ?.toString() ??
+                                                                        'N/A'))),
+                                                            DataCell(Align(
+                                                                alignment: Alignment
+                                                                    .centerRight,
+                                                                child: Text(
+                                                                    '₱${_formatAmount(total)}'))),
+                                                          ]);
                                                         }).toList(),
                                                       ),
                                                     ),
@@ -4396,15 +4113,15 @@ class _DashboardPageState extends State<DashboardPage> {
                                             ),
                                           ),
 
-                                          // ── Pagination Controls ──────────────────────────────────────
+                                          // Pagination
                                           Container(
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 12, vertical: 8),
                                             decoration: BoxDecoration(
                                               border: Border(
                                                   top: BorderSide(
-                                                      color: Colors
-                                                          .grey.shade200)),
+                                                      color:
+                                                          Colors.grey.shade200)),
                                             ),
                                             child: Row(
                                               mainAxisAlignment:
@@ -4422,12 +4139,13 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     IconButton(
                                                       icon: const Icon(
                                                           Icons.first_page),
-                                                      onPressed: _currentSessionPage >
-                                                              0
-                                                          ? () => setState(() =>
-                                                              _currentSessionPage =
-                                                                  0)
-                                                          : null,
+                                                      onPressed:
+                                                          _currentSessionPage >
+                                                                  0
+                                                              ? () => setState(
+                                                                  () => _currentSessionPage =
+                                                                      0)
+                                                              : null,
                                                       iconSize: 20,
                                                       tooltip: 'First page',
                                                       color: const Color(
@@ -4436,11 +4154,12 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     IconButton(
                                                       icon: const Icon(
                                                           Icons.chevron_left),
-                                                      onPressed: _currentSessionPage >
-                                                              0
-                                                          ? () => setState(() =>
-                                                              _currentSessionPage--)
-                                                          : null,
+                                                      onPressed:
+                                                          _currentSessionPage >
+                                                                  0
+                                                              ? () => setState(
+                                                                  () => _currentSessionPage--)
+                                                              : null,
                                                       iconSize: 20,
                                                       tooltip: 'Previous page',
                                                       color: const Color(
@@ -4462,22 +4181,22 @@ class _DashboardPageState extends State<DashboardPage> {
                                                       child: Text(
                                                         'Page ${safePage + 1} of $totalPages',
                                                         style: const TextStyle(
-                                                          fontSize: 13,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color:
-                                                              Color(0xFFC41E3A),
-                                                        ),
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: Color(
+                                                                0xFFC41E3A)),
                                                       ),
                                                     ),
                                                     IconButton(
                                                       icon: const Icon(
                                                           Icons.chevron_right),
-                                                      onPressed: _currentSessionPage <
-                                                              totalPages - 1
-                                                          ? () => setState(() =>
-                                                              _currentSessionPage++)
-                                                          : null,
+                                                      onPressed:
+                                                          _currentSessionPage <
+                                                                  totalPages - 1
+                                                              ? () => setState(
+                                                                  () => _currentSessionPage++)
+                                                              : null,
                                                       iconSize: 20,
                                                       tooltip: 'Next page',
                                                       color: const Color(
@@ -4486,13 +4205,14 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     IconButton(
                                                       icon: const Icon(
                                                           Icons.last_page),
-                                                      onPressed: _currentSessionPage <
-                                                              totalPages - 1
-                                                          ? () => setState(() =>
-                                                              _currentSessionPage =
-                                                                  totalPages -
-                                                                      1)
-                                                          : null,
+                                                      onPressed:
+                                                          _currentSessionPage <
+                                                                  totalPages - 1
+                                                              ? () => setState(
+                                                                  () => _currentSessionPage =
+                                                                      totalPages -
+                                                                          1)
+                                                              : null,
                                                       iconSize: 20,
                                                       tooltip: 'Last page',
                                                       color: const Color(
@@ -4530,6 +4250,10 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // MISC HELPERS
+  // ══════════════════════════════════════════════════════════════════════════
+
   Widget _buildMenuItem({
     required IconData icon,
     required String label,
@@ -4546,13 +4270,9 @@ class _DashboardPageState extends State<DashboardPage> {
         leading: Icon(icon, color: Colors.white, size: 24),
         title: _isSidebarCollapsed
             ? null
-            : Text(
-                label,
+            : Text(label,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+                    color: Colors.white, fontWeight: FontWeight.w500)),
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -4598,24 +4318,20 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  /// Single method — reads `_salesPeriod` + the appropriate selected date field.
   bool _isDateInSalesPeriod(DateTime? sessionDate) {
     if (sessionDate == null) return false;
-    final sd = DateTime(sessionDate.year, sessionDate.month, sessionDate.day);
-
+    final sd =
+        DateTime(sessionDate.year, sessionDate.month, sessionDate.day);
     switch (_salesPeriod) {
       case SalesPeriod.daily:
-        final d = DateTime(_selectedSalesDate.year, _selectedSalesDate.month,
-            _selectedSalesDate.day);
-        return sd == d;
-
+        return sd ==
+            DateTime(_selectedSalesDate.year, _selectedSalesDate.month,
+                _selectedSalesDate.day);
       case SalesPeriod.monthly:
         return sd.year == _selectedSalesMonth.year &&
             sd.month == _selectedSalesMonth.month;
-
       case SalesPeriod.yearly:
         return sd.year == _selectedSalesYear.year;
-
       case SalesPeriod.overall:
         return true;
     }
@@ -4623,66 +4339,38 @@ class _DashboardPageState extends State<DashboardPage> {
 
   String _getMonthName(int month) {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
+      'Jan','Feb','Mar','Apr','May','Jun',
+      'Jul','Aug','Sep','Oct','Nov','Dec'
     ];
     return months[month - 1];
   }
 
   String _getFullMonthName(int month) {
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+      'January','February','March','April','May','June',
+      'July','August','September','October','November','December',
     ];
     return months[month - 1];
   }
 
   String _salesPeriodLabel(SalesPeriod period) {
     switch (period) {
-      case SalesPeriod.daily:
-        return 'Daily';
-      case SalesPeriod.monthly:
-        return 'Monthly';
-      case SalesPeriod.yearly:
-        return 'Yearly';
-      case SalesPeriod.overall:
-        return 'Overall';
+      case SalesPeriod.daily:   return 'Daily';
+      case SalesPeriod.monthly: return 'Monthly';
+      case SalesPeriod.yearly:  return 'Yearly';
+      case SalesPeriod.overall: return 'Overall';
     }
   }
 
   String _getSalesSubtitle(
       int salesCount, double totalExpenses, double totalAdditionalProfits) {
     final periodLabel = _salesPeriodLabel(_salesPeriod).toLowerCase();
-    if (totalExpenses > 0 && totalAdditionalProfits > 0) {
-      return 'Net revenue  · $salesCount $periodLabel sessions';
-    } else if (totalExpenses > 0) {
-      return 'Net revenue · $salesCount $periodLabel sessions';
-    } else if (totalAdditionalProfits > 0) {
-      return 'Total revenue · $salesCount $periodLabel sessions';
-    } else {
-      return 'Total revenue · $salesCount $periodLabel sessions';
-    }
+    return totalExpenses > 0
+        ? 'Net revenue · $salesCount $periodLabel sessions'
+        : 'Total revenue · $salesCount $periodLabel sessions';
   }
+
+  // ── Additional Profit dialogs (unchanged) ─────────────────────────────────
 
   void _showAdditionalProfitHistoryDialog() {
     showDialog(
@@ -4712,16 +4400,11 @@ class _DashboardPageState extends State<DashboardPage> {
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
-                  child: Text('Error loading profits: ${snapshot.error}'),
-                );
+                    child: Text('Error loading profits: ${snapshot.error}'));
               }
-
               if (!snapshot.hasData) {
                 return const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFFC41E3A),
-                  ),
-                );
+                    child: CircularProgressIndicator(color: Color(0xFFC41E3A)));
               }
 
               final allProfits = snapshot.data!.docs;
@@ -4737,13 +4420,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.trending_up,
-                          size: 64, color: Colors.grey[400]),
+                      Icon(Icons.trending_up, size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
-                      Text(
-                        'No additional profits yet',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                      ),
+                      Text('No additional profits yet',
+                          style:
+                              TextStyle(color: Colors.grey[600], fontSize: 16)),
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
                         onPressed: () {
@@ -4767,9 +4448,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8)),
                     child: const Row(
                       children: [
                         Expanded(
@@ -4810,16 +4490,11 @@ class _DashboardPageState extends State<DashboardPage> {
                             final firstDesc = first is Map
                                 ? (first['description'] ?? '').toString()
                                 : 'N/A';
-                            if (itemsList.length > 1) {
-                              description =
-                                  '$firstDesc (+${itemsList.length - 1} more)';
-                            } else {
-                              description = firstDesc;
-                            }
+                            description = itemsList.length > 1
+                                ? '$firstDesc (+${itemsList.length - 1} more)'
+                                : firstDesc;
                           }
                         }
-                        final date = data['date'] ?? 'N/A';
-
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.all(12),
@@ -4831,25 +4506,20 @@ class _DashboardPageState extends State<DashboardPage> {
                           child: Row(
                             children: [
                               Expanded(
-                                flex: 2,
-                                child: Text(date,
-                                    style: const TextStyle(fontSize: 14)),
-                              ),
+                                  flex: 2,
+                                  child: Text(data['date'] ?? 'N/A',
+                                      style: const TextStyle(fontSize: 14))),
                               Expanded(
-                                flex: 2,
-                                child: Text(description,
-                                    style: const TextStyle(fontSize: 14)),
-                              ),
+                                  flex: 2,
+                                  child: Text(description,
+                                      style: const TextStyle(fontSize: 14))),
                               Expanded(
                                 flex: 1,
-                                child: Text(
-                                  '₱${_formatAmount(amount)}',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.right,
-                                ),
+                                child: Text('₱${_formatAmount(amount)}',
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600),
+                                    textAlign: TextAlign.right),
                               ),
                               Expanded(
                                 flex: 1,
@@ -4868,7 +4538,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                     IconButton(
                                       icon: const Icon(Icons.delete,
                                           size: 20, color: Colors.red),
-                                      onPressed: () => _deleteProfit(profit.id),
+                                      onPressed: () =>
+                                          _deleteProfit(profit.id),
                                       tooltip: 'Delete',
                                     ),
                                   ],
@@ -4887,9 +4558,8 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close')),
           ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(context);
@@ -4918,15 +4588,13 @@ class _DashboardPageState extends State<DashboardPage> {
           key: formKey,
           initialDate: _profitDate,
           onSave: (items, date) {
-            // Don't pop here — let _addProfitWithItems handle everything
             _addProfitWithItems(items, date);
           },
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () => formKey.currentState?._submit(),
             style: ElevatedButton.styleFrom(
@@ -4945,39 +4613,26 @@ class _DashboardPageState extends State<DashboardPage> {
     DateTime date,
   ) async {
     if (!mounted) return;
-
-    // Close the form dialog first, cleanly
     Navigator.of(context, rootNavigator: true).pop();
-
-    // Show loading indicator
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => const Center(
-        child: CircularProgressIndicator(color: Color(0xFFC41E3A)),
-      ),
+          child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
     );
-
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User must be signed in');
-
       final dateStr =
           '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
-
       double totalAmount = 0;
       final itemsData = <Map<String, dynamic>>[];
       for (final item in items) {
         final amt = double.tryParse(item['amount'] ?? '0') ?? 0;
         totalAmount += amt;
-        itemsData.add({
-          'description': item['description'] ?? '',
-          'amount': amt,
-        });
+        itemsData.add({'description': item['description'] ?? '', 'amount': amt});
       }
-      final firstDesc =
-          items.isNotEmpty ? (items.first['description'] ?? '') : '';
-
+      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
       await FirebaseFirestore.instance.collection('additional-profits').add({
         'date': dateStr,
         'amount': totalAmount,
@@ -4987,28 +4642,23 @@ class _DashboardPageState extends State<DashboardPage> {
         'userEmail': user.email ?? '',
         'createdAt': FieldValue.serverTimestamp(),
       });
-
       if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop(); // dismiss loader
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                'Profit of ₱${_formatAmount(totalAmount)} saved successfully'),
-            backgroundColor: const Color(0xFFC41E3A),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              'Profit of ₱${_formatAmount(totalAmount)} saved successfully'),
+          backgroundColor: const Color(0xFFC41E3A),
+          duration: const Duration(seconds: 2),
+        ));
       }
     } catch (e) {
       if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop(); // dismiss loader
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving profit: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error saving profit: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ));
       }
     }
   }
@@ -5016,30 +4666,22 @@ class _DashboardPageState extends State<DashboardPage> {
   void _showEditProfitDialog(DocumentSnapshot profit) {
     final data = profit.data() as Map<String, dynamic>;
     final dateStr = data['date'] ?? '';
-
     DateTime profitDate = DateTime.now();
     if (dateStr.isNotEmpty) {
       try {
         final parts = dateStr.split('/');
         if (parts.length == 3) {
-          profitDate = DateTime(
-            int.parse(parts[2]),
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-          );
+          profitDate = DateTime(int.parse(parts[2]), int.parse(parts[0]),
+              int.parse(parts[1]));
         }
-      } catch (e) {
-        // Use current date if parsing fails
-      }
+      } catch (_) {}
     }
 
     List<Map<String, String>>? initialItems;
     if (data['items'] != null && data['items'] is List) {
       final list = data['items'] as List;
       initialItems = list.map<Map<String, String>>((e) {
-        final m = e is Map
-            ? Map<String, dynamic>.from(e as Map)
-            : <String, dynamic>{};
+        final m = e is Map ? Map<String, dynamic>.from(e as Map) : <String, dynamic>{};
         final amt = m['amount'];
         return {
           'description': (m['description'] ?? '').toString(),
@@ -5048,9 +4690,8 @@ class _DashboardPageState extends State<DashboardPage> {
       }).toList();
     } else {
       final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
-      final description = data['description'] ?? '';
       initialItems = [
-        {'description': description, 'amount': amount.toString()},
+        {'description': data['description'] ?? '', 'amount': amount.toString()}
       ];
     }
 
@@ -5070,9 +4711,8 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () => formKey.currentState?._submit(),
             style: ElevatedButton.styleFrom(
@@ -5095,30 +4735,20 @@ class _DashboardPageState extends State<DashboardPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFFC41E3A),
-        ),
-      ),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
     );
-
     try {
       final dateStr =
           '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
-
       double totalAmount = 0;
       final itemsData = <Map<String, dynamic>>[];
       for (final item in items) {
         final amt = double.tryParse(item['amount'] ?? '0') ?? 0;
         totalAmount += amt;
-        itemsData.add({
-          'description': item['description'] ?? '',
-          'amount': amt,
-        });
+        itemsData.add({'description': item['description'] ?? '', 'amount': amt});
       }
-      final firstDesc =
-          items.isNotEmpty ? (items.first['description'] ?? '') : '';
-
+      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
       await FirebaseFirestore.instance
           .collection('additional-profits')
           .doc(profitId)
@@ -5129,28 +4759,23 @@ class _DashboardPageState extends State<DashboardPage> {
         'items': itemsData,
         'updatedAt': FieldValue.serverTimestamp(),
       });
-
       if (mounted) {
         Navigator.pop(context);
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profit updated successfully'),
-            backgroundColor: Color(0xFFC41E3A),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Profit updated successfully'),
+          backgroundColor: Color(0xFFC41E3A),
+          duration: Duration(seconds: 2),
+        ));
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating profit: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error updating profit: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ));
       }
     }
   }
@@ -5164,67 +4789,55 @@ class _DashboardPageState extends State<DashboardPage> {
             'Are you sure you want to delete this profit? This action cannot be undone.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
+                backgroundColor: Colors.red, foregroundColor: Colors.white),
             child: const Text('Delete'),
           ),
         ],
       ),
     );
-
     if (confirm != true) return;
-
     if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFFC41E3A),
-        ),
-      ),
+      builder: (context) =>
+          const Center(child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
     );
-
     try {
       await FirebaseFirestore.instance
           .collection('additional-profits')
           .doc(profitId)
           .delete();
-
       if (mounted) {
         Navigator.pop(context);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profit deleted successfully'),
-            backgroundColor: Color(0xFFC41E3A),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Profit deleted successfully'),
+          backgroundColor: Color(0xFFC41E3A),
+          duration: Duration(seconds: 2),
+        ));
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting profit: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error deleting profit: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ));
       }
     }
   }
 }
 
-/// Form content for Add/Edit Expense with multiple description+price rows.
+// ════════════════════════════════════════════════════════════════════════════
+// EXPENSE / PROFIT LINE ITEMS FORM  (unchanged)
+// ════════════════════════════════════════════════════════════════════════════
+
 class _ExpenseLineItemsForm extends StatefulWidget {
   const _ExpenseLineItemsForm({
     super.key,
@@ -5265,12 +4878,8 @@ class _ExpenseLineItemsFormState extends State<_ExpenseLineItemsForm> {
 
   @override
   void dispose() {
-    for (final c in _descControllers) {
-      c.dispose();
-    }
-    for (final c in _amountControllers) {
-      c.dispose();
-    }
+    for (final c in _descControllers) c.dispose();
+    for (final c in _amountControllers) c.dispose();
     super.dispose();
   }
 
@@ -5298,34 +4907,28 @@ class _ExpenseLineItemsFormState extends State<_ExpenseLineItemsForm> {
       final amountStr = _amountControllers[i].text.trim();
       if (desc.isEmpty && amountStr.isEmpty) continue;
       if (desc.isEmpty || amountStr.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'Fill description and price for each row, or remove empty rows'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Fill description and price for each row, or remove empty rows'),
+          backgroundColor: Colors.red,
+        ));
         return;
       }
       final amount = double.tryParse(amountStr);
       if (amount == null || amount < 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Enter a valid price for each row'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Enter a valid price for each row'),
+          backgroundColor: Colors.red,
+        ));
         return;
       }
       items.add({'description': desc, 'amount': amountStr});
     }
     if (items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Add at least one description and price'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Add at least one description and price'),
+        backgroundColor: Colors.red,
+      ));
       return;
     }
     widget.onSave(items, _date);
@@ -5340,10 +4943,8 @@ class _ExpenseLineItemsFormState extends State<_ExpenseLineItemsForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Date *',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-            ),
+            const Text('Date *',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
             const SizedBox(height: 8),
             InkWell(
               onTap: () async {
@@ -5361,15 +4962,12 @@ class _ExpenseLineItemsFormState extends State<_ExpenseLineItemsForm> {
                   prefixIcon: Icon(Icons.calendar_today),
                 ),
                 child: Text(
-                  '${_date.month.toString().padLeft(2, '0')}/${_date.day.toString().padLeft(2, '0')}/${_date.year}',
-                ),
+                    '${_date.month.toString().padLeft(2, '0')}/${_date.day.toString().padLeft(2, '0')}/${_date.year}'),
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Description & Price *',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-            ),
+            const Text('Description & Price *',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
             const SizedBox(height: 8),
             ...List.generate(_descControllers.length, (index) {
               return Padding(
@@ -5383,14 +4981,11 @@ class _ExpenseLineItemsFormState extends State<_ExpenseLineItemsForm> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'Description',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                          Text('Description',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500)),
                           const SizedBox(height: 4),
                           TextField(
                             controller: _descControllers[index],
@@ -5414,14 +5009,11 @@ class _ExpenseLineItemsFormState extends State<_ExpenseLineItemsForm> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'Price',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                          Text('Price',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500)),
                           const SizedBox(height: 4),
                           TextField(
                             controller: _amountControllers[index],
