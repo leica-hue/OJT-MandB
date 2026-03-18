@@ -2306,6 +2306,356 @@ class _DashboardPageState extends State<DashboardPage> {
   // Below totals row: Expenses then Additional Profits section (cols 4-8)
   // ══════════════════════════════════════════════════════════════════════════
 
+  // ════════════════════════════════════════════════════════════════════════
+  // _writeDayBlock: writes one day's data starting at [startRow].
+  // Uses the same column layout as _populateDaySheet but accepts a startRow.
+  // Returns the number of rows consumed.
+  // ════════════════════════════════════════════════════════════════════════
+  int _writeDayBlock(
+    xl.Sheet sheet,
+    int startRow,
+    DateTime filterDate,
+    List<QueryDocumentSnapshot> sessionDocs,
+    List<QueryDocumentSnapshot> expenseDocs,
+    List<QueryDocumentSnapshot> profitDocs,
+  ) {
+    final dateStr =
+        '${filterDate.month.toString().padLeft(2, '0')}/${filterDate.day.toString().padLeft(2, '0')}/${filterDate.year}';
+
+    // ── Parse expense line items ─────────────────────────────────────────
+    final List<Map<String, dynamic>> expenseItems = [];
+    for (final doc in expenseDocs) {
+      final d = doc.data() as Map<String, dynamic>;
+      if (d['items'] is List) {
+        for (final item in d['items'] as List) {
+          if (item is Map) {
+            expenseItems.add({
+              'description': item['description']?.toString() ?? '',
+              'amount': (item['amount'] is num)
+                  ? (item['amount'] as num).toDouble()
+                  : (double.tryParse(item['amount']?.toString() ?? '') ?? 0.0),
+            });
+          }
+        }
+      } else {
+        expenseItems.add({
+          'description': d['description']?.toString() ?? '',
+          'amount': (d['amount'] is num)
+              ? (d['amount'] as num).toDouble()
+              : (double.tryParse(d['amount']?.toString() ?? '') ?? 0.0),
+        });
+      }
+    }
+
+    // ── Parse profit line items ──────────────────────────────────────────
+    final List<Map<String, dynamic>> profitItems = [];
+    for (final doc in profitDocs) {
+      final d = doc.data() as Map<String, dynamic>;
+      if (d['items'] is List) {
+        for (final item in d['items'] as List) {
+          if (item is Map) {
+            profitItems.add({
+              'description': item['description']?.toString() ?? '',
+              'amount': (item['amount'] is num)
+                  ? (item['amount'] as num).toDouble()
+                  : (double.tryParse(item['amount']?.toString() ?? '') ?? 0.0),
+            });
+          }
+        }
+      } else {
+        profitItems.add({
+          'description': d['description']?.toString() ?? '',
+          'amount': (d['amount'] is num)
+              ? (d['amount'] as num).toDouble()
+              : (double.tryParse(d['amount']?.toString() ?? '') ?? 0.0),
+        });
+      }
+    }
+
+    // ── Parse session rows ───────────────────────────────────────────────
+    final List<Map<String, dynamic>> sessionRows = [];
+    for (final doc in sessionDocs) {
+      final d = doc.data() as Map<String, dynamic>;
+      sessionRows.add({
+        'clientName': d['clientName']?.toString() ?? '',
+        'personnel': d['personnel']?.toString() ?? '',
+        'bayNumber': d['bayNumber']?.toString() ?? '',
+        'duration': (d['duration'] is num) ? (d['duration'] as num).toDouble() : (double.tryParse(d['duration']?.toString() ?? '') ?? 0.0),
+        'sessionAmount': (d['sessionAmount'] is num) ? (d['sessionAmount'] as num).toDouble() : (double.tryParse(d['sessionAmount']?.toString() ?? '') ?? 0.0),
+        'coachingAmount': (d['coachingAmount'] is num) ? (d['coachingAmount'] as num).toDouble() : (double.tryParse(d['coachingAmount']?.toString() ?? '') ?? 0.0),
+        'rentalType': d['rentalType']?.toString() ?? '',
+        'rentalAmount': (d['rentalAmount'] is num) ? (d['rentalAmount'] as num).toDouble() : (double.tryParse(d['rentalAmount']?.toString() ?? '') ?? 0.0),
+      });
+    }
+
+    // ── Pre-compute totals ───────────────────────────────────────────────
+    double totalDuration = 0, totalCoaching = 0, totalSessionAmt = 0;
+    double totalGolfSet = 0, totalGloves = 0;
+    for (final s in sessionRows) {
+      totalDuration   += s['duration']       as double;
+      totalCoaching   += s['coachingAmount'] as double;
+      totalSessionAmt += s['sessionAmount']  as double;
+      final rAmt  = s['rentalAmount'] as double;
+      final rType = s['rentalType']   as String;
+      if (rType == 'Golf Set') totalGolfSet += rAmt;
+      if (rType == 'Gloves')   totalGloves  += rAmt;
+    }
+    final double totalAmount   = totalCoaching + totalSessionAmt;
+    final double totalRentals  = totalGolfSet + totalGloves;
+    final double totalExpenses = expenseItems.fold(0.0, (s, e) => s + (e['amount'] as double));
+    final double totalProfitsAmt = profitItems.fold(0.0, (s, e) => s + (e['amount'] as double));
+    final double totalProfit   = totalAmount - totalExpenses + totalProfitsAmt;
+
+    int row = startRow;
+
+    // Title row
+    sheet.merge(
+      xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+      xl.CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: row),
+    );
+    _setCell(sheet, 0, row, 'Daily Report \u2014 $dateStr', _titleStyle());
+    sheet.merge(
+      xl.CellIndex.indexByColumnRow(columnIndex: 10, rowIndex: row),
+      xl.CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row),
+    );
+    _setCell(sheet, 10, row, 'Rentals', _titleStyle());
+    sheet.setRowHeight(row, 26);
+    row++;
+
+    // Header row
+    const leftHeaders = ["Client's Name", 'Tee Girl', 'Bay', 'Duration', 'Coaching', 'Amount'];
+    for (var c = 0; c < leftHeaders.length; c++) {
+      _setCell(sheet, c, row, leftHeaders[c], _headerStyle());
+    }
+    _setCell(sheet, 10, row, 'Golf Set', _headerStyle());
+    _setCell(sheet, 11, row, 'Gloves',   _headerStyle());
+    sheet.setRowHeight(row, 20);
+    row++;
+
+    // Data rows
+    for (final s in sessionRows) {
+      _setCell(sheet, 0, row, s['clientName'] as String, _dataStyle());
+      _setCell(sheet, 1, row, s['personnel']  as String, _dataStyle(center: true));
+      _setCell(sheet, 2, row, s['bayNumber']  as String, _dataStyle(center: true));
+      final dur      = s['duration']       as double;
+      final coaching = s['coachingAmount'] as double;
+      final amount   = s['sessionAmount']  as double;
+      final rAmt     = s['rentalAmount']   as double;
+      final rType    = s['rentalType']     as String;
+      if (dur      > 0) _setCell(sheet, 3, row, dur,      _dataStyle(center: true));
+      if (coaching > 0) _setCell(sheet, 4, row, coaching, _dataStyle(center: true));
+      if (amount   > 0) _setCell(sheet, 5, row, amount,   _dataStyle(center: true));
+      if (rAmt > 0) {
+        if (rType == 'Golf Set') _setCell(sheet, 10, row, rAmt, _dataStyle(center: true));
+        if (rType == 'Gloves')   _setCell(sheet, 11, row, rAmt, _dataStyle(center: true));
+      }
+      row++;
+    }
+
+    // Totals row
+    row++;
+    if (totalDuration   > 0) _setCell(sheet, 3,  row, totalDuration,   _boldStyle());
+    if (totalCoaching   > 0) _setCell(sheet, 4,  row, totalCoaching,   _boldStyle(right: true));
+    if (totalSessionAmt > 0) _setCell(sheet, 5,  row, totalSessionAmt, _boldStyle(right: true));
+    _setCell(sheet, 6,  row, 'Total Amount:',  _pinkBoldStyle());
+    _setCell(sheet, 7,  row, totalAmount,      _pinkBoldStyle(right: true));
+    _setCell(sheet, 10, row, totalGolfSet,     _boldStyle(right: false));
+    _setCell(sheet, 11, row, totalGloves,      _boldStyle(right: false));
+    _setCell(sheet, 12, row, 'Total Rentals:', _pinkBoldStyle());
+    _setCell(sheet, 13, row, totalRentals,     _pinkBoldStyle(right: true));
+    row++;
+    row++;
+
+    // Expenses
+    _setCell(sheet, 3, row, 'Daily Expenses:', _pinkBoldStyle());
+    row++;
+    for (final item in expenseItems) {
+      _setCell(sheet, 4, row, item['description'] as String, _pinkStyle());
+      _setCell(sheet, 7, row, item['amount']      as double, _pinkStyle(right: true));
+      row++;
+    }
+    _setCell(sheet, 3, row, 'Total Expenses:', _pinkBoldStyle());
+    _setCell(sheet, 7, row, totalExpenses,      _pinkBoldStyle(right: true));
+    row++;
+    row++;
+
+    // Additional profits
+    if (profitItems.isNotEmpty) {
+      _setCell(sheet, 3, row, 'Additional Profit:', _pinkBoldStyle());
+      row++;
+      for (final item in profitItems) {
+        _setCell(sheet, 4, row, item['description'] as String, _pinkStyle());
+        _setCell(sheet, 7, row, item['amount']      as double, _pinkStyle(right: true));
+        row++;
+      }
+      row++;
+    }
+
+    // Total profit
+    _setCell(sheet, 3, row, 'Total Profit:', _pinkBoldStyle());
+    _setCell(sheet, 7, row, totalProfit,      _pinkBoldStyle(right: true));
+    row++;
+
+    return row - startRow;
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // _populateMonthSheetCombined: Monthly summary on top, then all daily
+  // blocks stacked below — all in one sheet.
+  // ════════════════════════════════════════════════════════════════════════
+  void _populateMonthSheetCombined(
+    xl.Sheet sheet,
+    int year,
+    int month,
+    List<int> sortedDays,
+    Map<int, List<QueryDocumentSnapshot>> sessionsByDay,
+    Map<int, List<QueryDocumentSnapshot>> expensesByDay,
+    Map<int, List<QueryDocumentSnapshot>> profitsByDay,
+  ) {
+    // Set column widths (same as daily sheet — 14 cols)
+    const colWidths = [
+      26.0, // 0  A  Client's Name
+      14.0, // 1  B  Tee Girl
+       8.0, // 2  C  Bay
+      15.0, // 3  D  Duration / Expense labels
+      15.0, // 4  E  Coaching / Expense desc
+      15.0, // 5  F  Amount
+      20.0, // 6  G  Total Amount label
+      14.0, // 7  H  Total Amount value / Expense amounts
+       8.0, // 8  I  gap
+       8.0, // 9  J  gap
+      14.0, // 10 K  Golf Set
+      14.0, // 11 L  Gloves
+      20.0, // 12 M  Total Rentals label
+      14.0, // 13 N  Total Rentals value
+    ];
+    for (var i = 0; i < colWidths.length; i++) {
+      sheet.setColumnWidth(i, colWidths[i]);
+    }
+
+    final monthDisplay = '${_getFullMonthName(month)} $year';
+    int currentRow = 0;
+
+    // ── PART 1: Monthly Summary ──────────────────────────────────────────
+    // Summary col layout reuses the 14-col grid:
+    // Left  (0-6): Date|Sessions|Session Amt|Coaching|Total Revenue|Expenses|Net Profit
+    // Gap   (7)
+    // Right (8-13 → using 8-11): Date|Golf Set|Gloves|Total Rentals
+
+    // Titles
+    sheet.merge(
+      xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: currentRow),
+      xl.CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: currentRow),
+    );
+    _setCell(sheet, 0, currentRow, 'Monthly Report \u2014 $monthDisplay', _titleStyle());
+    sheet.merge(
+      xl.CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: currentRow),
+      xl.CellIndex.indexByColumnRow(columnIndex: 11, rowIndex: currentRow),
+    );
+    _setCell(sheet, 8, currentRow, 'Rentals', _titleStyle());
+    sheet.setRowHeight(currentRow, 30);
+    currentRow += 2;
+
+    // Summary headers
+    const summaryHdrs = ['Date', 'Sessions', 'Session Amt', 'Coaching', 'Total Revenue', 'Expenses', 'Net Profit'];
+    for (var c = 0; c < summaryHdrs.length; c++) {
+      _setCell(sheet, c, currentRow, summaryHdrs[c], _monthSummaryHeaderStyle());
+    }
+    _setCell(sheet, 8,  currentRow, 'Date',          _monthSummaryHeaderStyle());
+    _setCell(sheet, 9,  currentRow, 'Golf Set',      _monthSummaryHeaderStyle());
+    _setCell(sheet, 10, currentRow, 'Gloves',        _monthSummaryHeaderStyle());
+    _setCell(sheet, 11, currentRow, 'Total Rentals', _monthSummaryHeaderStyle());
+    sheet.setRowHeight(currentRow, 22);
+    currentRow++;
+
+    double grandRevenue = 0, grandExpenses = 0, grandNet = 0;
+    double grandGolfSet = 0, grandGloves = 0;
+    int grandSessions = 0;
+
+    for (final day in sortedDays) {
+      final dayDate = DateTime(year, month, day);
+      final dayStr = '${dayDate.month.toString().padLeft(2, '0')}/${dayDate.day.toString().padLeft(2, '0')}/${dayDate.year}';
+      final daySessionDocs = sessionsByDay[day] ?? [];
+      final dayExpenseDocs = expensesByDay[day] ?? [];
+
+      double dSessionAmt = 0, dCoachingAmt = 0, dExpenses = 0;
+      double dGolfSet = 0, dGloves = 0;
+      final int dCount = daySessionDocs.length;
+
+      for (final doc in daySessionDocs) {
+        final d = doc.data() as Map<String, dynamic>;
+        dSessionAmt  += (d['sessionAmount']  is num) ? (d['sessionAmount']  as num).toDouble() : 0.0;
+        dCoachingAmt += (d['coachingAmount'] is num) ? (d['coachingAmount'] as num).toDouble() : 0.0;
+        final rAmt  = (d['rentalAmount'] is num) ? (d['rentalAmount'] as num).toDouble() : 0.0;
+        final rType = d['rentalType']?.toString() ?? '';
+        if (rType == 'Golf Set') dGolfSet += rAmt;
+        if (rType == 'Gloves')   dGloves  += rAmt;
+      }
+      final double dRevenue = dSessionAmt + dCoachingAmt;
+
+      for (final doc in dayExpenseDocs) {
+        final d = doc.data() as Map<String, dynamic>;
+        if (d['items'] != null && d['items'] is List) {
+          for (final item in (d['items'] as List)) {
+            if (item is Map) dExpenses += (item['amount'] is num) ? (item['amount'] as num).toDouble() : 0.0;
+          }
+        } else {
+          dExpenses += (d['amount'] is num) ? (d['amount'] as num).toDouble() : 0.0;
+        }
+      }
+      final double dNet = dRevenue - dExpenses;
+
+      grandRevenue  += dRevenue;
+      grandExpenses += dExpenses;
+      grandNet      += dNet;
+      grandSessions += dCount;
+      grandGolfSet  += dGolfSet;
+      grandGloves   += dGloves;
+
+      _setCell(sheet, 0, currentRow, dayStr,               _monthSummaryDataStyle());
+      _setCell(sheet, 1, currentRow, dCount.toDouble(),    _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 2, currentRow, dSessionAmt,          _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 3, currentRow, dCoachingAmt,         _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 4, currentRow, dRevenue,             _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 5, currentRow, dExpenses,            _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 6, currentRow, dNet,                 _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 8,  currentRow, dayStr,              _monthSummaryDataStyle());
+      _setCell(sheet, 9,  currentRow, dGolfSet,            _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 10, currentRow, dGloves,             _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 11, currentRow, dGolfSet + dGloves,  _monthSummaryDataStyle(right: true));
+      currentRow++;
+    }
+
+    // Grand total row
+    currentRow++;
+    _setCell(sheet, 0, currentRow, 'TOTAL',                      _monthSummaryTotalStyle());
+    _setCell(sheet, 1, currentRow, grandSessions.toDouble(),      _monthSummaryTotalStyle(right: true));
+    _setCell(sheet, 2, currentRow, '',                            _monthSummaryTotalStyle());
+    _setCell(sheet, 3, currentRow, '',                            _monthSummaryTotalStyle());
+    _setCell(sheet, 4, currentRow, grandRevenue,                  _monthSummaryTotalStyle(right: true));
+    _setCell(sheet, 5, currentRow, grandExpenses,                 _monthSummaryTotalStyle(right: true));
+    _setCell(sheet, 6, currentRow, grandNet,                      _monthSummaryTotalStyle(right: true));
+    _setCell(sheet, 8,  currentRow, 'TOTAL',                      _monthSummaryTotalStyle());
+    _setCell(sheet, 9,  currentRow, grandGolfSet,                 _monthSummaryTotalStyle(right: true));
+    _setCell(sheet, 10, currentRow, grandGloves,                  _monthSummaryTotalStyle(right: true));
+    _setCell(sheet, 11, currentRow, grandGolfSet + grandGloves,   _monthSummaryTotalStyle(right: true));
+    currentRow += 3; // gap between summary and daily blocks
+
+    // ── PART 2: Stacked daily blocks ─────────────────────────────────────
+    for (final day in sortedDays) {
+      final dayDate = DateTime(year, month, day);
+      final rowsUsed = _writeDayBlock(
+        sheet,
+        currentRow,
+        dayDate,
+        sessionsByDay[day] ?? [],
+        expensesByDay[day] ?? [],
+        profitsByDay[day]  ?? [],
+      );
+      currentRow += rowsUsed + 2; // 2-row gap between day blocks
+    }
+  }
+
   void _populateDaySheet(
     xl.Sheet sheet,
     DateTime filterDate,
@@ -2321,16 +2671,16 @@ class _DashboardPageState extends State<DashboardPage> {
     const colWidths = [
       26.0, // 0  A  Client's Name
       14.0, // 1  B  Tee Girl
-       10.0, // 2  C  Bay
-      16.0, // 3  D  Duration
-      14.0, // 4  E  Coaching
-      14.0, // 5  F  Amount
+       8.0, // 2  C  Bay
+      15.0, // 3  D  Duration
+      15.0, // 4  E  Coaching
+      15.0, // 5  F  Amount
       20.0, // 6  G  Total Amount label
       14.0, // 7  H  Total Amount value
-       8.0, // 8  I  gap
-       8.0, // 9  J  gap (highlighted in screenshot)
-      16.0, // 10 K  Golf Set
-      16.0, // 11 L  Gloves
+       6.0, // 8  I  gap
+       6.0, // 9  J  gap (highlighted in screenshot)
+      14.0, // 10 K  Golf Set
+      14.0, // 11 L  Gloves
       20.0, // 12 M  Total Rentals label
       14.0, // 13 N  Total Rentals value
     ];
@@ -2933,7 +3283,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _exportMonthlyReport() async {
     final month = _selectedSalesMonth;
     final monthLabel = '${_getMonthName(month.month)}_${month.year}';
-    final monthDisplay = '${_getMonthName(month.month)} ${month.year}';
+    final monthDisplay = '${_getFullMonthName(month.month)} ${month.year}';
 
     showDialog(
       context: context,
@@ -2993,6 +3343,149 @@ class _DashboardPageState extends State<DashboardPage> {
       if (excel.sheets.containsKey('Sheet1')) excel.delete('Sheet1');
       final sortedDays = activeDays.toList()..sort();
 
+      // ── Sheet 1: Monthly Summary ────────────────────────────────────────
+      // Left table  (cols 0-6): Date | Sessions | Session Amt | Coaching |
+      //                         Total Revenue | Expenses | Net Profit
+      // Gap col 7
+      // Right table (cols 8-11): "Rentals" title / Date | Golf Set | Gloves | Total
+      final summarySheet = excel['Monthly Summary'];
+      const summaryColWidths = [
+        14.0, // 0  Date
+        10.0, // 1  Sessions
+        16.0, // 2  Session Amt
+        14.0, // 3  Coaching
+        18.0, // 4  Total Revenue
+        14.0, // 5  Expenses
+        16.0, // 6  Net Profit
+         6.0, // 7  gap
+        14.0, // 8  Date (rentals)
+        14.0, // 9  Golf Set
+        14.0, // 10 Gloves
+        16.0, // 11 Total Rentals
+      ];
+      for (var i = 0; i < summaryColWidths.length; i++) {
+        summarySheet.setColumnWidth(i, summaryColWidths[i]);
+      }
+
+      int sRow = 0;
+
+      // Left title
+      summarySheet.merge(
+        xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: sRow),
+        xl.CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: sRow),
+      );
+      _setCell(summarySheet, 0, sRow, 'Monthly Report \u2014 $monthDisplay', _titleStyle());
+
+      // Right title — "Rentals"
+      summarySheet.merge(
+        xl.CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: sRow),
+        xl.CellIndex.indexByColumnRow(columnIndex: 11, rowIndex: sRow),
+      );
+      _setCell(summarySheet, 8, sRow, 'Rentals', _titleStyle());
+      summarySheet.setRowHeight(sRow, 30);
+      sRow += 2;
+
+      // Left table headers
+      const summaryHeaders = [
+        'Date', 'Sessions', 'Session Amt', 'Coaching',
+        'Total Revenue', 'Expenses', 'Net Profit',
+      ];
+      for (var c = 0; c < summaryHeaders.length; c++) {
+        _setCell(summarySheet, c, sRow, summaryHeaders[c], _monthSummaryHeaderStyle());
+      }
+
+      // Right table headers
+      _setCell(summarySheet, 8,  sRow, 'Date',          _monthSummaryHeaderStyle());
+      _setCell(summarySheet, 9,  sRow, 'Golf Set',       _monthSummaryHeaderStyle());
+      _setCell(summarySheet, 10, sRow, 'Gloves',         _monthSummaryHeaderStyle());
+      _setCell(summarySheet, 11, sRow, 'Total Rentals',  _monthSummaryHeaderStyle());
+      summarySheet.setRowHeight(sRow, 22);
+      sRow++;
+
+
+      double grandRevenue = 0, grandExpenses = 0, grandNet = 0;
+      double grandGolfSet = 0, grandGloves = 0;
+      int grandSessions = 0;
+
+      for (final day in sortedDays) {
+        final dayDate = DateTime(month.year, month.month, day);
+        final dayStr =
+            '${dayDate.month.toString().padLeft(2, '0')}/${dayDate.day.toString().padLeft(2, '0')}/${dayDate.year}';
+        final daySessionDocs = sessionsByDay[day] ?? [];
+        final dayExpenseDocs = expensesByDay[day] ?? [];
+
+        double dSessionAmt = 0, dCoachingAmt = 0, dExpenses = 0;
+        double dGolfSet = 0, dGloves = 0;
+        final int dSessionCount = daySessionDocs.length;
+
+        for (final doc in daySessionDocs) {
+          final d = doc.data() as Map<String, dynamic>;
+          dSessionAmt  += (d['sessionAmount']  is num) ? (d['sessionAmount']  as num).toDouble() : 0.0;
+          dCoachingAmt += (d['coachingAmount'] is num) ? (d['coachingAmount'] as num).toDouble() : 0.0;
+          final rentalAmt  = (d['rentalAmount'] is num) ? (d['rentalAmount'] as num).toDouble() : 0.0;
+          final rentalType = d['rentalType']?.toString() ?? '';
+          if (rentalType == 'Golf Set') dGolfSet += rentalAmt;
+          if (rentalType == 'Gloves')   dGloves  += rentalAmt;
+        }
+
+        // Total Revenue = session + coaching only (rentals excluded)
+        final double dRevenue = dSessionAmt + dCoachingAmt;
+
+        for (final doc in dayExpenseDocs) {
+          final d = doc.data() as Map<String, dynamic>;
+          if (d['items'] != null && d['items'] is List) {
+            for (final item in (d['items'] as List)) {
+              if (item is Map) dExpenses += (item['amount'] is num) ? (item['amount'] as num).toDouble() : 0.0;
+            }
+          } else {
+            dExpenses += (d['amount'] is num) ? (d['amount'] as num).toDouble() : 0.0;
+          }
+        }
+
+        // Net Profit = Revenue - Expenses (no additional profits in summary)
+        final double dNet = dRevenue - dExpenses;
+
+        grandRevenue  += dRevenue;
+        grandExpenses += dExpenses;
+        grandNet      += dNet;
+        grandSessions += dSessionCount;
+        grandGolfSet  += dGolfSet;
+        grandGloves   += dGloves;
+
+        // Left table row
+        _setCell(summarySheet, 0, sRow, dayStr,                 _monthSummaryDataStyle());
+        _setCell(summarySheet, 1, sRow, dSessionCount.toDouble(), _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 2, sRow, dSessionAmt,            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 3, sRow, dCoachingAmt,           _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 4, sRow, dRevenue,               _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 5, sRow, dExpenses,              _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 6, sRow, dNet,                   _monthSummaryDataStyle(right: true));
+
+        // Right table row (always write, even if zero — keeps rows in sync)
+        _setCell(summarySheet, 8,  sRow, dayStr,                _monthSummaryDataStyle());
+        _setCell(summarySheet, 9,  sRow, dGolfSet,              _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 10, sRow, dGloves,               _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 11, sRow, dGolfSet + dGloves,    _monthSummaryDataStyle(right: true));
+        sRow++;
+      }
+
+      // Grand total row — left table
+      sRow++;
+      _setCell(summarySheet, 0, sRow, 'TOTAL',                  _monthSummaryTotalStyle());
+      _setCell(summarySheet, 1, sRow, grandSessions.toDouble(),  _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 2, sRow, '',                        _monthSummaryTotalStyle());
+      _setCell(summarySheet, 3, sRow, '',                        _monthSummaryTotalStyle());
+      _setCell(summarySheet, 4, sRow, grandRevenue,              _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 5, sRow, grandExpenses,             _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 6, sRow, grandNet,                  _monthSummaryTotalStyle(right: true));
+
+      // Grand total row — right table (same row, aligned)
+      _setCell(summarySheet, 8,  sRow, 'TOTAL',                          _monthSummaryTotalStyle());
+      _setCell(summarySheet, 9,  sRow, grandGolfSet,                     _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 10, sRow, grandGloves,                      _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 11, sRow, grandGolfSet + grandGloves,       _monthSummaryTotalStyle(right: true));
+
+      // ── One sheet per active day — using the same layout as daily export ──
       for (final day in sortedDays) {
         final dayDate = DateTime(month.year, month.month, day);
         final sheetName =
@@ -3026,7 +3519,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       await Share.shareXFiles(
         [XFile(filePath, name: fileName)],
-        subject: 'Monthly Report — $monthDisplay',
+        subject: 'Monthly Report \u2014 $monthDisplay',
       );
     } catch (e) {
       if (mounted) {
@@ -3062,9 +3555,10 @@ class _DashboardPageState extends State<DashboardPage> {
           .collection('additional-profits')
           .get();
 
+      // Group all docs by month → day
       final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthSessionsByDay = {};
       final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthExpensesByDay = {};
-      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthProfitsByDay = {};
+      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthProfitsByDay  = {};
       final Set<int> activeMonths = {};
 
       void groupDoc(QueryDocumentSnapshot doc,
@@ -3078,7 +3572,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       for (final doc in sessionsSnap.docs) groupDoc(doc, monthSessionsByDay);
       for (final doc in expensesSnap.docs) groupDoc(doc, monthExpensesByDay);
-      for (final doc in profitsSnap.docs) groupDoc(doc, monthProfitsByDay);
+      for (final doc in profitsSnap.docs)  groupDoc(doc, monthProfitsByDay);
 
       if (activeMonths.isEmpty) {
         if (mounted) {
@@ -3094,150 +3588,179 @@ class _DashboardPageState extends State<DashboardPage> {
       if (excel.sheets.containsKey('Sheet1')) excel.delete('Sheet1');
       final sortedMonths = activeMonths.toList()..sort();
 
-      // ── Year Summary sheet ──────────────────────────────────────────────
+      // ════════════════════════════════════════════════════════════════════
+      // SHEET 1: Year Summary
+      // Left  (cols 0-6): Month | Sessions | Session Amt | Coaching |
+      //                   Total Revenue | Expenses | Net Profit
+      // Gap   (col  7)
+      // Right (cols 8-11): Rentals title / Month | Golf Set | Gloves | Total
+      // ════════════════════════════════════════════════════════════════════
       final summarySheet = excel['Year Summary'];
       const summaryColWidths = [
-        20.0, 14.0, 16.0, 18.0, 16.0, 16.0, 18.0, 16.0
+        18.0, // 0  Month
+        10.0, // 1  Sessions
+        16.0, // 2  Session Amt
+        14.0, // 3  Coaching
+        18.0, // 4  Total Revenue
+        14.0, // 5  Expenses
+        16.0, // 6  Net Profit
+         6.0, // 7  gap
+        18.0, // 8  Month (rentals)
+        14.0, // 9  Golf Set
+        14.0, // 10 Gloves
+        16.0, // 11 Total Rentals
       ];
       for (var i = 0; i < summaryColWidths.length; i++) {
         summarySheet.setColumnWidth(i, summaryColWidths[i]);
       }
 
       int sRow = 0;
+
+      // Left title
       summarySheet.merge(
         xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: sRow),
-        xl.CellIndex.indexByColumnRow(columnIndex: 7, rowIndex: sRow),
+        xl.CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: sRow),
       );
-      _setCell(summarySheet, 0, sRow, 'Yearly Report — $year', _titleStyle());
+      _setCell(summarySheet, 0, sRow, 'Yearly Report \u2014 $year', _titleStyle());
+
+      // Right title
+      summarySheet.merge(
+        xl.CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: sRow),
+        xl.CellIndex.indexByColumnRow(columnIndex: 11, rowIndex: sRow),
+      );
+      _setCell(summarySheet, 8, sRow, 'Rentals', _titleStyle());
       summarySheet.setRowHeight(sRow, 30);
       sRow += 2;
 
-      final summaryHeaders = [
-        'Month', 'Sessions', 'Session Amt', 'Coaching/Rental',
-        'Total Revenue', 'Expenses', 'Addl. Profit', 'Net Profit'
+      // Left headers
+      const yearSummaryHeaders = [
+        'Month', 'Sessions', 'Session Amt', 'Coaching',
+        'Total Revenue', 'Expenses', 'Net Profit',
       ];
-      for (var c = 0; c < summaryHeaders.length; c++) {
-        _setCell(summarySheet, c, sRow, summaryHeaders[c],
-            _monthSummaryHeaderStyle());
+      for (var c = 0; c < yearSummaryHeaders.length; c++) {
+        _setCell(summarySheet, c, sRow, yearSummaryHeaders[c], _monthSummaryHeaderStyle());
       }
+      // Right headers
+      _setCell(summarySheet, 8,  sRow, 'Month',         _monthSummaryHeaderStyle());
+      _setCell(summarySheet, 9,  sRow, 'Golf Set',      _monthSummaryHeaderStyle());
+      _setCell(summarySheet, 10, sRow, 'Gloves',        _monthSummaryHeaderStyle());
+      _setCell(summarySheet, 11, sRow, 'Total Rentals', _monthSummaryHeaderStyle());
       summarySheet.setRowHeight(sRow, 22);
       sRow++;
 
-      double grandRevenue = 0,
-          grandExpenses = 0,
-          grandProfits = 0,
-          grandNet = 0;
+      double grandRevenue = 0, grandExpenses = 0, grandNet = 0;
+      double grandGolfSet = 0, grandGloves = 0;
       int grandSessions = 0;
 
       for (final month in sortedMonths) {
         final sessionsByDay = monthSessionsByDay[month] ?? {};
         final expensesByDay = monthExpensesByDay[month] ?? {};
-        final profitsByDay = monthProfitsByDay[month] ?? {};
 
-        double mRevenue = 0,
-            mExpenses = 0,
-            mProfits = 0,
-            mSessionAmt = 0,
-            mCoachingAmt = 0;
+        double mSessionAmt = 0, mCoachingAmt = 0, mExpenses = 0;
+        double mGolfSet = 0, mGloves = 0;
         int mSessionCount = 0;
 
         for (final dayDocs in sessionsByDay.values) {
           for (final doc in dayDocs) {
             final d = doc.data() as Map<String, dynamic>;
-            final s = (d['sessionAmount'] is num)
-                ? (d['sessionAmount'] as num).toDouble()
-                : (double.tryParse(d['sessionAmount']?.toString() ?? '') ?? 0.0);
-            final c = (d['coachingAmount'] is num)
-                ? (d['coachingAmount'] as num).toDouble()
-                : (double.tryParse(d['coachingAmount']?.toString() ?? '') ?? 0.0);
-            mSessionAmt += s;
-            mCoachingAmt += c;
+            mSessionAmt  += (d['sessionAmount']  is num) ? (d['sessionAmount']  as num).toDouble() : 0.0;
+            mCoachingAmt += (d['coachingAmount'] is num) ? (d['coachingAmount'] as num).toDouble() : 0.0;
+            final rentalAmt  = (d['rentalAmount'] is num) ? (d['rentalAmount'] as num).toDouble() : 0.0;
+            final rentalType = d['rentalType']?.toString() ?? '';
+            if (rentalType == 'Golf Set') mGolfSet += rentalAmt;
+            if (rentalType == 'Gloves')   mGloves  += rentalAmt;
             mSessionCount++;
           }
         }
-        mRevenue = mSessionAmt + mCoachingAmt;
 
-        void sumItems(Map<int, List<QueryDocumentSnapshot>> byDay,
-            void Function(double) add) {
-          for (final dayDocs in byDay.values) {
-            for (final doc in dayDocs) {
-              final d = doc.data() as Map<String, dynamic>;
-              if (d['items'] != null && d['items'] is List) {
-                for (final item in (d['items'] as List)) {
-                  if (item is Map)
-                    add((item['amount'] is num)
-                        ? (item['amount'] as num).toDouble()
-                        : (double.tryParse(
-                                item['amount']?.toString() ?? '') ??
-                            0.0));
-                }
-              } else {
-                add((d['amount'] is num)
-                    ? (d['amount'] as num).toDouble()
-                    : (double.tryParse(d['amount']?.toString() ?? '') ?? 0.0));
+        // Total Revenue = session + coaching only
+        final double mRevenue = mSessionAmt + mCoachingAmt;
+
+        for (final dayDocs in expensesByDay.values) {
+          for (final doc in dayDocs) {
+            final d = doc.data() as Map<String, dynamic>;
+            if (d['items'] != null && d['items'] is List) {
+              for (final item in (d['items'] as List)) {
+                if (item is Map) mExpenses += (item['amount'] is num) ? (item['amount'] as num).toDouble() : 0.0;
               }
+            } else {
+              mExpenses += (d['amount'] is num) ? (d['amount'] as num).toDouble() : 0.0;
             }
           }
         }
 
-        sumItems(expensesByDay, (v) => mExpenses += v);
-        sumItems(profitsByDay, (v) => mProfits += v);
+        final double mNet = mRevenue - mExpenses;
 
-        final mNet = mRevenue - mExpenses + mProfits;
-        grandRevenue += mRevenue;
+        grandRevenue  += mRevenue;
         grandExpenses += mExpenses;
-        grandProfits += mProfits;
-        grandNet += mNet;
+        grandNet      += mNet;
         grandSessions += mSessionCount;
+        grandGolfSet  += mGolfSet;
+        grandGloves   += mGloves;
 
-        _setCell(summarySheet, 0, sRow, _getFullMonthName(month),
-            _monthSummaryDataStyle());
-        _setCell(summarySheet, 1, sRow, mSessionCount.toDouble(),
-            _monthSummaryDataStyle(right: true));
-        _setCell(
-            summarySheet, 2, sRow, mSessionAmt, _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 3, sRow, mCoachingAmt,
-            _monthSummaryDataStyle(right: true));
-        _setCell(
-            summarySheet, 4, sRow, mRevenue, _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 5, sRow, mExpenses,
-            _monthSummaryDataStyle(right: true));
-        _setCell(
-            summarySheet, 6, sRow, mProfits, _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 7, sRow, mNet, _monthSummaryDataStyle(right: true));
+        final monthName = _getFullMonthName(month);
+
+        // Left row
+        _setCell(summarySheet, 0, sRow, monthName,              _monthSummaryDataStyle());
+        _setCell(summarySheet, 1, sRow, mSessionCount.toDouble(), _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 2, sRow, mSessionAmt,            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 3, sRow, mCoachingAmt,           _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 4, sRow, mRevenue,               _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 5, sRow, mExpenses,              _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 6, sRow, mNet,                   _monthSummaryDataStyle(right: true));
+
+        // Right row
+        _setCell(summarySheet, 8,  sRow, monthName,             _monthSummaryDataStyle());
+        _setCell(summarySheet, 9,  sRow, mGolfSet,              _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 10, sRow, mGloves,               _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 11, sRow, mGolfSet + mGloves,    _monthSummaryDataStyle(right: true));
         sRow++;
       }
 
+      // Grand total row
       sRow++;
-      _setCell(summarySheet, 0, sRow, 'TOTAL', _monthSummaryTotalStyle());
-      _setCell(summarySheet, 1, sRow, grandSessions.toDouble(),
-          _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 2, sRow, '', _monthSummaryTotalStyle());
-      _setCell(summarySheet, 3, sRow, '', _monthSummaryTotalStyle());
-      _setCell(summarySheet, 4, sRow, grandRevenue,
-          _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 5, sRow, grandExpenses,
-          _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 6, sRow, grandProfits,
-          _monthSummaryTotalStyle(right: true));
-      _setCell(
-          summarySheet, 7, sRow, grandNet, _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 0, sRow, 'TOTAL',                       _monthSummaryTotalStyle());
+      _setCell(summarySheet, 1, sRow, grandSessions.toDouble(),       _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 2, sRow, '',                             _monthSummaryTotalStyle());
+      _setCell(summarySheet, 3, sRow, '',                             _monthSummaryTotalStyle());
+      _setCell(summarySheet, 4, sRow, grandRevenue,                   _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 5, sRow, grandExpenses,                  _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 6, sRow, grandNet,                       _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 8,  sRow, 'TOTAL',                       _monthSummaryTotalStyle());
+      _setCell(summarySheet, 9,  sRow, grandGolfSet,                  _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 10, sRow, grandGloves,                   _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 11, sRow, grandGolfSet + grandGloves,    _monthSummaryTotalStyle(right: true));
 
-      // ── One sheet per active month ──────────────────────────────────────
+      // ════════════════════════════════════════════════════════════════════
+      // Per-month sheets: one sheet per active month.
+      // Each sheet = monthly summary (same format as Monthly Summary tab)
+      //              with all per-day rows + a separate Rentals table,
+      //              followed by individual daily sheets.
+      // Sheet naming: "MMM YYYY Summary", "MM-DD-YYYY"
+      // ════════════════════════════════════════════════════════════════════
       for (final month in sortedMonths) {
-        final sheetName = _getFullMonthName(month);
-        final monthSheet = excel[sheetName];
         final sessionsByDay = monthSessionsByDay[month] ?? {};
         final expensesByDay = monthExpensesByDay[month] ?? {};
-        final profitsByDay = monthProfitsByDay[month] ?? {};
+        final profitsByDay  = monthProfitsByDay[month]  ?? {};
         final Set<int> daySet = {
           ...sessionsByDay.keys,
           ...expensesByDay.keys,
-          ...profitsByDay.keys
+          ...profitsByDay.keys,
         };
         final sortedDays = daySet.toList()..sort();
-        _populateMonthSheet(monthSheet, year, month, sortedDays, sessionsByDay,
-            expensesByDay, profitsByDay);
+        final monthAbbrev = _getMonthName(month);
+
+        // One sheet per month: summary on top + all daily blocks stacked below
+        final monthSheet = excel['$monthAbbrev $year'];
+        _populateMonthSheetCombined(
+          monthSheet,
+          year,
+          month,
+          sortedDays,
+          sessionsByDay,
+          expensesByDay,
+          profitsByDay,
+        );
       }
 
       final fileName = 'Yearly_Report_$year.xlsx';
@@ -3259,7 +3782,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       await Share.shareXFiles(
         [XFile(filePath, name: fileName)],
-        subject: 'Yearly Report — $year',
+        subject: 'Yearly Report \u2014 $year',
       );
     } catch (e) {
       if (mounted) {
