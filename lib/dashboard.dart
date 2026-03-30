@@ -842,7 +842,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     TextField(
                       controller: _paymentOtherController,
                       decoration: const InputDecoration(
-                        hintText: 'Specify mode of payment (e.g., Bank Transfer)',
+                        hintText:
+                            'Specify mode of payment (e.g., Bank Transfer)',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.edit),
                       ),
@@ -924,7 +925,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('User must be signed in to add expenses');
+      if (user == null)
+        throw Exception('User must be signed in to add expenses');
 
       final dateStr =
           '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
@@ -934,10 +936,12 @@ class _DashboardPageState extends State<DashboardPage> {
       for (final item in items) {
         final amt = double.tryParse(item['amount'] ?? '0') ?? 0;
         totalAmount += amt;
-        itemsData.add({'description': item['description'] ?? '', 'amount': amt});
+        itemsData
+            .add({'description': item['description'] ?? '', 'amount': amt});
       }
 
-      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
+      final firstDesc =
+          items.isNotEmpty ? (items.first['description'] ?? '') : '';
       final expenseData = {
         'date': dateStr,
         'amount': totalAmount,
@@ -948,16 +952,19 @@ class _DashboardPageState extends State<DashboardPage> {
         'createdAt': FieldValue.serverTimestamp(),
       };
 
-      final docRef =
-          await FirebaseFirestore.instance.collection('expenses').add(expenseData);
+      final docRef = await FirebaseFirestore.instance
+          .collection('expenses')
+          .add(expenseData);
       final savedDoc = await docRef.get();
-      if (!savedDoc.exists) throw Exception('Failed to save expense to Firebase');
+      if (!savedDoc.exists)
+        throw Exception('Failed to save expense to Firebase');
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Expense of ₱${_formatAmount(totalAmount)} saved successfully'),
+            content: Text(
+                'Expense of ₱${_formatAmount(totalAmount)} saved successfully'),
             backgroundColor: const Color(0xFFC41E3A),
             duration: const Duration(seconds: 2),
           ),
@@ -1001,10 +1008,12 @@ class _DashboardPageState extends State<DashboardPage> {
           width: MediaQuery.of(context).size.width * 0.6,
           height: MediaQuery.of(context).size.height * 0.6,
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('expenses').snapshots(),
+            stream:
+                FirebaseFirestore.instance.collection('expenses').snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return Center(child: Text('Error loading expenses: ${snapshot.error}'));
+                return Center(
+                    child: Text('Error loading expenses: ${snapshot.error}'));
               }
               if (!snapshot.hasData) {
                 return const Center(
@@ -1024,10 +1033,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
+                      Icon(Icons.receipt_long,
+                          size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text('No expenses yet',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                          style:
+                              TextStyle(color: Colors.grey[600], fontSize: 16)),
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
                         onPressed: () {
@@ -1083,7 +1094,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       itemBuilder: (context, index) {
                         final expense = expenses[index];
                         final data = expense.data() as Map<String, dynamic>;
-                        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+                        final amount =
+                            (data['amount'] as num?)?.toDouble() ?? 0.0;
                         String description = data['description'] ?? 'N/A';
                         if (data['items'] != null && data['items'] is List) {
                           final itemsList = data['items'] as List;
@@ -1140,7 +1152,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                     IconButton(
                                       icon: const Icon(Icons.delete,
                                           size: 20, color: Colors.red),
-                                      onPressed: () => _deleteExpense(expense.id),
+                                      onPressed: () =>
+                                          _deleteExpense(expense.id),
                                       tooltip: 'Delete',
                                     ),
                                   ],
@@ -1187,8 +1200,8 @@ class _DashboardPageState extends State<DashboardPage> {
       try {
         final parts = dateStr.split('/');
         if (parts.length == 3) {
-          expenseDate = DateTime(int.parse(parts[2]), int.parse(parts[0]),
-              int.parse(parts[1]));
+          expenseDate = DateTime(
+              int.parse(parts[2]), int.parse(parts[0]), int.parse(parts[1]));
         }
       } catch (_) {}
     }
@@ -1197,7 +1210,9 @@ class _DashboardPageState extends State<DashboardPage> {
     if (data['items'] != null && data['items'] is List) {
       final list = data['items'] as List;
       initialItems = list.map<Map<String, String>>((e) {
-        final m = e is Map ? Map<String, dynamic>.from(e as Map) : <String, dynamic>{};
+        final m = e is Map
+            ? Map<String, dynamic>.from(e as Map)
+            : <String, dynamic>{};
         final amt = m['amount'];
         return {
           'description': (m['description'] ?? '').toString(),
@@ -1252,8 +1267,8 @@ class _DashboardPageState extends State<DashboardPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) =>
-          const Center(child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
+      builder: (context) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
     );
     try {
       final dateStr =
@@ -1263,9 +1278,11 @@ class _DashboardPageState extends State<DashboardPage> {
       for (final item in items) {
         final amt = double.tryParse(item['amount'] ?? '0') ?? 0;
         totalAmount += amt;
-        itemsData.add({'description': item['description'] ?? '', 'amount': amt});
+        itemsData
+            .add({'description': item['description'] ?? '', 'amount': amt});
       }
-      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
+      final firstDesc =
+          items.isNotEmpty ? (items.first['description'] ?? '') : '';
       await FirebaseFirestore.instance
           .collection('expenses')
           .doc(expenseId)
@@ -1321,8 +1338,8 @@ class _DashboardPageState extends State<DashboardPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) =>
-          const Center(child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
+      builder: (context) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
     );
     try {
       await FirebaseFirestore.instance
@@ -1605,10 +1622,12 @@ class _DashboardPageState extends State<DashboardPage> {
                           return true;
                         }).toList()
                           ..sort((a, b) {
-                            final da = _parseSessionDate(a['date'] as String?) ??
-                                DateTime(2000);
-                            final db = _parseSessionDate(b['date'] as String?) ??
-                                DateTime(2000);
+                            final da =
+                                _parseSessionDate(a['date'] as String?) ??
+                                    DateTime(2000);
+                            final db =
+                                _parseSessionDate(b['date'] as String?) ??
+                                    DateTime(2000);
                             return db.compareTo(da);
                           });
 
@@ -1644,7 +1663,8 @@ class _DashboardPageState extends State<DashboardPage> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFC41E3A).withOpacity(0.08),
+                                color:
+                                    const Color(0xFFC41E3A).withOpacity(0.08),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -1841,8 +1861,18 @@ class _DashboardPageState extends State<DashboardPage> {
     int tempYear = _selectedSalesMonth.year;
     int tempMonth = _selectedSalesMonth.month;
     const months = [
-      'January','February','March','April','May','June',
-      'July','August','September','October','November','December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     await showDialog(
       context: context,
@@ -1882,8 +1912,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   itemBuilder: (context, index) {
                     final isSelected = (index + 1) == tempMonth;
                     return GestureDetector(
-                      onTap: () =>
-                          setDialogState(() => tempMonth = index + 1),
+                      onTap: () => setDialogState(() => tempMonth = index + 1),
                       child: Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
@@ -1915,8 +1944,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () {
-                setState(
-                    () => _selectedSalesMonth = DateTime(tempYear, tempMonth, 1));
+                setState(() =>
+                    _selectedSalesMonth = DateTime(tempYear, tempMonth, 1));
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
@@ -2087,8 +2116,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               color: Color(0xFF1a1a1a)),
                           items: SalesPeriod.values
                               .map((p) => DropdownMenuItem(
-                                  value: p,
-                                  child: Text(_salesPeriodLabel(p))))
+                                  value: p, child: Text(_salesPeriodLabel(p))))
                               .toList(),
                           onChanged: (SalesPeriod? value) {
                             if (value != null)
@@ -2106,12 +2134,11 @@ class _DashboardPageState extends State<DashboardPage> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 4),
                             decoration: BoxDecoration(
-                              color:
-                                  const Color(0xFFC41E3A).withOpacity(0.1),
+                              color: const Color(0xFFC41E3A).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                  color: const Color(0xFFC41E3A)
-                                      .withOpacity(0.3)),
+                                  color:
+                                      const Color(0xFFC41E3A).withOpacity(0.3)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -2157,15 +2184,14 @@ class _DashboardPageState extends State<DashboardPage> {
                 style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: netSales < 0
-                        ? Colors.red
-                        : const Color(0xFF1a1a1a)),
+                    color: netSales < 0 ? Colors.red : const Color(0xFF1a1a1a)),
               ),
             ),
           ),
           const SizedBox(height: 2),
           Text(
-            _getSalesSubtitle(salesCount, totalExpenses, totalAdditionalProfits),
+            _getSalesSubtitle(
+                salesCount, totalExpenses, totalAdditionalProfits),
             style: TextStyle(fontSize: 11, color: Colors.grey[600]),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -2380,11 +2406,19 @@ class _DashboardPageState extends State<DashboardPage> {
         'clientName': d['clientName']?.toString() ?? '',
         'personnel': d['personnel']?.toString() ?? '',
         'bayNumber': d['bayNumber']?.toString() ?? '',
-        'duration': (d['duration'] is num) ? (d['duration'] as num).toDouble() : (double.tryParse(d['duration']?.toString() ?? '') ?? 0.0),
-        'sessionAmount': (d['sessionAmount'] is num) ? (d['sessionAmount'] as num).toDouble() : (double.tryParse(d['sessionAmount']?.toString() ?? '') ?? 0.0),
-        'coachingAmount': (d['coachingAmount'] is num) ? (d['coachingAmount'] as num).toDouble() : (double.tryParse(d['coachingAmount']?.toString() ?? '') ?? 0.0),
+        'duration': (d['duration'] is num)
+            ? (d['duration'] as num).toDouble()
+            : (double.tryParse(d['duration']?.toString() ?? '') ?? 0.0),
+        'sessionAmount': (d['sessionAmount'] is num)
+            ? (d['sessionAmount'] as num).toDouble()
+            : (double.tryParse(d['sessionAmount']?.toString() ?? '') ?? 0.0),
+        'coachingAmount': (d['coachingAmount'] is num)
+            ? (d['coachingAmount'] as num).toDouble()
+            : (double.tryParse(d['coachingAmount']?.toString() ?? '') ?? 0.0),
         'rentalType': d['rentalType']?.toString() ?? '',
-        'rentalAmount': (d['rentalAmount'] is num) ? (d['rentalAmount'] as num).toDouble() : (double.tryParse(d['rentalAmount']?.toString() ?? '') ?? 0.0),
+        'rentalAmount': (d['rentalAmount'] is num)
+            ? (d['rentalAmount'] as num).toDouble()
+            : (double.tryParse(d['rentalAmount']?.toString() ?? '') ?? 0.0),
       });
     }
 
@@ -2392,19 +2426,21 @@ class _DashboardPageState extends State<DashboardPage> {
     double totalDuration = 0, totalCoaching = 0, totalSessionAmt = 0;
     double totalGolfSet = 0, totalGloves = 0;
     for (final s in sessionRows) {
-      totalDuration   += s['duration']       as double;
-      totalCoaching   += s['coachingAmount'] as double;
-      totalSessionAmt += s['sessionAmount']  as double;
-      final rAmt  = s['rentalAmount'] as double;
-      final rType = s['rentalType']   as String;
+      totalDuration += s['duration'] as double;
+      totalCoaching += s['coachingAmount'] as double;
+      totalSessionAmt += s['sessionAmount'] as double;
+      final rAmt = s['rentalAmount'] as double;
+      final rType = s['rentalType'] as String;
       if (rType == 'Golf Set') totalGolfSet += rAmt;
-      if (rType == 'Gloves')   totalGloves  += rAmt;
+      if (rType == 'Gloves') totalGloves += rAmt;
     }
-    final double totalAmount   = totalCoaching + totalSessionAmt;
-    final double totalRentals  = totalGolfSet + totalGloves;
-    final double totalExpenses = expenseItems.fold(0.0, (s, e) => s + (e['amount'] as double));
-    final double totalProfitsAmt = profitItems.fold(0.0, (s, e) => s + (e['amount'] as double));
-    final double totalProfit   = totalAmount - totalExpenses + totalProfitsAmt;
+    final double totalAmount = totalCoaching + totalSessionAmt;
+    final double totalRentals = totalGolfSet + totalGloves;
+    final double totalExpenses =
+        expenseItems.fold(0.0, (s, e) => s + (e['amount'] as double));
+    final double totalProfitsAmt =
+        profitItems.fold(0.0, (s, e) => s + (e['amount'] as double));
+    final double totalProfit = totalAmount - totalExpenses + totalProfitsAmt;
 
     int row = startRow;
 
@@ -2423,46 +2459,62 @@ class _DashboardPageState extends State<DashboardPage> {
     row++;
 
     // Header row
-    const leftHeaders = ["Client's Name", 'Tee Girl', 'Bay', 'Duration', 'Coaching', 'Amount'];
+    const leftHeaders = [
+      "Client's Name",
+      'Tee Girl',
+      'Bay',
+      'Duration',
+      'Coaching',
+      'Amount'
+    ];
     for (var c = 0; c < leftHeaders.length; c++) {
       _setCell(sheet, c, row, leftHeaders[c], _headerStyle());
     }
     _setCell(sheet, 10, row, 'Golf Set', _headerStyle());
-    _setCell(sheet, 11, row, 'Gloves',   _headerStyle());
+    _setCell(sheet, 11, row, 'Gloves', _headerStyle());
+    _setCell(sheet, 12, row, '', _headerStyle());
+    _setCell(sheet, 13, row, '', _headerStyle());
     sheet.setRowHeight(row, 20);
     row++;
 
     // Data rows
     for (final s in sessionRows) {
       _setCell(sheet, 0, row, s['clientName'] as String, _dataStyle());
-      _setCell(sheet, 1, row, s['personnel']  as String, _dataStyle(center: true));
-      _setCell(sheet, 2, row, s['bayNumber']  as String, _dataStyle(center: true));
-      final dur      = s['duration']       as double;
+      _setCell(
+          sheet, 1, row, s['personnel'] as String, _dataStyle(center: true));
+      _setCell(
+          sheet, 2, row, s['bayNumber'] as String, _dataStyle(center: true));
+      final dur = s['duration'] as double;
       final coaching = s['coachingAmount'] as double;
-      final amount   = s['sessionAmount']  as double;
-      final rAmt     = s['rentalAmount']   as double;
-      final rType    = s['rentalType']     as String;
-      if (dur      > 0) _setCell(sheet, 3, row, dur,      _dataStyle(center: true));
-      if (coaching > 0) _setCell(sheet, 4, row, coaching, _dataStyle(center: true));
-      if (amount   > 0) _setCell(sheet, 5, row, amount,   _dataStyle(center: true));
+      final amount = s['sessionAmount'] as double;
+      final rAmt = s['rentalAmount'] as double;
+      final rType = s['rentalType'] as String;
+      if (dur > 0) _setCell(sheet, 3, row, dur, _dataStyle(center: true));
+      if (coaching > 0)
+        _setCell(sheet, 4, row, coaching, _dataStyle(center: true));
+      if (amount > 0) _setCell(sheet, 5, row, amount, _dataStyle(center: true));
       if (rAmt > 0) {
-        if (rType == 'Golf Set') _setCell(sheet, 10, row, rAmt, _dataStyle(center: true));
-        if (rType == 'Gloves')   _setCell(sheet, 11, row, rAmt, _dataStyle(center: true));
+        if (rType == 'Golf Set')
+          _setCell(sheet, 10, row, rAmt, _dataStyle(center: true));
+        if (rType == 'Gloves')
+          _setCell(sheet, 11, row, rAmt, _dataStyle(center: true));
       }
       row++;
     }
 
     // Totals row
     row++;
-    if (totalDuration   > 0) _setCell(sheet, 3,  row, totalDuration,   _boldStyle());
-    if (totalCoaching   > 0) _setCell(sheet, 4,  row, totalCoaching,   _boldStyle(right: true));
-    if (totalSessionAmt > 0) _setCell(sheet, 5,  row, totalSessionAmt, _boldStyle(right: true));
-    _setCell(sheet, 6,  row, 'Total Amount:',  _pinkBoldStyle());
-    _setCell(sheet, 7,  row, totalAmount,      _pinkBoldStyle(right: true));
-    _setCell(sheet, 10, row, totalGolfSet,     _boldStyle(right: false));
-    _setCell(sheet, 11, row, totalGloves,      _boldStyle(right: false));
+    if (totalDuration > 0) _setCell(sheet, 3, row, totalDuration, _boldStyle());
+    if (totalCoaching > 0)
+      _setCell(sheet, 4, row, totalCoaching, _boldStyle(right: true));
+    if (totalSessionAmt > 0)
+      _setCell(sheet, 5, row, totalSessionAmt, _boldStyle(right: true));
+    _setCell(sheet, 6, row, 'Total Amount:', _pinkBoldStyle());
+    _setCell(sheet, 7, row, totalAmount, _pinkBoldStyle(right: true));
+    _setCell(sheet, 10, row, totalGolfSet, _boldStyle(right: false));
+    _setCell(sheet, 11, row, totalGloves, _boldStyle(right: false));
     _setCell(sheet, 12, row, 'Total Rentals:', _pinkBoldStyle());
-    _setCell(sheet, 13, row, totalRentals,     _pinkBoldStyle(right: true));
+    _setCell(sheet, 13, row, totalRentals, _pinkBoldStyle(right: true));
     row++;
     row++;
 
@@ -2471,11 +2523,17 @@ class _DashboardPageState extends State<DashboardPage> {
     row++;
     for (final item in expenseItems) {
       _setCell(sheet, 4, row, item['description'] as String, _pinkStyle());
-      _setCell(sheet, 7, row, item['amount']      as double, _pinkStyle(right: true));
+      _setCell(sheet, 5, row, '', _pinkStyle());
+      _setCell(sheet, 6, row, '', _pinkStyle());
+      _setCell(
+          sheet, 7, row, item['amount'] as double, _pinkStyle(right: true));
       row++;
     }
     _setCell(sheet, 3, row, 'Total Expenses:', _pinkBoldStyle());
-    _setCell(sheet, 7, row, totalExpenses,      _pinkBoldStyle(right: true));
+    _setCell(sheet, 4, row, '', _pinkBoldStyle()); 
+    _setCell(sheet, 5, row, '', _pinkBoldStyle());
+    _setCell(sheet, 6, row, '', _pinkBoldStyle());
+    _setCell(sheet, 7, row, totalExpenses, _pinkBoldStyle(right: true));
     row++;
     row++;
 
@@ -2485,7 +2543,10 @@ class _DashboardPageState extends State<DashboardPage> {
       row++;
       for (final item in profitItems) {
         _setCell(sheet, 4, row, item['description'] as String, _pinkStyle());
-        _setCell(sheet, 7, row, item['amount']      as double, _pinkStyle(right: true));
+        _setCell(sheet, 5, row, '', _pinkStyle());
+        _setCell(sheet, 6, row, '', _pinkStyle());
+        _setCell(
+            sheet, 7, row, item['amount'] as double, _pinkStyle(right: true));
         row++;
       }
       row++;
@@ -2493,7 +2554,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
     // Total profit
     _setCell(sheet, 3, row, 'Total Profit:', _pinkBoldStyle());
-    _setCell(sheet, 7, row, totalProfit,      _pinkBoldStyle(right: true));
+    _setCell(sheet, 4, row, '', _pinkBoldStyle()); 
+    _setCell(sheet, 5, row, '', _pinkBoldStyle()); 
+    _setCell(sheet, 6, row, '', _pinkBoldStyle());
+    _setCell(sheet, 7, row, totalProfit, _pinkBoldStyle(right: true));
     row++;
 
     return row - startRow;
@@ -2516,14 +2580,14 @@ class _DashboardPageState extends State<DashboardPage> {
     const colWidths = [
       26.0, // 0  A  Client's Name
       14.0, // 1  B  Tee Girl
-       8.0, // 2  C  Bay
+      8.0, // 2  C  Bay
       15.0, // 3  D  Duration / Expense labels
       15.0, // 4  E  Coaching / Expense desc
       15.0, // 5  F  Amount
       20.0, // 6  G  Total Amount label
       14.0, // 7  H  Total Amount value / Expense amounts
-       8.0, // 8  I  gap
-       8.0, // 9  J  gap
+      8.0, // 8  I  gap
+      8.0, // 9  J  gap
       14.0, // 10 K  Golf Set
       14.0, // 11 L  Gloves
       20.0, // 12 M  Total Rentals label
@@ -2547,7 +2611,8 @@ class _DashboardPageState extends State<DashboardPage> {
       xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: currentRow),
       xl.CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: currentRow),
     );
-    _setCell(sheet, 0, currentRow, 'Monthly Report \u2014 $monthDisplay', _titleStyle());
+    _setCell(sheet, 0, currentRow, 'Monthly Report \u2014 $monthDisplay',
+        _titleStyle());
     sheet.merge(
       xl.CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: currentRow),
       xl.CellIndex.indexByColumnRow(columnIndex: 11, rowIndex: currentRow),
@@ -2557,14 +2622,24 @@ class _DashboardPageState extends State<DashboardPage> {
     currentRow += 2;
 
     // Summary headers
-    const summaryHdrs = ['Date', 'Sessions', 'Session Amt', 'Coaching', 'Total Revenue', 'Expenses', 'Net Profit'];
+    const summaryHdrs = [
+      'Date',
+      'Sessions',
+      'Session Amt',
+      'Coaching',
+      'Total Revenue',
+      'Expenses',
+      'Net Profit'
+    ];
     for (var c = 0; c < summaryHdrs.length; c++) {
-      _setCell(sheet, c, currentRow, summaryHdrs[c], _monthSummaryHeaderStyle());
+      _setCell(
+          sheet, c, currentRow, summaryHdrs[c], _monthSummaryHeaderStyle());
     }
-    _setCell(sheet, 8,  currentRow, 'Date',          _monthSummaryHeaderStyle());
-    _setCell(sheet, 9,  currentRow, 'Golf Set',      _monthSummaryHeaderStyle());
-    _setCell(sheet, 10, currentRow, 'Gloves',        _monthSummaryHeaderStyle());
-    _setCell(sheet, 11, currentRow, 'Total Rentals', _monthSummaryHeaderStyle());
+    _setCell(sheet, 8, currentRow, 'Date', _monthSummaryHeaderStyle());
+    _setCell(sheet, 9, currentRow, 'Golf Set', _monthSummaryHeaderStyle());
+    _setCell(sheet, 10, currentRow, 'Gloves', _monthSummaryHeaderStyle());
+    _setCell(
+        sheet, 11, currentRow, 'Total Rentals', _monthSummaryHeaderStyle());
     sheet.setRowHeight(currentRow, 22);
     currentRow++;
 
@@ -2574,7 +2649,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
     for (final day in sortedDays) {
       final dayDate = DateTime(year, month, day);
-      final dayStr = '${dayDate.month.toString().padLeft(2, '0')}/${dayDate.day.toString().padLeft(2, '0')}/${dayDate.year}';
+      final dayStr =
+          '${dayDate.month.toString().padLeft(2, '0')}/${dayDate.day.toString().padLeft(2, '0')}/${dayDate.year}';
       final daySessionDocs = sessionsByDay[day] ?? [];
       final dayExpenseDocs = expensesByDay[day] ?? [];
 
@@ -2584,12 +2660,18 @@ class _DashboardPageState extends State<DashboardPage> {
 
       for (final doc in daySessionDocs) {
         final d = doc.data() as Map<String, dynamic>;
-        dSessionAmt  += (d['sessionAmount']  is num) ? (d['sessionAmount']  as num).toDouble() : 0.0;
-        dCoachingAmt += (d['coachingAmount'] is num) ? (d['coachingAmount'] as num).toDouble() : 0.0;
-        final rAmt  = (d['rentalAmount'] is num) ? (d['rentalAmount'] as num).toDouble() : 0.0;
+        dSessionAmt += (d['sessionAmount'] is num)
+            ? (d['sessionAmount'] as num).toDouble()
+            : 0.0;
+        dCoachingAmt += (d['coachingAmount'] is num)
+            ? (d['coachingAmount'] as num).toDouble()
+            : 0.0;
+        final rAmt = (d['rentalAmount'] is num)
+            ? (d['rentalAmount'] as num).toDouble()
+            : 0.0;
         final rType = d['rentalType']?.toString() ?? '';
         if (rType == 'Golf Set') dGolfSet += rAmt;
-        if (rType == 'Gloves')   dGloves  += rAmt;
+        if (rType == 'Gloves') dGloves += rAmt;
       }
       final double dRevenue = dSessionAmt + dCoachingAmt;
 
@@ -2597,48 +2679,67 @@ class _DashboardPageState extends State<DashboardPage> {
         final d = doc.data() as Map<String, dynamic>;
         if (d['items'] != null && d['items'] is List) {
           for (final item in (d['items'] as List)) {
-            if (item is Map) dExpenses += (item['amount'] is num) ? (item['amount'] as num).toDouble() : 0.0;
+            if (item is Map)
+              dExpenses += (item['amount'] is num)
+                  ? (item['amount'] as num).toDouble()
+                  : 0.0;
           }
         } else {
-          dExpenses += (d['amount'] is num) ? (d['amount'] as num).toDouble() : 0.0;
+          dExpenses +=
+              (d['amount'] is num) ? (d['amount'] as num).toDouble() : 0.0;
         }
       }
       final double dNet = dRevenue - dExpenses;
 
-      grandRevenue  += dRevenue;
+      grandRevenue += dRevenue;
       grandExpenses += dExpenses;
-      grandNet      += dNet;
+      grandNet += dNet;
       grandSessions += dCount;
-      grandGolfSet  += dGolfSet;
-      grandGloves   += dGloves;
+      grandGolfSet += dGolfSet;
+      grandGloves += dGloves;
 
-      _setCell(sheet, 0, currentRow, dayStr,               _monthSummaryDataStyle());
-      _setCell(sheet, 1, currentRow, dCount.toDouble(),    _monthSummaryDataStyle(right: true));
-      _setCell(sheet, 2, currentRow, dSessionAmt,          _monthSummaryDataStyle(right: true));
-      _setCell(sheet, 3, currentRow, dCoachingAmt,         _monthSummaryDataStyle(right: true));
-      _setCell(sheet, 4, currentRow, dRevenue,             _monthSummaryDataStyle(right: true));
-      _setCell(sheet, 5, currentRow, dExpenses,            _monthSummaryDataStyle(right: true));
-      _setCell(sheet, 6, currentRow, dNet,                 _monthSummaryDataStyle(right: true));
-      _setCell(sheet, 8,  currentRow, dayStr,              _monthSummaryDataStyle());
-      _setCell(sheet, 9,  currentRow, dGolfSet,            _monthSummaryDataStyle(right: true));
-      _setCell(sheet, 10, currentRow, dGloves,             _monthSummaryDataStyle(right: true));
-      _setCell(sheet, 11, currentRow, dGolfSet + dGloves,  _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 0, currentRow, dayStr, _monthSummaryDataStyle());
+      _setCell(sheet, 1, currentRow, dCount.toDouble(),
+          _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 2, currentRow, dSessionAmt,
+          _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 3, currentRow, dCoachingAmt,
+          _monthSummaryDataStyle(right: true));
+      _setCell(
+          sheet, 4, currentRow, dRevenue, _monthSummaryDataStyle(right: true));
+      _setCell(
+          sheet, 5, currentRow, dExpenses, _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 6, currentRow, dNet, _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 8, currentRow, dayStr, _monthSummaryDataStyle());
+      _setCell(
+          sheet, 9, currentRow, dGolfSet, _monthSummaryDataStyle(right: true));
+      _setCell(
+          sheet, 10, currentRow, dGloves, _monthSummaryDataStyle(right: true));
+      _setCell(sheet, 11, currentRow, dGolfSet + dGloves,
+          _monthSummaryDataStyle(right: true));
       currentRow++;
     }
 
     // Grand total row
     currentRow++;
-    _setCell(sheet, 0, currentRow, 'TOTAL',                      _monthSummaryTotalStyle());
-    _setCell(sheet, 1, currentRow, grandSessions.toDouble(),      _monthSummaryTotalStyle(right: true));
-    _setCell(sheet, 2, currentRow, '',                            _monthSummaryTotalStyle());
-    _setCell(sheet, 3, currentRow, '',                            _monthSummaryTotalStyle());
-    _setCell(sheet, 4, currentRow, grandRevenue,                  _monthSummaryTotalStyle(right: true));
-    _setCell(sheet, 5, currentRow, grandExpenses,                 _monthSummaryTotalStyle(right: true));
-    _setCell(sheet, 6, currentRow, grandNet,                      _monthSummaryTotalStyle(right: true));
-    _setCell(sheet, 8,  currentRow, 'TOTAL',                      _monthSummaryTotalStyle());
-    _setCell(sheet, 9,  currentRow, grandGolfSet,                 _monthSummaryTotalStyle(right: true));
-    _setCell(sheet, 10, currentRow, grandGloves,                  _monthSummaryTotalStyle(right: true));
-    _setCell(sheet, 11, currentRow, grandGolfSet + grandGloves,   _monthSummaryTotalStyle(right: true));
+    _setCell(sheet, 0, currentRow, 'TOTAL', _monthSummaryTotalStyle());
+    _setCell(sheet, 1, currentRow, grandSessions.toDouble(),
+        _monthSummaryTotalStyle(right: true));
+    _setCell(sheet, 2, currentRow, '', _monthSummaryTotalStyle());
+    _setCell(sheet, 3, currentRow, '', _monthSummaryTotalStyle());
+    _setCell(sheet, 4, currentRow, grandRevenue,
+        _monthSummaryTotalStyle(right: true));
+    _setCell(sheet, 5, currentRow, grandExpenses,
+        _monthSummaryTotalStyle(right: true));
+    _setCell(
+        sheet, 6, currentRow, grandNet, _monthSummaryTotalStyle(right: true));
+    _setCell(sheet, 8, currentRow, 'TOTAL', _monthSummaryTotalStyle());
+    _setCell(sheet, 9, currentRow, grandGolfSet,
+        _monthSummaryTotalStyle(right: true));
+    _setCell(sheet, 10, currentRow, grandGloves,
+        _monthSummaryTotalStyle(right: true));
+    _setCell(sheet, 11, currentRow, grandGolfSet + grandGloves,
+        _monthSummaryTotalStyle(right: true));
     currentRow += 3; // gap between summary and daily blocks
 
     // ── PART 2: Stacked daily blocks ─────────────────────────────────────
@@ -2650,7 +2751,7 @@ class _DashboardPageState extends State<DashboardPage> {
         dayDate,
         sessionsByDay[day] ?? [],
         expensesByDay[day] ?? [],
-        profitsByDay[day]  ?? [],
+        profitsByDay[day] ?? [],
       );
       currentRow += rowsUsed + 2; // 2-row gap between day blocks
     }
@@ -2671,14 +2772,14 @@ class _DashboardPageState extends State<DashboardPage> {
     const colWidths = [
       26.0, // 0  A  Client's Name
       14.0, // 1  B  Tee Girl
-       8.0, // 2  C  Bay
+      8.0, // 2  C  Bay
       15.0, // 3  D  Duration
       15.0, // 4  E  Coaching
       15.0, // 5  F  Amount
       20.0, // 6  G  Total Amount label
       14.0, // 7  H  Total Amount value
-       6.0, // 8  I  gap
-       6.0, // 9  J  gap (highlighted in screenshot)
+      6.0, // 8  I  gap
+      6.0, // 9  J  gap (highlighted in screenshot)
       14.0, // 10 K  Golf Set
       14.0, // 11 L  Gloves
       20.0, // 12 M  Total Rentals label
@@ -2769,21 +2870,21 @@ class _DashboardPageState extends State<DashboardPage> {
     double totalDuration = 0, totalCoaching = 0, totalSessionAmt = 0;
     double totalGolfSet = 0, totalGloves = 0;
     for (final s in sessionRows) {
-      totalDuration   += s['duration']       as double;
-      totalCoaching   += s['coachingAmount'] as double;
-      totalSessionAmt += s['sessionAmount']  as double;
-      final rentalAmt  = s['rentalAmount']   as double;
-      final rentalType = s['rentalType']     as String;
+      totalDuration += s['duration'] as double;
+      totalCoaching += s['coachingAmount'] as double;
+      totalSessionAmt += s['sessionAmount'] as double;
+      final rentalAmt = s['rentalAmount'] as double;
+      final rentalType = s['rentalType'] as String;
       if (rentalType == 'Golf Set') totalGolfSet += rentalAmt;
-      if (rentalType == 'Gloves')   totalGloves  += rentalAmt;
+      if (rentalType == 'Gloves') totalGloves += rentalAmt;
     }
-    final double totalAmount   = totalCoaching + totalSessionAmt;
-    final double totalRentals  = totalGolfSet + totalGloves;
+    final double totalAmount = totalCoaching + totalSessionAmt;
+    final double totalRentals = totalGolfSet + totalGloves;
     final double totalExpenses =
         expenseItems.fold(0.0, (s, e) => s + (e['amount'] as double));
     final double totalProfitsAmt =
         profitItems.fold(0.0, (s, e) => s + (e['amount'] as double));
-    final double totalProfit   = totalAmount - totalExpenses + totalProfitsAmt;
+    final double totalProfit = totalAmount - totalExpenses + totalProfitsAmt;
 
     int row = 0;
 
@@ -2809,18 +2910,20 @@ class _DashboardPageState extends State<DashboardPage> {
     // ════════════════════════════════════════════════════════════════════════
     const leftHeaders = [
       "Client's Name", // 0 A
-      'Tee Girl',      // 1 B
-      'Bay',           // 2 C
-      'Duration',      // 3 D
-      'Coaching',      // 4 E
-      'Amount',        // 5 F
+      'Tee Girl', // 1 B
+      'Bay', // 2 C
+      'Duration', // 3 D
+      'Coaching', // 4 E
+      'Amount', // 5 F
     ];
     for (var c = 0; c < leftHeaders.length; c++) {
       _setCell(sheet, c, row, leftHeaders[c], _headerStyle());
     }
     // Rental headers — centered
     _setCell(sheet, 10, row, 'Golf Set', _headerStyle());
-    _setCell(sheet, 11, row, 'Gloves',   _headerStyle());
+    _setCell(sheet, 11, row, 'Gloves', _headerStyle());
+    _setCell(sheet, 12, row, '', _headerStyle());
+    _setCell(sheet, 13, row, '', _headerStyle());
     sheet.setRowHeight(row, 20);
     row++;
 
@@ -2829,18 +2932,21 @@ class _DashboardPageState extends State<DashboardPage> {
     // ════════════════════════════════════════════════════════════════════════
     for (final s in sessionRows) {
       _setCell(sheet, 0, row, s['clientName'] as String, _dataStyle());
-      _setCell(sheet, 1, row, s['personnel']  as String, _dataStyle(center: true));
-      _setCell(sheet, 2, row, s['bayNumber']  as String, _dataStyle(center: true));
+      _setCell(
+          sheet, 1, row, s['personnel'] as String, _dataStyle(center: true));
+      _setCell(
+          sheet, 2, row, s['bayNumber'] as String, _dataStyle(center: true));
 
-      final dur        = s['duration']       as double;
-      final coaching   = s['coachingAmount'] as double;
-      final amount     = s['sessionAmount']  as double;
-      final rentalAmt  = s['rentalAmount']   as double;
-      final rentalType = s['rentalType']     as String;
+      final dur = s['duration'] as double;
+      final coaching = s['coachingAmount'] as double;
+      final amount = s['sessionAmount'] as double;
+      final rentalAmt = s['rentalAmount'] as double;
+      final rentalType = s['rentalType'] as String;
 
-      if (dur      > 0) _setCell(sheet, 3, row, dur,      _dataStyle(center: true));
-      if (coaching > 0) _setCell(sheet, 4, row, coaching, _dataStyle(center: true));
-      if (amount   > 0) _setCell(sheet, 5, row, amount,   _dataStyle(center: true));
+      if (dur > 0) _setCell(sheet, 3, row, dur, _dataStyle(center: true));
+      if (coaching > 0)
+        _setCell(sheet, 4, row, coaching, _dataStyle(center: true));
+      if (amount > 0) _setCell(sheet, 5, row, amount, _dataStyle(center: true));
 
       // Rental values — centered under Golf Set / Gloves headers
       if (rentalAmt > 0) {
@@ -2859,21 +2965,23 @@ class _DashboardPageState extends State<DashboardPage> {
     row++; // blank spacer
 
     // Left side column totals
-    if (totalDuration   > 0) _setCell(sheet, 3, row, totalDuration,   _boldStyle());
-    if (totalCoaching   > 0) _setCell(sheet, 4, row, totalCoaching,   _boldStyle(right: true));
-    if (totalSessionAmt > 0) _setCell(sheet, 5, row, totalSessionAmt, _boldStyle(right: true));
+    if (totalDuration > 0) _setCell(sheet, 3, row, totalDuration, _boldStyle());
+    if (totalCoaching > 0)
+      _setCell(sheet, 4, row, totalCoaching, _boldStyle(right: true));
+    if (totalSessionAmt > 0)
+      _setCell(sheet, 5, row, totalSessionAmt, _boldStyle(right: true));
 
     // Total Amount — col G(6) label, col H(7) value
     _setCell(sheet, 6, row, 'Total Amount:', _pinkBoldStyle());
-    _setCell(sheet, 7, row, totalAmount,      _pinkBoldStyle(right: true));
+    _setCell(sheet, 7, row, totalAmount, _pinkBoldStyle(right: true));
 
     // Rental column totals — centered (cols K=10, L=11)
     _setCell(sheet, 10, row, totalGolfSet, _boldStyle(right: false));
-    _setCell(sheet, 11, row, totalGloves,  _boldStyle(right: false));
+    _setCell(sheet, 11, row, totalGloves, _boldStyle(right: false));
 
     // Total Rentals — col M(12) label, col N(13) value right-justified
     _setCell(sheet, 12, row, 'Total Rentals:', _pinkBoldStyle());
-    _setCell(sheet, 13, row, totalRentals,       _pinkBoldStyle(right: true));
+    _setCell(sheet, 13, row, totalRentals, _pinkBoldStyle(right: true));
 
     row++; // past totals row
     row++; // blank spacer
@@ -2886,11 +2994,17 @@ class _DashboardPageState extends State<DashboardPage> {
     row++;
     for (final item in expenseItems) {
       _setCell(sheet, 4, row, item['description'] as String, _pinkStyle());
-      _setCell(sheet, 7, row, item['amount']      as double, _pinkStyle(right: true));
+      _setCell(sheet, 5, row, '', _pinkStyle());
+      _setCell(sheet, 6, row, '', _pinkStyle());
+      _setCell(
+          sheet, 7, row, item['amount'] as double, _pinkStyle(right: true));
       row++;
     }
     _setCell(sheet, 3, row, 'Total Expenses:', _pinkBoldStyle());
-    _setCell(sheet, 7, row, totalExpenses,       _pinkBoldStyle(right: true));
+    _setCell(sheet, 4, row, '', _pinkBoldStyle());
+    _setCell(sheet, 5, row, '', _pinkBoldStyle());
+    _setCell(sheet, 6, row, '', _pinkBoldStyle());
+    _setCell(sheet, 7, row, totalExpenses, _pinkBoldStyle(right: true));
     row++;
     row++; // blank spacer
 
@@ -2902,7 +3016,10 @@ class _DashboardPageState extends State<DashboardPage> {
       row++;
       for (final item in profitItems) {
         _setCell(sheet, 4, row, item['description'] as String, _pinkStyle());
-        _setCell(sheet, 7, row, item['amount']      as double, _pinkStyle(right: true));
+        _setCell(sheet, 5, row, '', _pinkStyle());
+        _setCell(sheet, 6, row, '', _pinkStyle());
+        _setCell(
+            sheet, 7, row, item['amount'] as double, _pinkStyle(right: true));
         row++;
       }
       row++; // blank spacer
@@ -2912,7 +3029,10 @@ class _DashboardPageState extends State<DashboardPage> {
     // TOTAL PROFIT
     // ════════════════════════════════════════════════════════════════════════
     _setCell(sheet, 3, row, 'Total Profit:', _pinkBoldStyle());
-    _setCell(sheet, 7, row, totalProfit,      _pinkBoldStyle(right: true));
+    _setCell(sheet, 4, row, '', _pinkBoldStyle()); 
+    _setCell(sheet, 5, row, '', _pinkBoldStyle()); 
+    _setCell(sheet, 6, row, '', _pinkBoldStyle()); 
+    _setCell(sheet, 7, row, totalProfit, _pinkBoldStyle(right: true));
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -3021,8 +3141,14 @@ class _DashboardPageState extends State<DashboardPage> {
     row++;
 
     const headers = [
-      "Client's Name", 'Tee Girl', 'Bay', 'Duration', 'Amount',
-      'Coaching/Rental', '', ''
+      "Client's Name",
+      'Tee Girl',
+      'Bay',
+      'Duration',
+      'Amount',
+      'Coaching/Rental',
+      '',
+      ''
     ];
     for (var c = 0; c < headers.length; c++) {
       _setCell(sheet, c, row, headers[c], _headerStyle());
@@ -3041,7 +3167,8 @@ class _DashboardPageState extends State<DashboardPage> {
       final cAmt = (data['coachingAmount'] is num)
           ? (data['coachingAmount'] as num).toDouble()
           : (double.tryParse(data['coachingAmount']?.toString() ?? '') ?? 0.0);
-      _setCell(sheet, 0, row, data['clientName']?.toString() ?? '', _dataStyle());
+      _setCell(
+          sheet, 0, row, data['clientName']?.toString() ?? '', _dataStyle());
       _setCell(sheet, 1, row, data['personnel']?.toString() ?? '',
           _dataStyle(center: true));
       _setCell(sheet, 2, row, data['bayNumber']?.toString() ?? '',
@@ -3102,7 +3229,8 @@ class _DashboardPageState extends State<DashboardPage> {
         final lr = leftRows[i];
         if (lr['type'] == 'personnel') {
           _setCell(sheet, 1, row, lr['name'] as String, _dataStyle());
-          _setCell(sheet, 3, row, lr['hrs'] as double, _dataStyle(center: true));
+          _setCell(
+              sheet, 3, row, lr['hrs'] as double, _dataStyle(center: true));
         } else if (lr['type'] == 'totalHrsLabel') {
           _setCell(sheet, 3, row, 'Total hrs', _boldStyle());
         } else if (lr['type'] == 'totalHrsValue') {
@@ -3357,7 +3485,7 @@ class _DashboardPageState extends State<DashboardPage> {
         18.0, // 4  Total Revenue
         14.0, // 5  Expenses
         16.0, // 6  Net Profit
-         6.0, // 7  gap
+        6.0, // 7  gap
         14.0, // 8  Date (rentals)
         14.0, // 9  Golf Set
         14.0, // 10 Gloves
@@ -3374,7 +3502,8 @@ class _DashboardPageState extends State<DashboardPage> {
         xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: sRow),
         xl.CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: sRow),
       );
-      _setCell(summarySheet, 0, sRow, 'Monthly Report \u2014 $monthDisplay', _titleStyle());
+      _setCell(summarySheet, 0, sRow, 'Monthly Report \u2014 $monthDisplay',
+          _titleStyle());
 
       // Right title — "Rentals"
       summarySheet.merge(
@@ -3387,21 +3516,27 @@ class _DashboardPageState extends State<DashboardPage> {
 
       // Left table headers
       const summaryHeaders = [
-        'Date', 'Sessions', 'Session Amt', 'Coaching',
-        'Total Revenue', 'Expenses', 'Net Profit',
+        'Date',
+        'Sessions',
+        'Session Amt',
+        'Coaching',
+        'Total Revenue',
+        'Expenses',
+        'Net Profit',
       ];
       for (var c = 0; c < summaryHeaders.length; c++) {
-        _setCell(summarySheet, c, sRow, summaryHeaders[c], _monthSummaryHeaderStyle());
+        _setCell(summarySheet, c, sRow, summaryHeaders[c],
+            _monthSummaryHeaderStyle());
       }
 
       // Right table headers
-      _setCell(summarySheet, 8,  sRow, 'Date',          _monthSummaryHeaderStyle());
-      _setCell(summarySheet, 9,  sRow, 'Golf Set',       _monthSummaryHeaderStyle());
-      _setCell(summarySheet, 10, sRow, 'Gloves',         _monthSummaryHeaderStyle());
-      _setCell(summarySheet, 11, sRow, 'Total Rentals',  _monthSummaryHeaderStyle());
+      _setCell(summarySheet, 8, sRow, 'Date', _monthSummaryHeaderStyle());
+      _setCell(summarySheet, 9, sRow, 'Golf Set', _monthSummaryHeaderStyle());
+      _setCell(summarySheet, 10, sRow, 'Gloves', _monthSummaryHeaderStyle());
+      _setCell(
+          summarySheet, 11, sRow, 'Total Rentals', _monthSummaryHeaderStyle());
       summarySheet.setRowHeight(sRow, 22);
       sRow++;
-
 
       double grandRevenue = 0, grandExpenses = 0, grandNet = 0;
       double grandGolfSet = 0, grandGloves = 0;
@@ -3420,12 +3555,18 @@ class _DashboardPageState extends State<DashboardPage> {
 
         for (final doc in daySessionDocs) {
           final d = doc.data() as Map<String, dynamic>;
-          dSessionAmt  += (d['sessionAmount']  is num) ? (d['sessionAmount']  as num).toDouble() : 0.0;
-          dCoachingAmt += (d['coachingAmount'] is num) ? (d['coachingAmount'] as num).toDouble() : 0.0;
-          final rentalAmt  = (d['rentalAmount'] is num) ? (d['rentalAmount'] as num).toDouble() : 0.0;
+          dSessionAmt += (d['sessionAmount'] is num)
+              ? (d['sessionAmount'] as num).toDouble()
+              : 0.0;
+          dCoachingAmt += (d['coachingAmount'] is num)
+              ? (d['coachingAmount'] as num).toDouble()
+              : 0.0;
+          final rentalAmt = (d['rentalAmount'] is num)
+              ? (d['rentalAmount'] as num).toDouble()
+              : 0.0;
           final rentalType = d['rentalType']?.toString() ?? '';
           if (rentalType == 'Golf Set') dGolfSet += rentalAmt;
-          if (rentalType == 'Gloves')   dGloves  += rentalAmt;
+          if (rentalType == 'Gloves') dGloves += rentalAmt;
         }
 
         // Total Revenue = session + coaching only (rentals excluded)
@@ -3435,55 +3576,75 @@ class _DashboardPageState extends State<DashboardPage> {
           final d = doc.data() as Map<String, dynamic>;
           if (d['items'] != null && d['items'] is List) {
             for (final item in (d['items'] as List)) {
-              if (item is Map) dExpenses += (item['amount'] is num) ? (item['amount'] as num).toDouble() : 0.0;
+              if (item is Map)
+                dExpenses += (item['amount'] is num)
+                    ? (item['amount'] as num).toDouble()
+                    : 0.0;
             }
           } else {
-            dExpenses += (d['amount'] is num) ? (d['amount'] as num).toDouble() : 0.0;
+            dExpenses +=
+                (d['amount'] is num) ? (d['amount'] as num).toDouble() : 0.0;
           }
         }
 
         // Net Profit = Revenue - Expenses (no additional profits in summary)
         final double dNet = dRevenue - dExpenses;
 
-        grandRevenue  += dRevenue;
+        grandRevenue += dRevenue;
         grandExpenses += dExpenses;
-        grandNet      += dNet;
+        grandNet += dNet;
         grandSessions += dSessionCount;
-        grandGolfSet  += dGolfSet;
-        grandGloves   += dGloves;
+        grandGolfSet += dGolfSet;
+        grandGloves += dGloves;
 
         // Left table row
-        _setCell(summarySheet, 0, sRow, dayStr,                 _monthSummaryDataStyle());
-        _setCell(summarySheet, 1, sRow, dSessionCount.toDouble(), _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 2, sRow, dSessionAmt,            _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 3, sRow, dCoachingAmt,           _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 4, sRow, dRevenue,               _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 5, sRow, dExpenses,              _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 6, sRow, dNet,                   _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 0, sRow, dayStr, _monthSummaryDataStyle());
+        _setCell(summarySheet, 1, sRow, dSessionCount.toDouble(),
+            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 2, sRow, dSessionAmt,
+            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 3, sRow, dCoachingAmt,
+            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 4, sRow, dRevenue,
+            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 5, sRow, dExpenses,
+            _monthSummaryDataStyle(right: true));
+        _setCell(
+            summarySheet, 6, sRow, dNet, _monthSummaryDataStyle(right: true));
 
         // Right table row (always write, even if zero — keeps rows in sync)
-        _setCell(summarySheet, 8,  sRow, dayStr,                _monthSummaryDataStyle());
-        _setCell(summarySheet, 9,  sRow, dGolfSet,              _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 10, sRow, dGloves,               _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 11, sRow, dGolfSet + dGloves,    _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 8, sRow, dayStr, _monthSummaryDataStyle());
+        _setCell(summarySheet, 9, sRow, dGolfSet,
+            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 10, sRow, dGloves,
+            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 11, sRow, dGolfSet + dGloves,
+            _monthSummaryDataStyle(right: true));
         sRow++;
       }
 
       // Grand total row — left table
       sRow++;
-      _setCell(summarySheet, 0, sRow, 'TOTAL',                  _monthSummaryTotalStyle());
-      _setCell(summarySheet, 1, sRow, grandSessions.toDouble(),  _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 2, sRow, '',                        _monthSummaryTotalStyle());
-      _setCell(summarySheet, 3, sRow, '',                        _monthSummaryTotalStyle());
-      _setCell(summarySheet, 4, sRow, grandRevenue,              _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 5, sRow, grandExpenses,             _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 6, sRow, grandNet,                  _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 0, sRow, 'TOTAL', _monthSummaryTotalStyle());
+      _setCell(summarySheet, 1, sRow, grandSessions.toDouble(),
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 2, sRow, '', _monthSummaryTotalStyle());
+      _setCell(summarySheet, 3, sRow, '', _monthSummaryTotalStyle());
+      _setCell(summarySheet, 4, sRow, grandRevenue,
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 5, sRow, grandExpenses,
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 6, sRow, grandNet,
+          _monthSummaryTotalStyle(right: true));
 
       // Grand total row — right table (same row, aligned)
-      _setCell(summarySheet, 8,  sRow, 'TOTAL',                          _monthSummaryTotalStyle());
-      _setCell(summarySheet, 9,  sRow, grandGolfSet,                     _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 10, sRow, grandGloves,                      _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 11, sRow, grandGolfSet + grandGloves,       _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 8, sRow, 'TOTAL', _monthSummaryTotalStyle());
+      _setCell(summarySheet, 9, sRow, grandGolfSet,
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 10, sRow, grandGloves,
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 11, sRow, grandGolfSet + grandGloves,
+          _monthSummaryTotalStyle(right: true));
 
       // ── One sheet per active day — using the same layout as daily export ──
       for (final day in sortedDays) {
@@ -3556,9 +3717,12 @@ class _DashboardPageState extends State<DashboardPage> {
           .get();
 
       // Group all docs by month → day
-      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthSessionsByDay = {};
-      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthExpensesByDay = {};
-      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthProfitsByDay  = {};
+      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthSessionsByDay =
+          {};
+      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthExpensesByDay =
+          {};
+      final Map<int, Map<int, List<QueryDocumentSnapshot>>> monthProfitsByDay =
+          {};
       final Set<int> activeMonths = {};
 
       void groupDoc(QueryDocumentSnapshot doc,
@@ -3572,7 +3736,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       for (final doc in sessionsSnap.docs) groupDoc(doc, monthSessionsByDay);
       for (final doc in expensesSnap.docs) groupDoc(doc, monthExpensesByDay);
-      for (final doc in profitsSnap.docs)  groupDoc(doc, monthProfitsByDay);
+      for (final doc in profitsSnap.docs) groupDoc(doc, monthProfitsByDay);
 
       if (activeMonths.isEmpty) {
         if (mounted) {
@@ -3604,7 +3768,7 @@ class _DashboardPageState extends State<DashboardPage> {
         18.0, // 4  Total Revenue
         14.0, // 5  Expenses
         16.0, // 6  Net Profit
-         6.0, // 7  gap
+        6.0, // 7  gap
         18.0, // 8  Month (rentals)
         14.0, // 9  Golf Set
         14.0, // 10 Gloves
@@ -3621,7 +3785,8 @@ class _DashboardPageState extends State<DashboardPage> {
         xl.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: sRow),
         xl.CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: sRow),
       );
-      _setCell(summarySheet, 0, sRow, 'Yearly Report \u2014 $year', _titleStyle());
+      _setCell(
+          summarySheet, 0, sRow, 'Yearly Report \u2014 $year', _titleStyle());
 
       // Right title
       summarySheet.merge(
@@ -3634,17 +3799,24 @@ class _DashboardPageState extends State<DashboardPage> {
 
       // Left headers
       const yearSummaryHeaders = [
-        'Month', 'Sessions', 'Session Amt', 'Coaching',
-        'Total Revenue', 'Expenses', 'Net Profit',
+        'Month',
+        'Sessions',
+        'Session Amt',
+        'Coaching',
+        'Total Revenue',
+        'Expenses',
+        'Net Profit',
       ];
       for (var c = 0; c < yearSummaryHeaders.length; c++) {
-        _setCell(summarySheet, c, sRow, yearSummaryHeaders[c], _monthSummaryHeaderStyle());
+        _setCell(summarySheet, c, sRow, yearSummaryHeaders[c],
+            _monthSummaryHeaderStyle());
       }
       // Right headers
-      _setCell(summarySheet, 8,  sRow, 'Month',         _monthSummaryHeaderStyle());
-      _setCell(summarySheet, 9,  sRow, 'Golf Set',      _monthSummaryHeaderStyle());
-      _setCell(summarySheet, 10, sRow, 'Gloves',        _monthSummaryHeaderStyle());
-      _setCell(summarySheet, 11, sRow, 'Total Rentals', _monthSummaryHeaderStyle());
+      _setCell(summarySheet, 8, sRow, 'Month', _monthSummaryHeaderStyle());
+      _setCell(summarySheet, 9, sRow, 'Golf Set', _monthSummaryHeaderStyle());
+      _setCell(summarySheet, 10, sRow, 'Gloves', _monthSummaryHeaderStyle());
+      _setCell(
+          summarySheet, 11, sRow, 'Total Rentals', _monthSummaryHeaderStyle());
       summarySheet.setRowHeight(sRow, 22);
       sRow++;
 
@@ -3663,12 +3835,18 @@ class _DashboardPageState extends State<DashboardPage> {
         for (final dayDocs in sessionsByDay.values) {
           for (final doc in dayDocs) {
             final d = doc.data() as Map<String, dynamic>;
-            mSessionAmt  += (d['sessionAmount']  is num) ? (d['sessionAmount']  as num).toDouble() : 0.0;
-            mCoachingAmt += (d['coachingAmount'] is num) ? (d['coachingAmount'] as num).toDouble() : 0.0;
-            final rentalAmt  = (d['rentalAmount'] is num) ? (d['rentalAmount'] as num).toDouble() : 0.0;
+            mSessionAmt += (d['sessionAmount'] is num)
+                ? (d['sessionAmount'] as num).toDouble()
+                : 0.0;
+            mCoachingAmt += (d['coachingAmount'] is num)
+                ? (d['coachingAmount'] as num).toDouble()
+                : 0.0;
+            final rentalAmt = (d['rentalAmount'] is num)
+                ? (d['rentalAmount'] as num).toDouble()
+                : 0.0;
             final rentalType = d['rentalType']?.toString() ?? '';
             if (rentalType == 'Golf Set') mGolfSet += rentalAmt;
-            if (rentalType == 'Gloves')   mGloves  += rentalAmt;
+            if (rentalType == 'Gloves') mGloves += rentalAmt;
             mSessionCount++;
           }
         }
@@ -3681,55 +3859,75 @@ class _DashboardPageState extends State<DashboardPage> {
             final d = doc.data() as Map<String, dynamic>;
             if (d['items'] != null && d['items'] is List) {
               for (final item in (d['items'] as List)) {
-                if (item is Map) mExpenses += (item['amount'] is num) ? (item['amount'] as num).toDouble() : 0.0;
+                if (item is Map)
+                  mExpenses += (item['amount'] is num)
+                      ? (item['amount'] as num).toDouble()
+                      : 0.0;
               }
             } else {
-              mExpenses += (d['amount'] is num) ? (d['amount'] as num).toDouble() : 0.0;
+              mExpenses +=
+                  (d['amount'] is num) ? (d['amount'] as num).toDouble() : 0.0;
             }
           }
         }
 
         final double mNet = mRevenue - mExpenses;
 
-        grandRevenue  += mRevenue;
+        grandRevenue += mRevenue;
         grandExpenses += mExpenses;
-        grandNet      += mNet;
+        grandNet += mNet;
         grandSessions += mSessionCount;
-        grandGolfSet  += mGolfSet;
-        grandGloves   += mGloves;
+        grandGolfSet += mGolfSet;
+        grandGloves += mGloves;
 
         final monthName = _getFullMonthName(month);
 
         // Left row
-        _setCell(summarySheet, 0, sRow, monthName,              _monthSummaryDataStyle());
-        _setCell(summarySheet, 1, sRow, mSessionCount.toDouble(), _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 2, sRow, mSessionAmt,            _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 3, sRow, mCoachingAmt,           _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 4, sRow, mRevenue,               _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 5, sRow, mExpenses,              _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 6, sRow, mNet,                   _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 0, sRow, monthName, _monthSummaryDataStyle());
+        _setCell(summarySheet, 1, sRow, mSessionCount.toDouble(),
+            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 2, sRow, mSessionAmt,
+            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 3, sRow, mCoachingAmt,
+            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 4, sRow, mRevenue,
+            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 5, sRow, mExpenses,
+            _monthSummaryDataStyle(right: true));
+        _setCell(
+            summarySheet, 6, sRow, mNet, _monthSummaryDataStyle(right: true));
 
         // Right row
-        _setCell(summarySheet, 8,  sRow, monthName,             _monthSummaryDataStyle());
-        _setCell(summarySheet, 9,  sRow, mGolfSet,              _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 10, sRow, mGloves,               _monthSummaryDataStyle(right: true));
-        _setCell(summarySheet, 11, sRow, mGolfSet + mGloves,    _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 8, sRow, monthName, _monthSummaryDataStyle());
+        _setCell(summarySheet, 9, sRow, mGolfSet,
+            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 10, sRow, mGloves,
+            _monthSummaryDataStyle(right: true));
+        _setCell(summarySheet, 11, sRow, mGolfSet + mGloves,
+            _monthSummaryDataStyle(right: true));
         sRow++;
       }
 
       // Grand total row
       sRow++;
-      _setCell(summarySheet, 0, sRow, 'TOTAL',                       _monthSummaryTotalStyle());
-      _setCell(summarySheet, 1, sRow, grandSessions.toDouble(),       _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 2, sRow, '',                             _monthSummaryTotalStyle());
-      _setCell(summarySheet, 3, sRow, '',                             _monthSummaryTotalStyle());
-      _setCell(summarySheet, 4, sRow, grandRevenue,                   _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 5, sRow, grandExpenses,                  _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 6, sRow, grandNet,                       _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 8,  sRow, 'TOTAL',                       _monthSummaryTotalStyle());
-      _setCell(summarySheet, 9,  sRow, grandGolfSet,                  _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 10, sRow, grandGloves,                   _monthSummaryTotalStyle(right: true));
-      _setCell(summarySheet, 11, sRow, grandGolfSet + grandGloves,    _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 0, sRow, 'TOTAL', _monthSummaryTotalStyle());
+      _setCell(summarySheet, 1, sRow, grandSessions.toDouble(),
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 2, sRow, '', _monthSummaryTotalStyle());
+      _setCell(summarySheet, 3, sRow, '', _monthSummaryTotalStyle());
+      _setCell(summarySheet, 4, sRow, grandRevenue,
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 5, sRow, grandExpenses,
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 6, sRow, grandNet,
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 8, sRow, 'TOTAL', _monthSummaryTotalStyle());
+      _setCell(summarySheet, 9, sRow, grandGolfSet,
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 10, sRow, grandGloves,
+          _monthSummaryTotalStyle(right: true));
+      _setCell(summarySheet, 11, sRow, grandGolfSet + grandGloves,
+          _monthSummaryTotalStyle(right: true));
 
       // ════════════════════════════════════════════════════════════════════
       // Per-month sheets: one sheet per active month.
@@ -3741,7 +3939,7 @@ class _DashboardPageState extends State<DashboardPage> {
       for (final month in sortedMonths) {
         final sessionsByDay = monthSessionsByDay[month] ?? {};
         final expensesByDay = monthExpensesByDay[month] ?? {};
-        final profitsByDay  = monthProfitsByDay[month]  ?? {};
+        final profitsByDay = monthProfitsByDay[month] ?? {};
         final Set<int> daySet = {
           ...sessionsByDay.keys,
           ...expensesByDay.keys,
@@ -4053,15 +4251,15 @@ class _DashboardPageState extends State<DashboardPage> {
                                             salesDocs.fold(0.0, (sum, doc) {
                                           final d = doc.data()
                                               as Map<String, dynamic>;
-                                          final rental =
-                                              (d['rentalAmount'] is num)
-                                                  ? (d['rentalAmount'] as num)
-                                                      .toDouble()
-                                                  : (double.tryParse(
-                                                          d['rentalAmount']
-                                                                  ?.toString() ??
-                                                              '') ??
-                                                      0.0);
+                                          final rental = (d['rentalAmount']
+                                                  is num)
+                                              ? (d['rentalAmount'] as num)
+                                                  .toDouble()
+                                              : (double.tryParse(
+                                                      d['rentalAmount']
+                                                              ?.toString() ??
+                                                          '') ??
+                                                  0.0);
                                           return sum + rental;
                                         });
                                       }
@@ -4104,10 +4302,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                         });
                                       }
 
-                                      final netSales =
-                                          totalRevenueSalesPeriod -
-                                              totalExpenses +
-                                              totalAdditionalProfits;
+                                      final netSales = totalRevenueSalesPeriod -
+                                          totalExpenses +
+                                          totalAdditionalProfits;
 
                                       return LayoutBuilder(
                                         builder: (context, constraints) {
@@ -4129,11 +4326,14 @@ class _DashboardPageState extends State<DashboardPage> {
                                                         const EdgeInsets.only(
                                                             right: 6),
                                                     child: _buildStatCard(
-                                                      title: 'Today\'s Sessions',
+                                                      title:
+                                                          'Today\'s Sessions',
                                                       value: todaySessions
                                                           .toString(),
-                                                      subtitle: 'Sessions today',
-                                                      icon: Icons.calendar_today,
+                                                      subtitle:
+                                                          'Sessions today',
+                                                      icon:
+                                                          Icons.calendar_today,
                                                       iconBgColor: const Color(
                                                           0xFFC41E3A),
                                                     ),
@@ -4153,8 +4353,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     padding: const EdgeInsets
                                                         .symmetric(
                                                         horizontal: 6),
-                                                    child: _buildExpensesStatCard(
-                                                        totalExpenses),
+                                                    child:
+                                                        _buildExpensesStatCard(
+                                                            totalExpenses),
                                                   ),
                                                 ),
                                                 Expanded(
@@ -4275,7 +4476,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                                 Text('${snapshot.error}',
                                                     style: TextStyle(
                                                         fontSize: 13,
-                                                        color: Colors.grey[600]),
+                                                        color:
+                                                            Colors.grey[600]),
                                                     textAlign:
                                                         TextAlign.center),
                                               ],
@@ -4514,119 +4716,118 @@ class _DashboardPageState extends State<DashboardPage> {
                                                           final total =
                                                               _getSessionTotal(
                                                                   data);
-                                                          return DataRow(cells: [
-                                                            DataCell(Align(
-                                                                alignment: Alignment
-                                                                    .centerLeft,
-                                                                child: Text(
-                                                                    data['clientName'] ??
-                                                                        'N/A'))),
-                                                            DataCell(Align(
-                                                                alignment: Alignment
-                                                                    .center,
-                                                                child: Text(
-                                                                    data['date'] ??
-                                                                        'N/A'))),
-                                                            DataCell(Align(
-                                                              alignment: Alignment
-                                                                  .center,
-                                                              child: Text(data[
-                                                                          'sessionAmount'] !=
-                                                                      null
-                                                                  ? (data['sessionAmount']
-                                                                          is num
+                                                          return DataRow(
+                                                              cells: [
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .centerLeft,
+                                                                    child: Text(
+                                                                        data['clientName'] ??
+                                                                            'N/A'))),
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .center,
+                                                                    child: Text(
+                                                                        data['date'] ??
+                                                                            'N/A'))),
+                                                                DataCell(Align(
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .center,
+                                                                  child: Text(data[
+                                                                              'sessionAmount'] !=
+                                                                          null
                                                                       ? (data['sessionAmount']
-                                                                              as num)
-                                                                          .toString()
-                                                                      : data['sessionAmount']
-                                                                          .toString())
-                                                                  : '—'),
-                                                            )),
-                                                            DataCell(Align(
-                                                              alignment: Alignment
-                                                                  .center,
-                                                              child: Text(data['coachingAmount'] !=
-                                                                          null &&
-                                                                      (data['coachingAmount']
-                                                                              as num) >
-                                                                          0
-                                                                  ? (data['coachingAmount']
-                                                                          as num)
-                                                                      .toString()
-                                                                  : '—'),
-                                                            )),
-                                                            DataCell(Align(
-                                                              alignment: Alignment
-                                                                  .center,
-                                                              child: Column(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .center,
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .center,
-                                                                children: [
-                                                                  Text(data['rentalAmount'] !=
+                                                                              is num
+                                                                          ? (data['sessionAmount'] as num)
+                                                                              .toString()
+                                                                          : data['sessionAmount']
+                                                                              .toString())
+                                                                      : '—'),
+                                                                )),
+                                                                DataCell(Align(
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .center,
+                                                                  child: Text(data['coachingAmount'] !=
                                                                               null &&
-                                                                          (data['rentalAmount']
-                                                                                  as num) >
+                                                                          (data['coachingAmount'] as num) >
                                                                               0
-                                                                      ? (data['rentalAmount']
+                                                                      ? (data['coachingAmount']
                                                                               as num)
                                                                           .toString()
                                                                       : '—'),
-                                                                  if (data['rentalType'] !=
-                                                                          null &&
-                                                                      (data['rentalType']
-                                                                              as String)
-                                                                          .isNotEmpty)
-                                                                    Text(
-                                                                      data['rentalType']
-                                                                          as String,
-                                                                      style: const TextStyle(
-                                                                          fontSize:
-                                                                              11,
-                                                                          color: Colors
-                                                                              .grey,
-                                                                          fontStyle:
-                                                                              FontStyle.italic),
-                                                                    ),
-                                                                ],
-                                                              ),
-                                                            )),
-                                                            DataCell(Align(
-                                                                alignment: Alignment
-                                                                    .center,
-                                                                child: Text(
-                                                                    data['bayNumber']
-                                                                            ?.toString() ??
-                                                                        '—'))),
-                                                            DataCell(Align(
-                                                                alignment: Alignment
-                                                                    .center,
-                                                                child: Text(
-                                                                    data['personnel'] ??
-                                                                        'N/A'))),
-                                                            DataCell(Align(
-                                                                alignment: Alignment
-                                                                    .center,
-                                                                child: Text(
-                                                                    data['duration']
-                                                                            ?.toString() ??
-                                                                        '0.0'))),
-                                                            DataCell(Align(
-                                                                alignment: Alignment
-                                                                    .centerRight,
-                                                                child: Text(
-                                                                    data['modeOfPayment']
-                                                                            ?.toString() ??
-                                                                        'N/A'))),
-                                                            DataCell(Align(
-                                                                alignment: Alignment
-                                                                    .centerRight,
-                                                                child: Text(
-                                                                    '₱${_formatAmount(total)}'))),
-                                                          ]);
+                                                                )),
+                                                                DataCell(Align(
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .center,
+                                                                  child: Column(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .center,
+                                                                    crossAxisAlignment:
+                                                                        CrossAxisAlignment
+                                                                            .center,
+                                                                    children: [
+                                                                      Text(data['rentalAmount'] != null &&
+                                                                              (data['rentalAmount'] as num) >
+                                                                                  0
+                                                                          ? (data['rentalAmount'] as num)
+                                                                              .toString()
+                                                                          : '—'),
+                                                                      if (data['rentalType'] !=
+                                                                              null &&
+                                                                          (data['rentalType'] as String)
+                                                                              .isNotEmpty)
+                                                                        Text(
+                                                                          data['rentalType']
+                                                                              as String,
+                                                                          style: const TextStyle(
+                                                                              fontSize: 11,
+                                                                              color: Colors.grey,
+                                                                              fontStyle: FontStyle.italic),
+                                                                        ),
+                                                                    ],
+                                                                  ),
+                                                                )),
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .center,
+                                                                    child: Text(
+                                                                        data['bayNumber']?.toString() ??
+                                                                            '—'))),
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .center,
+                                                                    child: Text(
+                                                                        data['personnel'] ??
+                                                                            'N/A'))),
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .center,
+                                                                    child: Text(
+                                                                        data['duration']?.toString() ??
+                                                                            '0.0'))),
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .centerRight,
+                                                                    child: Text(
+                                                                        data['modeOfPayment']?.toString() ??
+                                                                            'N/A'))),
+                                                                DataCell(Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .centerRight,
+                                                                    child: Text(
+                                                                        '₱${_formatAmount(total)}'))),
+                                                              ]);
                                                         }).toList(),
                                                       ),
                                                     ),
@@ -4643,8 +4844,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                             decoration: BoxDecoration(
                                               border: Border(
                                                   top: BorderSide(
-                                                      color:
-                                                          Colors.grey.shade200)),
+                                                      color: Colors
+                                                          .grey.shade200)),
                                             ),
                                             child: Row(
                                               mainAxisAlignment:
@@ -4662,13 +4863,12 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     IconButton(
                                                       icon: const Icon(
                                                           Icons.first_page),
-                                                      onPressed:
-                                                          _currentSessionPage >
-                                                                  0
-                                                              ? () => setState(
-                                                                  () => _currentSessionPage =
-                                                                      0)
-                                                              : null,
+                                                      onPressed: _currentSessionPage >
+                                                              0
+                                                          ? () => setState(() =>
+                                                              _currentSessionPage =
+                                                                  0)
+                                                          : null,
                                                       iconSize: 20,
                                                       tooltip: 'First page',
                                                       color: const Color(
@@ -4677,12 +4877,11 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     IconButton(
                                                       icon: const Icon(
                                                           Icons.chevron_left),
-                                                      onPressed:
-                                                          _currentSessionPage >
-                                                                  0
-                                                              ? () => setState(
-                                                                  () => _currentSessionPage--)
-                                                              : null,
+                                                      onPressed: _currentSessionPage >
+                                                              0
+                                                          ? () => setState(() =>
+                                                              _currentSessionPage--)
+                                                          : null,
                                                       iconSize: 20,
                                                       tooltip: 'Previous page',
                                                       color: const Color(
@@ -4714,12 +4913,11 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     IconButton(
                                                       icon: const Icon(
                                                           Icons.chevron_right),
-                                                      onPressed:
-                                                          _currentSessionPage <
-                                                                  totalPages - 1
-                                                              ? () => setState(
-                                                                  () => _currentSessionPage++)
-                                                              : null,
+                                                      onPressed: _currentSessionPage <
+                                                              totalPages - 1
+                                                          ? () => setState(() =>
+                                                              _currentSessionPage++)
+                                                          : null,
                                                       iconSize: 20,
                                                       tooltip: 'Next page',
                                                       color: const Color(
@@ -4728,14 +4926,13 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     IconButton(
                                                       icon: const Icon(
                                                           Icons.last_page),
-                                                      onPressed:
-                                                          _currentSessionPage <
-                                                                  totalPages - 1
-                                                              ? () => setState(
-                                                                  () => _currentSessionPage =
-                                                                      totalPages -
-                                                                          1)
-                                                              : null,
+                                                      onPressed: _currentSessionPage <
+                                                              totalPages - 1
+                                                          ? () => setState(() =>
+                                                              _currentSessionPage =
+                                                                  totalPages -
+                                                                      1)
+                                                          : null,
                                                       iconSize: 20,
                                                       tooltip: 'Last page',
                                                       color: const Color(
@@ -4843,8 +5040,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   bool _isDateInSalesPeriod(DateTime? sessionDate) {
     if (sessionDate == null) return false;
-    final sd =
-        DateTime(sessionDate.year, sessionDate.month, sessionDate.day);
+    final sd = DateTime(sessionDate.year, sessionDate.month, sessionDate.day);
     switch (_salesPeriod) {
       case SalesPeriod.daily:
         return sd ==
@@ -4862,26 +5058,50 @@ class _DashboardPageState extends State<DashboardPage> {
 
   String _getMonthName(int month) {
     const months = [
-      'Jan','Feb','Mar','Apr','May','Jun',
-      'Jul','Aug','Sep','Oct','Nov','Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return months[month - 1];
   }
 
   String _getFullMonthName(int month) {
     const months = [
-      'January','February','March','April','May','June',
-      'July','August','September','October','November','December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return months[month - 1];
   }
 
   String _salesPeriodLabel(SalesPeriod period) {
     switch (period) {
-      case SalesPeriod.daily:   return 'Daily';
-      case SalesPeriod.monthly: return 'Monthly';
-      case SalesPeriod.yearly:  return 'Yearly';
-      case SalesPeriod.overall: return 'Overall';
+      case SalesPeriod.daily:
+        return 'Daily';
+      case SalesPeriod.monthly:
+        return 'Monthly';
+      case SalesPeriod.yearly:
+        return 'Yearly';
+      case SalesPeriod.overall:
+        return 'Overall';
     }
   }
 
@@ -4943,7 +5163,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.trending_up, size: 64, color: Colors.grey[400]),
+                      Icon(Icons.trending_up,
+                          size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text('No additional profits yet',
                           style:
@@ -5061,8 +5282,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                     IconButton(
                                       icon: const Icon(Icons.delete,
                                           size: 20, color: Colors.red),
-                                      onPressed: () =>
-                                          _deleteProfit(profit.id),
+                                      onPressed: () => _deleteProfit(profit.id),
                                       tooltip: 'Delete',
                                     ),
                                   ],
@@ -5153,9 +5373,11 @@ class _DashboardPageState extends State<DashboardPage> {
       for (final item in items) {
         final amt = double.tryParse(item['amount'] ?? '0') ?? 0;
         totalAmount += amt;
-        itemsData.add({'description': item['description'] ?? '', 'amount': amt});
+        itemsData
+            .add({'description': item['description'] ?? '', 'amount': amt});
       }
-      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
+      final firstDesc =
+          items.isNotEmpty ? (items.first['description'] ?? '') : '';
       await FirebaseFirestore.instance.collection('additional-profits').add({
         'date': dateStr,
         'amount': totalAmount,
@@ -5194,8 +5416,8 @@ class _DashboardPageState extends State<DashboardPage> {
       try {
         final parts = dateStr.split('/');
         if (parts.length == 3) {
-          profitDate = DateTime(int.parse(parts[2]), int.parse(parts[0]),
-              int.parse(parts[1]));
+          profitDate = DateTime(
+              int.parse(parts[2]), int.parse(parts[0]), int.parse(parts[1]));
         }
       } catch (_) {}
     }
@@ -5204,7 +5426,9 @@ class _DashboardPageState extends State<DashboardPage> {
     if (data['items'] != null && data['items'] is List) {
       final list = data['items'] as List;
       initialItems = list.map<Map<String, String>>((e) {
-        final m = e is Map ? Map<String, dynamic>.from(e as Map) : <String, dynamic>{};
+        final m = e is Map
+            ? Map<String, dynamic>.from(e as Map)
+            : <String, dynamic>{};
         final amt = m['amount'];
         return {
           'description': (m['description'] ?? '').toString(),
@@ -5258,8 +5482,8 @@ class _DashboardPageState extends State<DashboardPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) =>
-          const Center(child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
+      builder: (context) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
     );
     try {
       final dateStr =
@@ -5269,9 +5493,11 @@ class _DashboardPageState extends State<DashboardPage> {
       for (final item in items) {
         final amt = double.tryParse(item['amount'] ?? '0') ?? 0;
         totalAmount += amt;
-        itemsData.add({'description': item['description'] ?? '', 'amount': amt});
+        itemsData
+            .add({'description': item['description'] ?? '', 'amount': amt});
       }
-      final firstDesc = items.isNotEmpty ? (items.first['description'] ?? '') : '';
+      final firstDesc =
+          items.isNotEmpty ? (items.first['description'] ?? '') : '';
       await FirebaseFirestore.instance
           .collection('additional-profits')
           .doc(profitId)
@@ -5328,8 +5554,8 @@ class _DashboardPageState extends State<DashboardPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) =>
-          const Center(child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
+      builder: (context) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFC41E3A))),
     );
     try {
       await FirebaseFirestore.instance
