@@ -572,131 +572,184 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   const SizedBox(height: 16),
-                  const Text('Date *',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _selectedDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2030),
-                      );
-                      if (date != null) {
-                        setDialogState(() => _selectedDate = date);
-                      }
-                    },
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      child: Text(
-                        '${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.year}',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('Personnel *',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _personnelController,
-                    decoration: InputDecoration(
-                      hintText: 'Search personnel...',
-                      hintStyle:
-                          TextStyle(color: Colors.grey[400], fontSize: 14),
-                      prefixIcon: const Icon(Icons.search,
-                          color: Color(0xFFC41E3A), size: 20),
-                      suffixIcon: _selectedPersonnelName != null
-                          ? const Icon(Icons.check_circle,
-                              color: Color(0xFFC41E3A))
-                          : null,
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: Colors.grey.shade300, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            color: Color(0xFFC41E3A), width: 1.2),
-                      ),
-                    ),
-                    onChanged: (value) {
-                      setDialogState(() => _selectedPersonnelName = null);
-                      _searchPersonnel(value, setDialogState);
-                    },
-                  ),
-                  if (_personnelSearchResults.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(4),
-                        color: Colors.white,
-                      ),
-                      constraints: const BoxConstraints(maxHeight: 200),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _personnelSearchResults.length,
-                        itemBuilder: (context, index) {
-                          final personnel = _personnelSearchResults[index];
-                          final data = personnel.data() as Map<String, dynamic>;
-                          final name =
-                              data['name'] ?? data['fullName'] ?? 'Unknown';
-                          final role = data['role'] ?? data['position'] ?? '';
-                          return ListTile(
-                            dense: true,
-                            leading: CircleAvatar(
-                              backgroundColor: const Color(0xFFC41E3A),
-                              child: Text(
-                                name.isNotEmpty ? name[0].toUpperCase() : '?',
-                                style: const TextStyle(color: Colors.white),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Date *',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w600, fontSize: 14)),
+                            const SizedBox(height: 8),
+                            InkWell(
+                              onTap: () async {
+                                final date = await showDatePicker(
+                                  context: context,
+                                  initialDate: _selectedDate,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime(2030),
+                                );
+                                if (date != null) {
+                                  setDialogState(() => _selectedDate = date);
+                                }
+                              },
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.calendar_today),
+                                ),
+                                child: Text(
+                                  '${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.year}',
+                                ),
                               ),
                             ),
-                            title: Text(name),
-                            subtitle: role.isNotEmpty ? Text(role) : null,
-                            onTap: () =>
-                                _selectPersonnel(personnel, setDialogState),
-                          );
-                        },
+                          ],
+                        ),
                       ),
-                    ),
-                  if (_personnelSearchResults.isEmpty &&
-                      _personnelController.text.isNotEmpty &&
-                      _selectedPersonnelName == null)
-                    Container(
-                      margin: const EdgeInsets.only(top: 8),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.orange.shade200),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline,
-                              color: Colors.orange.shade700, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'No personnel found. Check the Personnel page to add staff.',
-                              style: TextStyle(
-                                  color: Colors.orange.shade700, fontSize: 13),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Personnel *',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w600, fontSize: 14)),
+                            const SizedBox(height: 8),
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                TextField(
+                                  controller: _personnelController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Search personnel...',
+                                    hintStyle: TextStyle(
+                                        color: Colors.grey[400], fontSize: 14),
+                                    prefixIcon: const Icon(Icons.search,
+                                        color: Color(0xFFC41E3A), size: 20),
+                                    suffixIcon: _selectedPersonnelName != null
+                                        ? const Icon(Icons.check_circle,
+                                            color: Color(0xFFC41E3A))
+                                        : null,
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                          color: Colors.grey.shade300,
+                                          width: 1),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                          color: Color(0xFFC41E3A), width: 1.2),
+                                    ),
+                                  ),
+                                  onChanged: (value) {
+                                    setDialogState(
+                                        () => _selectedPersonnelName = null);
+                                    _searchPersonnel(value, setDialogState);
+                                  },
+                                ),
+                                if (_personnelSearchResults.isNotEmpty)
+                                  Positioned(
+                                    bottom: 48,
+                                    left: 0,
+                                    right: 0,
+                                    child: Material(
+                                      elevation: 4,
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Container(
+                                        constraints: const BoxConstraints(
+                                            maxHeight: 150),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: Colors.grey.shade300),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          color: Colors.white,
+                                        ),
+                                        child: ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount:
+                                              _personnelSearchResults.length,
+                                          itemBuilder: (context, index) {
+                                            final personnel =
+                                                _personnelSearchResults[index];
+                                            final data = personnel.data()
+                                                as Map<String, dynamic>;
+                                            final name = data['name'] ??
+                                                data['fullName'] ??
+                                                'Unknown';
+                                            final role = data['role'] ??
+                                                data['position'] ??
+                                                '';
+                                            return ListTile(
+                                              dense: true,
+                                              leading: CircleAvatar(
+                                                backgroundColor:
+                                                    const Color(0xFFC41E3A),
+                                                child: Text(
+                                                  name.isNotEmpty
+                                                      ? name[0].toUpperCase()
+                                                      : '?',
+                                                  style: const TextStyle(
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                              title: Text(name),
+                                              subtitle: role.isNotEmpty
+                                                  ? Text(role)
+                                                  : null,
+                                              onTap: () => _selectPersonnel(
+                                                  personnel, setDialogState),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                          ),
-                        ],
+                            if (_personnelSearchResults.isEmpty &&
+                                _personnelController.text.isNotEmpty &&
+                                _selectedPersonnelName == null)
+                              Container(
+                                margin: const EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border:
+                                      Border.all(color: Colors.orange.shade200),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.info_outline,
+                                        color: Colors.orange.shade700,
+                                        size: 20),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'No personnel found. Check the Personnel page to add staff.',
+                                        style: TextStyle(
+                                            color: Colors.orange.shade700,
+                                            fontSize: 13),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   const SizedBox(height: 16),
                   const Text('Bay Number *',
                       style:
@@ -2530,7 +2583,7 @@ class _DashboardPageState extends State<DashboardPage> {
       row++;
     }
     _setCell(sheet, 3, row, 'Total Expenses:', _pinkBoldStyle());
-    _setCell(sheet, 4, row, '', _pinkBoldStyle()); 
+    _setCell(sheet, 4, row, '', _pinkBoldStyle());
     _setCell(sheet, 5, row, '', _pinkBoldStyle());
     _setCell(sheet, 6, row, '', _pinkBoldStyle());
     _setCell(sheet, 7, row, totalExpenses, _pinkBoldStyle(right: true));
@@ -2554,8 +2607,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
     // Total profit
     _setCell(sheet, 3, row, 'Total Profit:', _pinkBoldStyle());
-    _setCell(sheet, 4, row, '', _pinkBoldStyle()); 
-    _setCell(sheet, 5, row, '', _pinkBoldStyle()); 
+    _setCell(sheet, 4, row, '', _pinkBoldStyle());
+    _setCell(sheet, 5, row, '', _pinkBoldStyle());
     _setCell(sheet, 6, row, '', _pinkBoldStyle());
     _setCell(sheet, 7, row, totalProfit, _pinkBoldStyle(right: true));
     row++;
@@ -3029,9 +3082,9 @@ class _DashboardPageState extends State<DashboardPage> {
     // TOTAL PROFIT
     // ════════════════════════════════════════════════════════════════════════
     _setCell(sheet, 3, row, 'Total Profit:', _pinkBoldStyle());
-    _setCell(sheet, 4, row, '', _pinkBoldStyle()); 
-    _setCell(sheet, 5, row, '', _pinkBoldStyle()); 
-    _setCell(sheet, 6, row, '', _pinkBoldStyle()); 
+    _setCell(sheet, 4, row, '', _pinkBoldStyle());
+    _setCell(sheet, 5, row, '', _pinkBoldStyle());
+    _setCell(sheet, 6, row, '', _pinkBoldStyle());
     _setCell(sheet, 7, row, totalProfit, _pinkBoldStyle(right: true));
   }
 
